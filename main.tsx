@@ -5,11 +5,12 @@ import "./style.css";
 type Tab =
   | "home"
   | "weather"
-  | "crops"
+  | "crop"
   | "doctor"
+  | "mandi"
   | "store"
+  | "scheme"
   | "profile"
-  | "cart"
   | "chat";
 
 type Product = {
@@ -18,30 +19,36 @@ type Product = {
   price: number;
 };
 
+const products: Product[] = [
+  { id: 1, name: "गेहूं बीज", price: 450 },
+  { id: 2, name: "सरसों बीज", price: 380 },
+  { id: 3, name: "जैविक खाद", price: 520 },
+];
+
 function App() {
   const [tab, setTab] = useState<Tab>("home");
   const [name] = useState("Kisan Bhai");
   const [cart, setCart] = useState<Record<number, number>>({});
   const [message, setMessage] = useState("");
-  const [chat, setChat] = useState<string[]>([]);
+  const [messages, setMessages] = useState<string[]>([]);
 
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
-
-  const products: Product[] = [
-    { id: 1, name: "गेहूं बीज", price: 450 },
-    { id: 2, name: "सरसों बीज", price: 380 },
-    { id: 3, name: "जैविक खाद", price: 520 },
-  ];
+  const addCart = (id: number) => {
+    setCart((old) => ({
+      ...old,
+      [id]: (old[id] || 0) + 1,
+    }));
+  };
 
   const sendMessage = () => {
     if (!message.trim()) return;
 
-    setChat((c) => [...c, "आप: " + message]);
-    setMessage("");
+    setMessages((old) => [
+      ...old,
+      "आप: " + message,
+      "AI Kisan: नमस्ते किसान भाई 👋 मैं आपकी खेती में मदद करने के लिए तैयार हूँ।",
+    ]);
 
-    setTimeout(() => {
-      setChat((c) => [...c, "AI किसान: आपकी मदद के लिए मैं यहाँ हूँ।"]);
-    }, 400);
+    setMessage("");
   };
 
   return (
@@ -51,64 +58,57 @@ function App() {
           <div className="brand">🌾 KisanSaathi AI</div>
           <small>Aapka Digital Kisan Dost</small>
         </div>
-
-        <div className="profileTop">👨‍🌾</div>
+        <div>👨‍🌾</div>
       </header>
 
       <main>
+
         {tab === "home" && (
-          <HomePage name={name} setTab={setTab} />
+          <Home name={name} setTab={setTab} />
         )}
 
         {tab === "weather" && (
-          <WeatherPage setTab={setTab} />
+          <Weather setTab={setTab} />
         )}
 
-        {tab === "crops" && (
-          <SimplePage
-            title="🌱 मेरी फसल"
-            text="अपनी फसल की जानकारी यहाँ जोड़ें।"
-            setTab={setTab}
-          />
+        {tab === "crop" && (
+          <Crop setTab={setTab} />
         )}
 
         {tab === "doctor" && (
-          <SimplePage
-            title="📷 Crop Doctor"
-            text="फसल की फोटो डालकर बीमारी की जानकारी पाएँ।"
-            setTab={setTab}
-          />
+          <Doctor setTab={setTab} />
+        )}
+
+        {tab === "mandi" && (
+          <Mandi setTab={setTab} />
         )}
 
         {tab === "store" && (
-          <StorePage
-            products={products}
+          <Store
+            setTab={setTab}
+            addCart={addCart}
             cart={cart}
-            setCart={setCart}
           />
+        )}
+
+        {tab === "scheme" && (
+          <Scheme setTab={setTab} />
         )}
 
         {tab === "profile" && (
-          <ProfilePage name={name} setTab={setTab} />
-        )}
-
-        {tab === "cart" && (
-          <CartPage
-            products={products}
-            cart={cart}
-            setCart={setCart}
-          />
+          <Profile name={name} setTab={setTab} />
         )}
 
         {tab === "chat" && (
-          <ChatPage
-            chat={chat}
+          <Chat
+            setTab={setTab}
             message={message}
             setMessage={setMessage}
+            messages={messages}
             sendMessage={sendMessage}
-            setTab={setTab}
           />
         )}
+
       </main>
 
       <button className="fab" onClick={() => setTab("chat")}>
@@ -121,7 +121,7 @@ function App() {
           <small>Home</small>
         </button>
 
-        <button onClick={() => setTab("crops")}>
+        <button onClick={() => setTab("crop")}>
           🌱
           <small>Meri Fasal</small>
         </button>
@@ -140,31 +140,39 @@ function App() {
   );
 }
 
+
 /* HOME */
 
-function HomePage({
+function Home({
   name,
   setTab,
 }: {
   name: string;
-  setTab: (tab: Tab) => void;
+  setTab: (t: Tab) => void;
 }) {
   return (
     <section>
+
       <div className="hero">
         <h1>Namaste {name} 👋</h1>
+
         <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
 
-        <button className="weatherBox" onClick={() => setTab("weather")}>
-          <span>☀️</span>
+        <button
+          className="weatherBox"
+          onClick={() => setTab("weather")}
+        >
+          ☀️
           <div>
             <b>28°C · साफ मौसम</b>
-            <small>💧 बारिश की संभावना: 20% · Demo Data</small>
+            <small>💧 बारिश की संभावना: 20%</small>
           </div>
         </button>
       </div>
 
+
       <div className="grid">
+
         <Card
           icon="📷"
           title="Fasal Check Karein"
@@ -177,7 +185,6 @@ function HomePage({
           onClick={() => setTab("chat")}
         />
 
-        {/* यही मुख्य FIX है */}
         <Card
           icon="🌦️"
           title="Mausam"
@@ -187,13 +194,13 @@ function HomePage({
         <Card
           icon="💰"
           title="Mandi Bhav"
-          onClick={() => alert("Mandi Bhav page जल्द आएगा")}
+          onClick={() => setTab("mandi")}
         />
 
         <Card
           icon="🌱"
           title="Meri Fasal"
-          onClick={() => setTab("crops")}
+          onClick={() => setTab("crop")}
         />
 
         <Card
@@ -205,104 +212,25 @@ function HomePage({
         <Card
           icon="🏛️"
           title="Sarkari Yojana"
-          onClick={() => alert("Sarkari Yojana page जल्द आएगा")}
+          onClick={() => setTab("scheme")}
         />
+
       </div>
+
 
       <div className="advice">
         ⚠️ <b>खेती की सलाह</b>
+
         <p>
-          कल बारिश की संभावना हो सकती है। सिंचाई का निर्णय लेने से पहले
-          स्थानीय forecast चेक करें।
+          आज मौसम खेती के सामान्य कामों के लिए ठीक है।
+          सिंचाई से पहले मौसम जरूर देखें।
         </p>
       </div>
+
     </section>
   );
 }
 
-/* WEATHER */
-
-function WeatherPage({
-  setTab,
-}: {
-  setTab: (tab: Tab) => void;
-}) {
-  return (
-    <section>
-      <button className="back" onClick={() => setTab("home")}>
-        ← वापस
-      </button>
-
-      <div className="weatherPage">
-        <h1>🌦️ आज का मौसम</h1>
-
-        <div className="bigWeather">
-          <div className="sun">☀️</div>
-          <div>
-            <strong>28°C</strong>
-            <p>साफ मौसम</p>
-          </div>
-        </div>
-
-        <div className="weatherCards">
-          <div>
-            💧
-            <b>नमी</b>
-            <span>62%</span>
-          </div>
-
-          <div>
-            💨
-            <b>हवा</b>
-            <span>12 km/h</span>
-          </div>
-
-          <div>
-            🌧️
-            <b>बारिश</b>
-            <span>20%</span>
-          </div>
-
-          <div>
-            🌡️
-            <b>महसूस होगा</b>
-            <span>29°C</span>
-          </div>
-        </div>
-
-        <div className="forecast">
-          <h3>अगले दिन</h3>
-
-          <div className="forecastRow">
-            <span>आज</span>
-            <span>☀️</span>
-            <b>28° / 21°</b>
-          </div>
-
-          <div className="forecastRow">
-            <span>कल</span>
-            <span>🌦️</span>
-            <b>27° / 20°</b>
-          </div>
-
-          <div className="forecastRow">
-            <span>परसों</span>
-            <span>☀️</span>
-            <b>29° / 21°</b>
-          </div>
-        </div>
-
-        <div className="advice">
-          🌾 <b>किसान सलाह</b>
-          <p>
-            आज मौसम खेती के सामान्य कामों के लिए ठीक है। बारिश की संभावना
-            बढ़ने पर सिंचाई रोकने पर विचार करें।
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* CARD */
 
@@ -317,7 +245,10 @@ function Card({
 }) {
   return (
     <button className="card" onClick={onClick}>
-      <span className="cardIcon">{icon}</span>
+
+      <span className="cardIcon">
+        {icon}
+      </span>
 
       <div>
         <b>{title}</b>
@@ -325,233 +256,476 @@ function Card({
       </div>
 
       <span>›</span>
+
     </button>
   );
 }
 
-/* SIMPLE PAGE */
 
-function SimplePage({
-  title,
-  text,
+/* WEATHER */
+
+function Weather({
   setTab,
 }: {
-  title: string;
-  text: string;
-  setTab: (tab: Tab) => void;
+  setTab: (t: Tab) => void;
 }) {
   return (
     <section>
-      <button className="back" onClick={() => setTab("home")}>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
         ← वापस
       </button>
 
-      <div className="simplePage">
-        <h1>{title}</h1>
-        <p>{text}</p>
+      <div className="page">
+
+        <h1>🌦️ आज का मौसम</h1>
+
+        <div className="bigWeather">
+          <span>☀️</span>
+
+          <div>
+            <strong>28°C</strong>
+            <p>साफ मौसम</p>
+          </div>
+        </div>
+
+
+        <div className="weatherGrid">
+
+          <Info title="💧 नमी" value="62%" />
+
+          <Info title="💨 हवा" value="12 km/h" />
+
+          <Info title="🌧️ बारिश" value="20%" />
+
+          <Info title="🌡️ महसूस होगा" value="29°C" />
+
+        </div>
+
+
+        <div className="advice">
+          🌾 <b>किसान सलाह</b>
+
+          <p>
+            आज मौसम खेती के सामान्य कामों के लिए अच्छा है।
+            बारिश की संभावना बढ़ने पर सिंचाई रोकें।
+          </p>
+        </div>
+
       </div>
+
     </section>
   );
 }
+
+
+function Info({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="info">
+      <b>{title}</b>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+
+/* CROP */
+
+function Crop({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  return (
+    <section>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
+        ← वापस
+      </button>
+
+      <div className="page">
+
+        <h1>🌱 मेरी फसल</h1>
+
+        <div className="item">
+          <b>🌾 गेहूं</b>
+          <p>फसल की स्थिति: अच्छी</p>
+        </div>
+
+        <div className="item">
+          <b>🌻 सरसों</b>
+          <p>फसल की स्थिति: सामान्य</p>
+        </div>
+
+        <button
+          className="mainButton"
+          onClick={() => alert("नई फसल जोड़ने का विकल्प जल्द आएगा")}
+        >
+          + नई फसल जोड़ें
+        </button>
+
+      </div>
+
+    </section>
+  );
+}
+
+
+/* DOCTOR */
+
+function Doctor({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  return (
+    <section>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
+        ← वापस
+      </button>
+
+      <div className="page">
+
+        <h1>📷 Fasal Check Karein</h1>
+
+        <p>
+          अपनी फसल की फोटो लेकर बीमारी की पहचान करें।
+        </p>
+
+        <button
+          className="mainButton"
+          onClick={() =>
+            alert("Camera feature जल्द जोड़ा जाएगा")
+          }
+        >
+          📷 फोटो लें
+        </button>
+
+        <div className="advice">
+          💡 पत्तियों की साफ और नजदीक से फोटो लें।
+        </div>
+
+      </div>
+
+    </section>
+  );
+}
+
+
+/* MANDI */
+
+function Mandi({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  return (
+    <section>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
+        ← वापस
+      </button>
+
+      <div className="page">
+
+        <h1>💰 आज का मंडी भाव</h1>
+
+        <div className="item">
+          <b>🌾 गेहूं</b>
+          <strong>₹2,450 / क्विंटल</strong>
+        </div>
+
+        <div className="item">
+          <b>🌻 सरसों</b>
+          <strong>₹5,800 / क्विंटल</strong>
+        </div>
+
+        <div className="item">
+          <b>🌽 मक्का</b>
+          <strong>₹2,100 / क्विंटल</strong>
+        </div>
+
+        <small>
+          * ये demo prices हैं।
+        </small>
+
+      </div>
+
+    </section>
+  );
+}
+
 
 /* STORE */
 
-function StorePage({
-  products,
+function Store({
+  setTab,
+  addCart,
   cart,
-  setCart,
 }: {
-  products: Product[];
+  setTab: (t: Tab) => void;
+  addCart: (id: number) => void;
   cart: Record<number, number>;
-  setCart: React.Dispatch<React.SetStateAction<Record<number, number>>>;
 }) {
-  const add = (id: number) => {
-    setCart((c) => ({
-      ...c,
-      [id]: (c[id] || 0) + 1,
-    }));
-  };
-
   return (
     <section>
-      <div className="pageTitle">
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
+        ← वापस
+      </button>
+
+      <div className="page">
+
         <h1>🛒 Kisan Store</h1>
+
+        {products.map((p) => (
+          <div className="product" key={p.id}>
+
+            <div>
+              <b>{p.name}</b>
+              <p>₹{p.price}</p>
+            </div>
+
+            <button onClick={() => addCart(p.id)}>
+              जोड़ें
+            </button>
+
+          </div>
+        ))}
+
+        <button
+          className="mainButton"
+          onClick={() => {
+            const total = Object.entries(cart).reduce(
+              (sum, [id, qty]) => {
+                const p = products.find(
+                  (x) => x.id === Number(id)
+                );
+
+                return sum + (p ? p.price * qty : 0);
+              },
+              0
+            );
+
+            alert(
+              total
+                ? `Cart total: ₹${total}`
+                : "Cart खाली है"
+            );
+          }}
+        >
+          🛒 Cart देखें
+        </button>
+
       </div>
 
-      {products.map((p) => (
-        <div className="product" key={p.id}>
-          <div>
-            <b>{p.name}</b>
-            <p>₹{p.price}</p>
-          </div>
-
-          <button onClick={() => add(p.id)}>
-            जोड़ें
-          </button>
-        </div>
-      ))}
     </section>
   );
 }
 
-/* CART */
 
-function CartPage({
-  products,
-  cart,
-  setCart,
+/* SCHEME */
+
+function Scheme({
+  setTab,
 }: {
-  products: Product[];
-  cart: Record<number, number>;
-  setCart: React.Dispatch<React.SetStateAction<Record<number, number>>>;
+  setTab: (t: Tab) => void;
 }) {
   return (
     <section>
-      <div className="pageTitle">
-        <h1>🛒 मेरा Cart</h1>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
+        ← वापस
+      </button>
+
+      <div className="page">
+
+        <h1>🏛️ Sarkari Yojana</h1>
+
+        <div className="item">
+          <b>🌾 किसान सम्मान निधि</b>
+          <p>किसानों के लिए सरकारी सहायता योजना।</p>
+        </div>
+
+        <div className="item">
+          <b>💧 प्रधानमंत्री कृषि सिंचाई योजना</b>
+          <p>सिंचाई सुविधाओं को बढ़ावा देने की योजना।</p>
+        </div>
+
+        <div className="item">
+          <b>🌱 फसल बीमा योजना</b>
+          <p>फसल नुकसान के समय बीमा सहायता।</p>
+        </div>
+
       </div>
 
-      {products.map((p) => {
-        const qty = cart[p.id] || 0;
-
-        if (!qty) return null;
-
-        return (
-          <div className="product" key={p.id}>
-            <b>{p.name}</b>
-            <span>
-              {qty} × ₹{p.price}
-            </span>
-
-            <button
-              onClick={() =>
-                setCart((c) => ({
-                  ...c,
-                  [p.id]: Math.max(0, qty - 1),
-                }))
-              }
-            >
-              −
-            </button>
-          </div>
-        );
-      })}
     </section>
   );
 }
+
 
 /* PROFILE */
 
-function ProfilePage({
+function Profile({
   name,
   setTab,
 }: {
   name: string;
-  setTab: (tab: Tab) => void;
+  setTab: (t: Tab) => void;
 }) {
   return (
     <section>
-      <button className="back" onClick={() => setTab("home")}>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
         ← वापस
       </button>
 
       <div className="profileCard">
-        <div className="profileAvatar">👨‍🌾</div>
+
+        <div className="profileAvatar">
+          👨‍🌾
+        </div>
 
         <h2>{name}</h2>
-        <p>किसान साथी उपयोगकर्ता</p>
+
+        <p>
+          किसान साथी उपयोगकर्ता
+        </p>
+
       </div>
 
-      <div className="section">
-        <div className="profileItem">
-          <span>👤</span>
-          <div>
-            <b>नाम</b>
-            <p>{name}</p>
-          </div>
-        </div>
 
-        <div className="profileItem">
-          <span>🌾</span>
-          <div>
-            <b>मेरी फसल</b>
-            <p>फसल की जानकारी जोड़ें</p>
-          </div>
-        </div>
-
-        <div className="profileItem">
-          <span>📍</span>
-          <div>
-            <b>स्थान</b>
-            <p>अपना गांव और जिला जोड़ें</p>
-          </div>
-        </div>
-
-        <div className="profileItem">
-          <span>📞</span>
-          <div>
-            <b>सहायता</b>
-            <p>किसान सहायता केंद्र</p>
-          </div>
-        </div>
+      <div className="item">
+        👤 <b>नाम</b>
+        <p>{name}</p>
       </div>
+
+      <div className="item">
+        🌾 <b>मेरी फसल</b>
+        <p>फसल की जानकारी जोड़ें</p>
+      </div>
+
+      <div className="item">
+        📍 <b>स्थान</b>
+        <p>अपना गांव और जिला जोड़ें</p>
+      </div>
+
+      <div className="item">
+        📞 <b>सहायता</b>
+        <p>किसान सहायता केंद्र</p>
+      </div>
+
     </section>
   );
 }
+
 
 /* CHAT */
 
-function ChatPage({
-  chat,
+function Chat({
+  setTab,
   message,
   setMessage,
+  messages,
   sendMessage,
-  setTab,
 }: {
-  chat: string[];
+  setTab: (t: Tab) => void;
   message: string;
   setMessage: (v: string) => void;
+  messages: string[];
   sendMessage: () => void;
-  setTab: (tab: Tab) => void;
 }) {
   return (
     <section>
-      <button className="back" onClick={() => setTab("home")}>
+
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+      >
         ← वापस
       </button>
 
-      <div className="chatPage">
+      <div className="page">
+
         <h1>🤖 AI Kisan</h1>
 
         <div className="chatBox">
-          {chat.length === 0 && (
-            <p>नमस्ते किसान भाई 👋 मैं आपकी खेती में मदद कर सकता हूँ।</p>
+
+          {messages.length === 0 && (
+            <p>
+              नमस्ते किसान भाई 👋
+              <br />
+              खेती से जुड़ा सवाल पूछिए।
+            </p>
           )}
 
-          {chat.map((x, i) => (
+          {messages.map((m, i) => (
             <div className="chatMsg" key={i}>
-              {x}
+              {m}
             </div>
           ))}
+
         </div>
 
+
         <div className="chatInput">
+
           <input
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) =>
+              setMessage(e.target.value)
+            }
             placeholder="अपना सवाल लिखें..."
             onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
+              if (e.key === "Enter") {
+                sendMessage();
+              }
             }}
           />
 
-          <button onClick={sendMessage}>➤</button>
+          <button onClick={sendMessage}>
+            ➤
+          </button>
+
         </div>
+
       </div>
+
     </section>
   );
 }
 
-createRoot(document.getElementById("root")!).render(
+
+createRoot(
+  document.getElementById("root")!
+).render(
   <App />
 );
