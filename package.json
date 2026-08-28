@@ -1,0 +1,9 @@
+{
+  "name":"kisansathi-ai",
+  "private":true,
+  "version":"1.0.0",
+  "type":"module",
+  "scripts":{"dev":"concurrently \"npm:dev:server\" \"npm:dev:client\"","dev:server":"tsx server/index.ts","dev:client":"vite","build":"vite build","start":"tsx server/index.ts","db:generate":"drizzle-kit generate","db:migrate":"drizzle-kit migrate"},
+  "dependencies":{"@vitejs/plugin-react":"latest","better-sqlite3":"latest","concurrently":"latest","drizzle-orm":"latest","express":"latest","multer":"latest","react":"latest","react-dom":"latest","tsx":"latest","typescript":"latest","vite":"latest","zod":"latest","tailwindcss":"latest","@tailwindcss/vite":"latest","lucide-react":"latest"},
+  "devDependencies":{"drizzle-kit":"latest"}
+}
