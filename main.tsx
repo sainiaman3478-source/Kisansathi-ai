@@ -1,234 +1,504 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
-import "./style.css";
 
 type Tab =
   | "home"
   | "weather"
-  | "crops"
   | "doctor"
-  | "store"
-  | "cart"
   | "chat"
-  | "profile";
+  | "mandi"
+  | "crop"
+  | "store"
+  | "scheme";
 
 function App() {
   const [tab, setTab] = useState<Tab>("home");
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<string[]>([]);
 
-  const sendMessage = () => {
-    if (!message.trim()) return;
+  if (tab === "weather")
+    return <Weather setTab={setTab} />;
 
-    setMessages([...messages, "आप: " + message]);
-    setMessage("");
-  };
+  if (tab === "doctor")
+    return <SimplePage title="📷 Fas﻿al Check Karein" setTab={setTab} />;
 
+  if (tab === "chat")
+    return <SimplePage title="🤖 AI Kisan" setTab={setTab} />;
+
+  if (tab === "mandi")
+    return <SimplePage title="💰 Mandi Bhav" setTab={setTab} />;
+
+  if (tab === "crop")
+    return <SimplePage title="🌱 Meri Fasal" setTab={setTab} />;
+
+  if (tab === "store")
+    return <SimplePage title="🛒 Kisan Store" setTab={setTab} />;
+
+  if (tab === "scheme")
+    return <SimplePage title="🏛️ Sarkari Yojana" setTab={setTab} />;
+
+  return <Home setTab={setTab} />;
+}
+
+function Home({ setTab }: { setTab: (t: Tab) => void }) {
   return (
     <div className="app">
 
-      <header className="header">
-        <h2>🌾 KisanSaathi AI</h2>
-        <small>आपका Digital Kisan Dost</small>
+      <header>
+        <div>
+          <b>🌾 KisanSaathi AI</b>
+          <small>Aapka Digital Kisan Dost</small>
+        </div>
+        <div className="user">👨‍🌾</div>
       </header>
 
-      <main className="main">
+      <main>
 
-        {tab === "home" && (
-          <section>
-            <h1>नमस्ते किसान भाई 👋</h1>
-            <p>आज खेती में आपकी क्या मदद करूँ?</p>
+        <section className="welcome">
+          <h1>Namaste Kisan Bhai 👋</h1>
+          <p>Aaj kheti mein aapki madad ke liye taiyar hoon.</p>
 
-            <div className="grid">
-
-              <button onClick={() => setTab("weather")}>
-                🌤️
-                <b>मौसम</b>
-                <span>आज का मौसम देखें</span>
-              </button>
-
-              <button onClick={() => setTab("crops")}>
-                🌾
-                <b>मेरी फसल</b>
-                <span>अपनी फसल देखें</span>
-              </button>
-
-              <button onClick={() => setTab("doctor")}>
-                🩺
-                <b>Crop Doctor</b>
-                <span>फसल की समस्या</span>
-              </button>
-
-              <button onClick={() => setTab("store")}>
-                🛒
-                <b>किसान Store</b>
-                <span>खेती का सामान</span>
-              </button>
-
+          <button
+            className="weatherMini"
+            onClick={() => setTab("weather")}
+          >
+            <span>🌤️</span>
+            <div>
+              <b>28°C · Saaf Mausam</b>
+              <small>🌧️ Baarish ki sambhavna: 20% · Demo Data</small>
             </div>
-          </section>
-        )}
+          </button>
+        </section>
 
-        {tab === "weather" && (
-          <section>
-            <button className="back" onClick={() => setTab("home")}>
-              ← वापस
-            </button>
+        <div className="grid">
 
-            <h1>🌤️ मौसम</h1>
+          <Card
+            icon="📸"
+            title="Fasal Check Karein"
+            onClick={() => setTab("doctor")}
+          />
 
-            <div className="weather">
-              <div className="weatherIcon">☀️</div>
-              <h2>आज का मौसम</h2>
-              <strong>28°C</strong>
-              <p>आसमान साफ है</p>
+          <Card
+            icon="🤖"
+            title="AI Kisan"
+            onClick={() => setTab("chat")}
+          />
 
-              <div className="weatherInfo">
-                <span>💧 नमी<br /><b>65%</b></span>
-                <span>💨 हवा<br /><b>12 km/h</b></span>
-                <span>🌡️ तापमान<br /><b>28°C</b></span>
-              </div>
-            </div>
-          </section>
-        )}
+          <Card
+            icon="🌦️"
+            title="Mausam"
+            onClick={() => setTab("weather")}
+          />
 
-        {tab === "crops" && (
-          <section>
-            <button className="back" onClick={() => setTab("home")}>
-              ← वापस
-            </button>
-            <h1>🌾 मेरी फसल</h1>
+          <Card
+            icon="💰"
+            title="Mandi Bhav"
+            onClick={() => setTab("mandi")}
+          />
 
-            <div className="card">
-              <h2>फसल की जानकारी</h2>
-              <p>अपनी फसल की जानकारी यहाँ जोड़ें।</p>
-            </div>
-          </section>
-        )}
+          <Card
+            icon="🌱"
+            title="Meri Fasal"
+            onClick={() => setTab("crop")}
+          />
 
-        {tab === "doctor" && (
-          <section>
-            <button className="back" onClick={() => setTab("home")}>
-              ← वापस
-            </button>
-            <h1>🩺 Crop Doctor</h1>
+          <Card
+            icon="🛒"
+            title="Kisan Store"
+            onClick={() => setTab("store")}
+          />
 
-            <div className="card">
-              <h2>फसल की समस्या?</h2>
-              <p>अपनी फसल की समस्या बताएं।</p>
-              <button onClick={() => setTab("chat")}>
-                🤖 AI से पूछें
-              </button>
-            </div>
-          </section>
-        )}
+          <Card
+            icon="🏛️"
+            title="Sarkari Yojana"
+            onClick={() => setTab("scheme")}
+          />
 
-        {tab === "store" && (
-          <section>
-            <button className="back" onClick={() => setTab("home")}>
-              ← वापस
-            </button>
-            <h1>🛒 किसान Store</h1>
+        </div>
 
-            <div className="card">
-              <h2>🌱 बीज</h2>
-              <p>खेती के लिए उपयोगी सामान</p>
-            </div>
-
-            <div className="card">
-              <h2>🧪 खाद</h2>
-              <p>फसल के लिए जरूरी उत्पाद</p>
-            </div>
-
-            <button onClick={() => setTab("cart")}>
-              🛒 Cart देखें
-            </button>
-          </section>
-        )}
-
-        {tab === "cart" && (
-          <section>
-            <button className="back" onClick={() => setTab("store")}>
-              ← वापस
-            </button>
-            <h1>🛒 मेरा Cart</h1>
-
-            <div className="card">
-              <p>आपका Cart अभी खाली है।</p>
-            </div>
-          </section>
-        )}
-
-        {tab === "chat" && (
-          <section>
-            <button className="back" onClick={() => setTab("home")}>
-              ← वापस
-            </button>
-
-            <h1>🤖 AI Kisan</h1>
-
-            <div className="chatBox">
-              {messages.length === 0 && (
-                <p>नमस्ते! खेती से जुड़ा कोई भी सवाल पूछें। 🌾</p>
-              )}
-
-              {messages.map((m, i) => (
-                <p key={i}>{m}</p>
-              ))}
-            </div>
-
-            <div className="chatInput">
-              <input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="अपना सवाल लिखें..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") sendMessage();
-                }}
-              />
-              <button onClick={sendMessage}>➤</button>
-            </div>
-          </section>
-        )}
-
-        {tab === "profile" && (
-          <section>
-            <button className="back" onClick={() => setTab("home")}>
-              ← वापस
-            </button>
-
-            <h1>👤 प्रोफाइल</h1>
-
-            <div className="profile">
-              <div className="avatar">👤</div>
-              <h2>किसान साथी उपयोगकर्ता</h2>
-              <p>🌾 किसान</p>
-              <p>📍 अपना गांव और जिला जोड़ें</p>
-              <p>📞 किसान सहायता केंद्र</p>
-            </div>
-          </section>
-        )}
+        <section className="advice">
+          <b>⚠️ Kheti ki salah</b>
+          <p>
+            Kal baarish ki sambhavna hai. Sinchai ka nirnay lene se
+            pehle sthaniya forecast check karein.
+          </p>
+        </section>
 
       </main>
 
-      <button className="fab" onClick={() => setTab("chat")}>
-        🤖 AI Kisan
+      <button className="aiButton" onClick={() => setTab("chat")}>
+        🤖 <span>AI Kisan</span>
       </button>
 
-      <nav className="nav">
-        <button onClick={() => setTab("home")}>🏠<span>Home</span></button>
-        <button onClick={() => setTab("weather")}>🌤️<span>मौसम</span></button>
-        <button onClick={() => setTab("crops")}>🌾<span>फसल</span></button>
-        <button onClick={() => setTab("store")}>🛒<span>Store</span></button>
-        <button onClick={() => setTab("profile")}>👤<span>Profile</span></button>
+      <nav>
+        <button onClick={() => setTab("home")}>🏠<small>Home</small></button>
+        <button onClick={() => setTab("crop")}>🌱<small>Meri Fasal</small></button>
+        <button onClick={() => setTab("doctor")}>📷<small>Crop Doctor</small></button>
+        <button onClick={() => setTab("store")}>🛒<small>Store</small></button>
       </nav>
 
     </div>
   );
 }
 
+function Card({
+  icon,
+  title,
+  onClick
+}: {
+  icon: string;
+  title: string;
+  onClick: () => void;
+}) {
+  return (
+    <button className="card" onClick={onClick}>
+      <span className="cardIcon">{icon}</span>
+      <div>
+        <b>{title}</b>
+        <small>देखें</small>
+      </div>
+      <span className="arrow">›</span>
+    </button>
+  );
+}
+
+function Weather({ setTab }: { setTab: (t: Tab) => void }) {
+  return (
+    <div className="app">
+
+      <header>
+        <div>
+          <b>🌾 KisanSaathi AI</b>
+          <small>Aapka Digital Kisan Dost</small>
+        </div>
+      </header>
+
+      <main>
+
+        <button className="back" onClick={() => setTab("home")}>
+          ← वापस
+        </button>
+
+        <section className="weatherPage">
+
+          <h1>🌤️ Mausam</h1>
+
+          <div className="bigWeather">
+            <div className="bigSun">☀️</div>
+            <h2>28°C</h2>
+            <b>Saaf Mausam</b>
+            <p>Aaj mausam kheti ke liye achha hai.</p>
+
+            <div className="weatherDetails">
+              <div>💧<b>65%</b><small>Nami</small></div>
+              <div>💨<b>12 km/h</b><small>Hawa</small></div>
+              <div>🌧️<b>20%</b><small>Baarish</small></div>
+            </div>
+          </div>
+
+          <div className="advice">
+            <b>🌾 Kheti ki salah</b>
+            <p>
+              Sinchai ya spray karne se pehle local weather
+              forecast zaroor check karein.
+            </p>
+          </div>
+
+        </section>
+
+      </main>
+
+      <nav>
+        <button onClick={() => setTab("home")}>🏠<small>Home</small></button>
+        <button onClick={() => setTab("crop")}>🌱<small>Meri Fasal</small></button>
+        <button onClick={() => setTab("doctor")}>📷<small>Crop Doctor</small></button>
+        <button onClick={() => setTab("store")}>🛒<small>Store</small></button>
+      </nav>
+
+    </div>
+  );
+}
+
+function SimplePage({
+  title,
+  setTab
+}: {
+  title: string;
+  setTab: (t: Tab) => void;
+}) {
+  return (
+    <div className="app">
+      <header>
+        <div>
+          <b>🌾 KisanSaathi AI</b>
+          <small>Aapka Digital Kisan Dost</small>
+        </div>
+      </header>
+
+      <main>
+        <button className="back" onClick={() => setTab("home")}>
+          ← वापस
+        </button>
+
+        <div className="simple">
+          <h1>{title}</h1>
+          <p>Ye section taiyar kiya ja raha hai.</p>
+        </div>
+      </main>
+
+      <nav>
+        <button onClick={() => setTab("home")}>🏠<small>Home</small></button>
+        <button onClick={() => setTab("crop")}>🌱<small>Meri Fasal</small></button>
+        <button onClick={() => setTab("doctor")}>📷<small>Crop Doctor</small></button>
+        <button onClick={() => setTab("store")}>🛒<small>Store</small></button>
+      </nav>
+    </div>
+  );
+}
+
+const style = document.createElement("style");
+
+style.textContent = `
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7f2;
+  color: #263329;
+}
+
+button {
+  font-family: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+header {
+  background: white;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 5px #ddd;
+}
+
+header b {
+  display: block;
+  font-size: 16px;
+}
+
+header small {
+  color: #777;
+  display: block;
+  margin-top: 5px;
+}
+
+.user {
+  background: #e9f4e7;
+  border-radius: 50%;
+  padding: 9px;
+}
+
+main {
+  max-width: 650px;
+  margin: auto;
+  padding: 16px;
+}
+
+.welcome {
+  background: linear-gradient(135deg,#e5f7df,#f5fbf1);
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.welcome h1 {
+  font-size: 21px;
+  margin: 0 0 8px;
+}
+
+.welcome p {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.weatherMini {
+  width: 100%;
+  border: 0;
+  background: white;
+  border-radius: 15px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  text-align: left;
+  align-items: center;
+}
+
+.weatherMini span {
+  font-size: 25px;
+}
+
+.weatherMini small {
+  display: block;
+  color: #777;
+  margin-top: 5px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.card {
+  border: 0;
+  background: white;
+  border-radius: 17px;
+  min-height: 70px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  box-shadow: 0 2px 8px #e4e7e2;
+}
+
+.cardIcon {
+  font-size: 25px;
+}
+
+.card b {
+  display: block;
+  font-size: 14px;
+}
+
+.card small {
+  display: block;
+  color: #777;
+  margin-top: 5px;
+}
+
+.arrow {
+  margin-left: auto;
+  font-size: 24px;
+}
+
+.advice {
+  background: white;
+  border-radius: 17px;
+  padding: 14px;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px #e4e7e2;
+}
+
+.advice b {
+  font-size: 14px;
+}
+
+.advice p {
+  margin: 7px 0 0;
+  font-size: 13px;
+}
+
+.aiButton {
+  position: fixed;
+  right: 18px;
+  bottom: 75px;
+  border: 0;
+  border-radius: 30px;
+  padding: 12px 17px;
+  background: #1f7a3a;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 4px 12px #bbb;
+}
+
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 9px 3px;
+  box-shadow: 0 -2px 10px #ddd;
+}
+
+nav button {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+}
+
+nav small {
+  display: block;
+  font-size: 10px;
+  margin-top: 3px;
+}
+
+.back {
+  border: 0;
+  background: white;
+  border-radius: 10px;
+  padding: 9px 14px;
+  margin-bottom: 15px;
+}
+
+.weatherPage h1 {
+  margin-top: 5px;
+}
+
+.bigWeather {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  text-align: center;
+  box-shadow: 0 2px 10px #ddd;
+}
+
+.bigSun {
+  font-size: 55px;
+}
+
+.bigWeather h2 {
+  font-size: 42px;
+  margin: 8px;
+}
+
+.weatherDetails {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.weatherDetails div {
+  background: #f4f7f2;
+  border-radius: 12px;
+  padding: 12px 5px;
+}
+
+.weatherDetails b,
+.weatherDetails small {
+  display: block;
+  margin-top: 5px;
+}
+
+.simple {
+  background: white;
+  border-radius: 20px;
+  padding: 25px;
+  text-align: center;
+}
+`;
+
+document.head.appendChild(style);
+
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );
