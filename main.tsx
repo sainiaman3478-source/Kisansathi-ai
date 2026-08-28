@@ -1,37 +1,1007 @@
-import React,{useEffect,useState} from "react"; import {createRoot} from "react-dom/client"; import {Home,Leaf,Camera,ShoppingCart,User,MessageCircle,CloudSun,IndianRupee,BookOpen,Landmark,Plus,Minus,Trash2,ArrowLeft} from "lucide-react"; import "./style.css";
+import React, { useState } from "react";
+import { createRoot } from "react-dom/client";
+import {
+  Home,
+  Leaf,
+  Camera,
+  MessageCircle,
+  CloudSun,
+  ShoppingCart,
+  Landmark,
+  IndianRupee,
+  Sprout,
+  ArrowLeft,
+  User,
+  Stethoscope,
+  Store as StoreIcon,
+  X
+} from "lucide-react";
 
-type Product={id:number,name:string,category:string,price:number,discountPrice?:number,stock:number,unit:string,image:string};
-type Farm={id:number,name:string,crop:string,area:number,unit:string,sowingDate:string,soil:string,irrigation:string};
-const api=async(path:string,opts?:RequestInit)=>{const r=await fetch("/api"+path,{headers:{"Content-Type":"application/json"},...opts}); if(!r.ok) throw new Error(await r.text()); return r.json()};
+type Tab =
+  | "home"
+  | "mandi"
+  | "crops"
+  | "doctor"
+  | "store"
+  | "profile"
+  | "cart"
+  | "chat";
 
-function App(){
- const [tab,setTab]=useState("home"); const [products,setProducts]=useState<Product[]>([]); const [cart,setCart]=useState<Record<number,number>>({}); const [farms,setFarms]=useState<Farm[]>([]); const [chat,setChat]=useState<{role:string,text:string}[]>([]); const [q,setQ]=useState(""); const [name]=useState("Kisan Bhai"); const [doctor,setDoctor]=useState<any>(null);
- useEffect(()=>{api("/products").then(setProducts);api("/farms").then(setFarms).catch(()=>{})},[]);
- const count=Object.values(cart).reduce((a,b)=>a+b,0);
- const total=Object.entries(cart).reduce((s,[id,n])=>{const p=products.find(x=>x.id===+id);return s+(p?(p.discountPrice||p.price)*n:0)},0);
- const ask=async()=>{if(!q.trim())return; const text=q;setQ("");setChat(c=>[...c,{role:"user",text}]);try{const x=await api("/chat",{method:"POST",body:JSON.stringify({message:text})});setChat(c=>[...c,{role:"ai",text:x.reply}])}catch{setChat(c=>[...c,{role:"ai",text:"AI service abhi configure nahi hai. Demo mode mein app chal raha hai."}])}};
- return <div className="app">
-  <header><div><div className="brand">🌾 KisanSaathi AI</div><small>Aapka Digital Kisan Dost</small></div><div className="avatar">👨‍🌾</div></header>
-  <main>
-   {tab==="home"&&<HomePage name={name} setTab={setTab}/>}
-   {tab==="crops"&&<Crops farms={farms} setFarms={setFarms}/>}
-   {tab==="doctor"&&<Doctor doctor={doctor} setDoctor={setDoctor}/>}
-   {tab==="store"&&<Store products={products} cart={cart} setCart={setCart}/>}
-   {tab==="profile"&&<Profile name={name} setTab={setTab}/>}
-   {tab==="cart"&&<Cart products={products} cart={cart} setCart={setCart} total={total}/>}
-   {tab==="chat"&&<Chat chat={chat} q={q} setQ={setQ} ask={ask}/>}
-  </main>
-  <button className="fab" onClick={()=>setTab("chat")}><MessageCircle size={25}/><span>AI Kisan</span></button>
-  <nav>{[[Home,"home","Home"],[Leaf,"crops","Meri Fasal"],[Camera,"doctor","Crop Doctor"],[ShoppingCart,"store",`Store${count?` (${count})`:``}`],[User,"profile","Profile"]].map(([I,k,t]:any)=><button className={tab===k?"active":""} onClick={()=>setTab(k)} key={k}><I size={22}/><span>{t}</span></button>)}</nav>
- </div>
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  unit: string;
+};
+
+type Mandi = {
+  crop: string;
+  mandi: string;
+  price: number;
+  unit: string;
+};
+
+const mandiData: Mandi[] = [
+  { crop: "गेहूं", mandi: "दिल्ली मंडी", price: 2450, unit: "क्विंटल" },
+  { crop: "गेहूं", mandi: "जयपुर मंडी", price: 2380, unit: "क्विंटल" },
+  { crop: "सरसों", mandi: "भरतपुर मंडी", price: 5650, unit: "क्विंटल" },
+  { crop: "सरसों", mandi: "अलवर मंडी", price: 5580, unit: "क्विंटल" },
+  { crop: "चना", mandi: "जयपुर मंडी", price: 6200, unit: "क्विंटल" },
+  { crop: "बाजरा", mandi: "हरियाणा मंडी", price: 2350, unit: "क्विंटल" },
+  { crop: "मक्का", mandi: "इंदौर मंडी", price: 2250, unit: "क्विंटल" },
+  { crop: "सोयाबीन", mandi: "इंदौर मंडी", price: 4650, unit: "क्विंटल" },
+  { crop: "कपास", mandi: "अकोला मंडी", price: 7200, unit: "क्विंटल" }
+];
+
+const products: Product[] = [
+  { id: 1, name: "नीम खली", price: 450, unit: "25 kg" },
+  { id: 2, name: "जैविक खाद", price: 350, unit: "25 kg" },
+  { id: 3, name: "सरसों बीज", price: 180, unit: "1 kg" },
+  { id: 4, name: "गेहूं बीज", price: 65, unit: "1 kg" }
+];
+
+function App() {
+  const [tab, setTab] = useState<Tab>("home");
+  const [name] = useState("किसान भाई");
+  const [cart, setCart] = useState<Record<number, number>>({});
+  const [chat, setChat] = useState<string[]>([]);
+  const [q, setQ] = useState("");
+
+  const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
+
+  const total = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const p = products.find(x => x.id === Number(id));
+    return sum + (p ? p.price * qty : 0);
+  }, 0);
+
+  const addToCart = (id: number) => {
+    setCart(c => ({
+      ...c,
+      [id]: (c[id] || 0) + 1
+    }));
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart(c => {
+      const copy = { ...c };
+      if (!copy[id]) return copy;
+
+      copy[id]--;
+
+      if (copy[id] <= 0) {
+        delete copy[id];
+      }
+
+      return copy;
+    });
+  };
+
+  const askAI = () => {
+    if (!q.trim()) return;
+
+    const question = q.trim();
+
+    setChat(c => [
+      ...c,
+      "आप: " + question,
+      "AI किसान: आपकी फसल के लिए सही सलाह देने के लिए मौसम, मिट्टी और फसल की स्थिति भी ध्यान में रखें।"
+    ]);
+
+    setQ("");
+  };
+
+  return (
+    <div className="app">
+      <style>{`
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+          font-family: Arial, sans-serif;
+          background: #f4f7f1;
+          color: #263126;
+        }
+
+        button {
+          font-family: inherit;
+        }
+
+        .app {
+          min-height: 100vh;
+          max-width: 700px;
+          margin: auto;
+          background: #f4f7f1;
+          padding-bottom: 80px;
+        }
+
+        header {
+          background: white;
+          padding: 15px 18px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          box-shadow: 0 1px 8px rgba(0,0,0,.08);
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+
+        .brand {
+          font-size: 19px;
+          font-weight: 700;
+          color: #28752e;
+        }
+
+        header small {
+          color: #777;
+        }
+
+        .profileIcon {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: #e8f5e9;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #28752e;
+        }
+
+        main {
+          padding: 14px;
+        }
+
+        .hero {
+          background: linear-gradient(135deg,#e7f8df,#f7fff4);
+          border-radius: 20px;
+          padding: 20px;
+          margin-bottom: 14px;
+        }
+
+        .hero h1 {
+          margin: 0 0 7px;
+          font-size: 23px;
+        }
+
+        .hero p {
+          margin: 0 0 15px;
+          color: #596359;
+        }
+
+        .weather {
+          background: white;
+          border-radius: 15px;
+          padding: 14px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .weather strong {
+          font-size: 20px;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .card {
+          border: 0;
+          background: white;
+          border-radius: 17px;
+          padding: 16px 13px;
+          min-height: 85px;
+          box-shadow: 0 2px 8px rgba(0,0,0,.07);
+          display: flex;
+          align-items: center;
+          gap: 11px;
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .card:hover {
+          transform: translateY(-1px);
+        }
+
+        .cardIcon {
+          font-size: 25px;
+          width: 35px;
+          text-align: center;
+        }
+
+        .cardTitle {
+          font-weight: 700;
+          font-size: 14px;
+        }
+
+        .cardSub {
+          font-size: 12px;
+          color: #777;
+          margin-top: 4px;
+        }
+
+        .advice {
+          background: white;
+          border-radius: 17px;
+          padding: 15px;
+          margin-top: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+
+        .pageTitle {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 15px;
+        }
+
+        .back {
+          border: 0;
+          background: white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+
+        .pageTitle h2 {
+          margin: 0;
+        }
+
+        .mandiCard {
+          background: white;
+          border-radius: 16px;
+          padding: 15px;
+          margin-bottom: 10px;
+          box-shadow: 0 2px 8px rgba(0,0,0,.06);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .mandiCrop {
+          font-size: 17px;
+          font-weight: 700;
+        }
+
+        .mandiName {
+          font-size: 12px;
+          color: #777;
+          margin-top: 5px;
+        }
+
+        .mandiPrice {
+          font-size: 18px;
+          font-weight: 700;
+          color: #28752e;
+          text-align: right;
+        }
+
+        .section {
+          background: white;
+          border-radius: 17px;
+          padding: 16px;
+          margin-bottom: 12px;
+        }
+
+        .product {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 13px 0;
+          border-bottom: 1px solid #eee;
+        }
+
+        .product:last-child {
+          border-bottom: 0;
+        }
+
+        .productName {
+          font-weight: 700;
+        }
+
+        .productUnit {
+          font-size: 12px;
+          color: #777;
+        }
+
+        .addBtn {
+          background: #2e7d32;
+          color: white;
+          border: 0;
+          padding: 9px 13px;
+          border-radius: 10px;
+          cursor: pointer;
+        }
+
+        .chatBox {
+          background: white;
+          border-radius: 17px;
+          padding: 15px;
+          min-height: 350px;
+        }
+
+        .message {
+          padding: 10px 12px;
+          background: #edf7ea;
+          border-radius: 12px;
+          margin-bottom: 8px;
+          font-size: 14px;
+        }
+
+        .inputRow {
+          display: flex;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .inputRow input {
+          flex: 1;
+          border: 1px solid #ddd;
+          border-radius: 12px;
+          padding: 13px;
+          font-size: 15px;
+        }
+
+        .sendBtn {
+          border: 0;
+          background: #2e7d32;
+          color: white;
+          border-radius: 12px;
+          padding: 0 17px;
+        }
+
+        .bottomNav {
+          position: fixed;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(700px,100%);
+          background: white;
+          display: grid;
+          grid-template-columns: repeat(4,1fr);
+          padding: 8px 4px;
+          box-shadow: 0 -2px 12px rgba(0,0,0,.1);
+          z-index: 20;
+        }
+
+        .navBtn {
+          border: 0;
+          background: transparent;
+          color: #777;
+          font-size: 11px;
+          padding: 5px;
+          cursor: pointer;
+        }
+
+        .navBtn.active {
+          color: #28752e;
+          font-weight: 700;
+        }
+
+        .fab {
+          position: fixed;
+          right: 20px;
+          bottom: 75px;
+          width: 55px;
+          height: 55px;
+          border-radius: 50%;
+          border: 0;
+          background: #2e7d32;
+          color: white;
+          box-shadow: 0 4px 12px rgba(0,0,0,.25);
+          cursor: pointer;
+          z-index: 15;
+        }
+
+        .cartTotal {
+          font-size: 20px;
+          font-weight: 700;
+          color: #28752e;
+          margin-top: 15px;
+        }
+
+        .empty {
+          text-align: center;
+          padding: 45px 15px;
+          color: #777;
+        }
+
+        @media(max-width:420px) {
+          .grid {
+            gap: 8px;
+          }
+
+          .card {
+            padding: 13px 9px;
+          }
+
+          .cardTitle {
+            font-size: 13px;
+          }
+        }
+      `}</style>
+
+      <header>
+        <div>
+          <div className="brand">🌾 KisanSaathi AI</div>
+          <small>Aapka Digital Kisan Dost</small>
+        </div>
+
+        <div className="profileIcon">
+          <User size={22} />
+        </div>
+      </header>
+
+      <main>
+
+        {tab === "home" && (
+          <HomePage setTab={setTab} name={name} />
+        )}
+
+        {tab === "mandi" && (
+          <MandiPage setTab={setTab} />
+        )}
+
+        {tab === "crops" && (
+          <CropsPage setTab={setTab} />
+        )}
+
+        {tab === "doctor" && (
+          <DoctorPage setTab={setTab} />
+        )}
+
+        {tab === "store" && (
+          <StorePage
+            setTab={setTab}
+            products={products}
+            cart={cart}
+            addToCart={addToCart}
+          />
+        )}
+
+        {tab === "cart" && (
+          <CartPage
+            setTab={setTab}
+            products={products}
+            cart={cart}
+            addToCart={addToCart}
+            removeFromCart={removeFromCart}
+            total={total}
+          />
+        )}
+
+        {tab === "chat" && (
+          <ChatPage
+            setTab={setTab}
+            chat={chat}
+            q={q}
+            setQ={setQ}
+            askAI={askAI}
+          />
+        )}
+
+        {tab === "profile" && (
+          <ProfilePage setTab={setTab} name={name} />
+        )}
+
+      </main>
+
+      <button className="fab" onClick={() => setTab("chat")}>
+        <MessageCircle size={25} />
+      </button>
+
+      <nav className="bottomNav">
+
+        <button
+          className={"navBtn " + (tab === "home" ? "active" : "")}
+          onClick={() => setTab("home")}
+        >
+          <Home size={20} />
+          <div>Home</div>
+        </button>
+
+        <button
+          className={"navBtn " + (tab === "crops" ? "active" : "")}
+          onClick={() => setTab("crops")}
+        >
+          <Leaf size={20} />
+          <div>मेरी फसल</div>
+        </button>
+
+        <button
+          className={"navBtn " + (tab === "store" ? "active" : "")}
+          onClick={() => setTab("store")}
+        >
+          <ShoppingCart size={20} />
+          <div>Store {cartCount > 0 ? `(${cartCount})` : ""}</div>
+        </button>
+
+        <button
+          className={"navBtn " + (tab === "profile" ? "active" : "")}
+          onClick={() => setTab("profile")}
+        >
+          <User size={20} />
+          <div>Profile</div>
+        </button>
+
+      </nav>
+    </div>
+  );
 }
-function HomePage({name,setTab}:any){return <><section className="hero"><h1>Namaste {name} 👋</h1><p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p><div className="weather"><CloudSun/><div><b>28°C · साफ़ मौसम</b><small>🌧️ बारिश की संभावना: 20% · Demo Data</small></div></div></section><div className="grid">
- {[[Camera,"📸","Fasal Check Karein","doctor"],[MessageCircle,"🤖","AI Kisan","chat"],[CloudSun,"🌦️","Mausam","home"],[IndianRupee,"💰","Mandi Bhav","home"],[Leaf,"🌱","Meri Fasal","crops"],[ShoppingCart,"🛒","Kisan Store","store"],[Landmark,"🏛️","Sarkari Yojana","schemes"]].map(([I,e,t,k]:any)=><button className="action" onClick={()=>setTab(k)} key={t}><span>{e}</span><div><b>{t}</b><small>देखें</small></div><I size={20}/></button>)}</div><section className="card"><b>⚠️ खेती की सलाह</b><p>कल बारिश की संभावना है। सिंचाई का निर्णय लेने से पहले स्थानीय forecast चेक करें।</p></section></>}
-function Doctor({doctor,setDoctor}:any){const [crop,setCrop]=useState("गेहूं"); const [file,setFile]=useState<File|null>(null); const analyze=async()=>{const r=await api("/crop/analyze",{method:"POST",body:JSON.stringify({cropType:crop})});setDoctor(r)};return <><Title title="📸 Crop Doctor"/><div className="card"><label>फसल चुनें</label><select value={crop} onChange={e=>setCrop(e.target.value)}><option>गेहूं</option><option>धान</option><option>टमाटर</option><option>आलू</option><option>कपास</option></select><label className="upload">📷 फोटो चुनें<input type="file" accept="image/*" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>{file&&<p>✓ {file.name}</p>}<button className="primary" onClick={analyze}>फसल का विश्लेषण करें</button></div>{doctor&&<div className="card"><div className="warning">AI-based preliminary assessment<br/><b>Demo Data — not a real diagnosis.</b></div><h2>{doctor.crop}</h2><p><b>संभावित समस्या:</b> {doctor.issue}</p><p><b>Confidence:</b> {doctor.confidence}</p><p><b>लक्षण:</b> {doctor.symptoms}</p><p><b>संभावित कारण:</b> {doctor.causes}</p><p><b>अगला कदम:</b> {doctor.nextSteps}</p><p><b>रोकथाम:</b> {doctor.prevention}</p><button className="secondary">📖 Khet Diary में सेव करें</button></div>}</>}
-function Store({products,cart,setCart}:any){return <><Title title="🛒 KisanSaathi Store"/><div className="notice">🌾 Kheti ki zaroori cheezein ek jagah</div><input className="search" placeholder="🔎 उत्पाद खोजें..."/><div className="chips"><span>🌱 Seeds</span><span>🌾 Fertilizers</span><span>🧰 Tools</span><span>💧 Irrigation</span></div><div className="products">{products.map((p:Product)=><div className="product" key={p.id}><div className="pimg">{p.image}</div><small>{p.category}</small><b>{p.name}</b><div className="price">₹{p.discountPrice||p.price} <del>{p.discountPrice?`₹${p.price}`:""}</del></div><small>{p.stock>0?"✓ उपलब्ध":"Out of stock"} · {p.unit}</small><button disabled={!p.stock} className="primary" onClick={()=>setCart((c:any)=>({...c,[p.id]:(c[p.id]||0)+1}))}>+ Cart</button></div>)}</div></>}
-function Cart({products,cart,setCart,total}:any){const [placed,setPlaced]=useState(false);const checkout=async()=>{const items=Object.entries(cart).map(([productId,quantity])=>({productId:+productId,quantity}));try{await api("/orders",{method:"POST",body:JSON.stringify({items,paymentMethod:"COD",customer:{name:"Kisan Bhai",mobile:"",address:"",village:"",district:"",state:"",pin:""}})});setPlaced(true);setCart({})}catch(e:any){alert("Order place nahi hua: "+e.message)}};return <><Title title="🛒 Cart"/>{placed?<div className="card success"><h2>🎉 Order Placed</h2><p>Cash on Delivery order demo backend mein save ho gaya.</p></div>:<><div>{Object.entries(cart).map(([id,n]:any)=>{const p=products.find((x:Product)=>x.id===+id);return p?<div className="cartrow"><span>{p.image} {p.name}</span><b>×{n}</b><button onClick={()=>setCart((c:any)=>({...c,[id]:Math.max(0,c[id]-1)}))}><Minus size={16}/></button></div>:null})}</div><div className="card totals"><p>Subtotal <b>₹{total}</b></p><p>Delivery <b>₹0</b></p><h2>Total <b>₹{total}</b></h2><button className="primary" disabled={!total} onClick={checkout}>COD से Order करें</button></div></>}</>}
-function Crops({farms,setFarms}:any){const [open,setOpen]=useState(false);const [f,setF]=useState({name:"मेरा खेत",crop:"गेहूं",area:1,unit:"एकड़",sowingDate:"",soil:"दोमट",irrigation:"नहर"});const save=async()=>{const x=await api("/farms",{method:"POST",body:JSON.stringify(f)});setFarms([...farms,x]);setOpen(false)};return <><Title title="🌱 Meri Fasal"/><button className="primary" onClick={()=>setOpen(!open)}>+ नया खेत जोड़ें</button>{open&&<div className="card">{Object.keys(f).map(k=><input key={k} placeholder={k} value={(f as any)[k]} onChange={e=>setF({...f,[k]:e.target.value})}/>)}<button className="primary" onClick={save}>सेव करें</button></div>}{farms.map((x:any)=><div className="card"><h2>🌾 {x.name}</h2><p>{x.crop} · {x.area} {x.unit}</p><p>मिट्टी: {x.soil} · सिंचाई: {x.irrigation}</p><span className="tag">स्वस्थ · Demo</span></div>)}</>}
-function Chat({chat,q,setQ,ask}:any){return <><Title title="🤖 AI Kisan"/><div className="chat">{chat.length===0&&<div className="ai">नमस्ते! मैं KisanSaathi AI हूँ। खेती से जुड़ा सवाल पूछिए।<br/><small>Demo mode — AI API configure नहीं है तो मैं वास्तविक AI होने का दावा नहीं करूँगा।</small></div>}{chat.map((m:any)=><div className={m.role==="user"?"user":"ai"}>{m.text}</div>)}</div><div className="composer"><input value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==="Enter"&&ask()} placeholder="जैसे: गेहूं की पत्तियां पीली हैं..."/><button onClick={ask}>➤</button></div></>}
-function Profile({name,setTab}:any){return <><Title title="👤 Profile"/><div className="profile card"><div className="bigavatar">👨‍🌾</div><h2>{name}</h2><p>📍 उत्तराखंड · Hindi</p></div><div className="card"><button onClick={()=>setTab("crops")}>🌱 मेरे खेत</button><button onClick={()=>setTab("cart")}>🛒 मेरे Orders / Cart</button><button>📖 Khet Diary</button><button>🏛️ Sarkari Yojana</button></div></>}
-function Title({title}:any){return <div className="title"><h1>{title}</h1><small>सरल भाषा · किसान के लिए</small></div>}
-createRoot(document.getElementById("root")!).render(<App/>);
+
+function HomePage({
+  setTab,
+  name
+}: {
+  setTab: (t: Tab) => void;
+  name: string;
+}) {
+  return (
+    <>
+      <section className="hero">
+        <h1>Namaste {name} 👋</h1>
+        <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
+
+        <div className="weather">
+          <CloudSun size={30} />
+          <div>
+            <strong>28°C · साफ मौसम</strong>
+            <div style={{ color: "#777", fontSize: 12 }}>
+              बारिश की संभावना: 20% · Demo Data
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid">
+
+        <button className="card" onClick={() => setTab("doctor")}>
+          <div className="cardIcon">📸</div>
+          <div>
+            <div className="cardTitle">Fasal Check Karein</div>
+            <div className="cardSub">देखें</div>
+          </div>
+          <Camera size={19} />
+        </button>
+
+        <button className="card" onClick={() => setTab("chat")}>
+          <div className="cardIcon">🤖</div>
+          <div>
+            <div className="cardTitle">AI Kisan</div>
+            <div className="cardSub">देखें</div>
+          </div>
+          <MessageCircle size={19} />
+        </button>
+
+        <button className="card" onClick={() => setTab("home")}>
+          <div className="cardIcon">🌦️</div>
+          <div>
+            <div className="cardTitle">Mausam</div>
+            <div className="cardSub">देखें</div>
+          </div>
+          <CloudSun size={19} />
+        </button>
+
+        {/* IMPORTANT: MANDI BHAV BUTTON */}
+        <button className="card" onClick={() => setTab("mandi")}>
+          <div className="cardIcon">💰</div>
+          <div>
+            <div className="cardTitle">Mandi Bhav</div>
+            <div className="cardSub">आज के भाव देखें</div>
+          </div>
+          <IndianRupee size={19} />
+        </button>
+
+        <button className="card" onClick={() => setTab("crops")}>
+          <div className="cardIcon">🌱</div>
+          <div>
+            <div className="cardTitle">Meri Fasal</div>
+            <div className="cardSub">देखें</div>
+          </div>
+          <Leaf size={19} />
+        </button>
+
+        <button className="card" onClick={() => setTab("store")}>
+          <div className="cardIcon">🛒</div>
+          <div>
+            <div className="cardTitle">Kisan Store</div>
+            <div className="cardSub">देखें</div>
+          </div>
+          <ShoppingCart size={19} />
+        </button>
+
+        <button className="card" onClick={() => setTab("profile")}>
+          <div className="cardIcon">🏛️</div>
+          <div>
+            <div className="cardTitle">Sarkari Yojana</div>
+            <div className="cardSub">देखें</div>
+          </div>
+          <Landmark size={19} />
+        </button>
+
+      </div>
+
+      <div className="advice">
+        ⚠️ <b>खेती की सलाह</b>
+        <br />
+        <span style={{ fontSize: 13 }}>
+          कल बारिश की संभावना है। सिंचाई का निर्णय लेने से पहले स्थानीय forecast
+          चेक करें।
+        </span>
+      </div>
+    </>
+  );
+}
+
+function MandiPage({ setTab }: { setTab: (t: Tab) => void }) {
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("home")}>
+          <ArrowLeft size={21} />
+        </button>
+        <div>
+          <h2>💰 Mandi Bhav</h2>
+          <small style={{ color: "#777" }}>आज के Demo मंडी भाव</small>
+        </div>
+      </div>
+
+      <div className="section">
+        <b>📍 फसल के आज के भाव</b>
+        <p style={{ color: "#777", fontSize: 12 }}>
+          भाव Demo Data हैं। वास्तविक भाव स्थानीय मंडी से verify करें।
+        </p>
+      </div>
+
+      {mandiData.map((item, index) => (
+        <div className="mandiCard" key={index}>
+          <div>
+            <div className="mandiCrop">
+              🌾 {item.crop}
+            </div>
+            <div className="mandiName">
+              {item.mandi}
+            </div>
+          </div>
+
+          <div className="mandiPrice">
+            ₹{item.price.toLocaleString("en-IN")}
+            <div style={{ fontSize: 11, color: "#777" }}>
+              / {item.unit}
+            </div>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("home")}>
+          <ArrowLeft size={21} />
+        </button>
+        <h2>🌱 मेरी फसल</h2>
+      </div>
+
+      <div className="section">
+        <h3>गेहूं</h3>
+        <p>फसल स्थिति: अच्छी</p>
+        <p>💧 सिंचाई: आवश्यकता अनुसार</p>
+        <p>🌤️ मौसम: साफ</p>
+      </div>
+
+      <div className="section">
+        <h3>सरसों</h3>
+        <p>फसल स्थिति: सामान्य</p>
+        <p>🌱 पौधों की नियमित जांच करें।</p>
+      </div>
+
+      <div className="section">
+        <Sprout size={35} />
+        <h3>नई फसल जोड़ें</h3>
+        <p style={{ color: "#777" }}>
+          अपनी फसल की जानकारी यहां से manage कर सकते हैं।
+        </p>
+      </div>
+    </>
+  );
+}
+
+function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("home")}>
+          <ArrowLeft size={21} />
+        </button>
+        <h2>👨‍🌾 Crop Doctor</h2>
+      </div>
+
+      <div className="section" style={{ textAlign: "center" }}>
+        <Camera size={55} />
+        <h3>फसल की फोटो जांचें</h3>
+        <p style={{ color: "#777" }}>
+          पत्तियों या फसल की साफ फोटो लेकर समस्या की पहचान में मदद लें।
+        </p>
+
+        <button className="addBtn">
+          📷 फोटो चुनें
+        </button>
+      </div>
+
+      <div className="section">
+        <Stethoscope size={30} />
+        <h3>सामान्य सलाह</h3>
+        <p>
+          पत्तियों पर दाग, कीड़े या रंग में बदलाव दिखे तो साफ फोटो लेकर जांच
+          करें।
+        </p>
+      </div>
+    </>
+  );
+}
+
+function StorePage({
+  setTab,
+  products,
+  addToCart
+}: {
+  setTab: (t: Tab) => void;
+  products: Product[];
+  cart: Record<number, number>;
+  addToCart: (id: number) => void;
+}) {
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("home")}>
+          <ArrowLeft size={21} />
+        </button>
+        <h2>🛒 Kisan Store</h2>
+      </div>
+
+      <div className="section">
+        {products.map(p => (
+          <div className="product" key={p.id}>
+            <div>
+              <div className="productName">{p.name}</div>
+              <div className="productUnit">
+                ₹{p.price} · {p.unit}
+              </div>
+            </div>
+
+            <button
+              className="addBtn"
+              onClick={() => addToCart(p.id)}
+            >
+              + जोड़ें
+            </button>
+          </div>
+        ))}
+
+        <button
+          className="addBtn"
+          style={{ width: "100%", marginTop: 15 }}
+          onClick={() => setTab("cart")}
+        >
+          🛒 Cart देखें
+        </button>
+      </div>
+    </>
+  );
+}
+
+function CartPage({
+  setTab,
+  products,
+  cart,
+  addToCart,
+  removeFromCart,
+  total
+}: {
+  setTab: (t: Tab) => void;
+  products: Product[];
+  cart: Record<number, number>;
+  addToCart: (id: number) => void;
+  removeFromCart: (id: number) => void;
+  total: number;
+}) {
+  const ids = Object.keys(cart).map(Number);
+
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("store")}>
+          <ArrowLeft size={21} />
+        </button>
+        <h2>🛒 आपका Cart</h2>
+      </div>
+
+      {ids.length === 0 ? (
+        <div className="section empty">
+          <ShoppingCart size={50} />
+          <h3>Cart खाली है</h3>
+          <button className="addBtn" onClick={() => setTab("store")}>
+            Store देखें
+          </button>
+        </div>
+      ) : (
+        <div className="section">
+          {ids.map(id => {
+            const p = products.find(x => x.id === id);
+            if (!p) return null;
+
+            return (
+              <div className="product" key={id}>
+                <div>
+                  <div className="productName">{p.name}</div>
+                  <div className="productUnit">
+                    ₹{p.price} × {cart[id]}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    className="addBtn"
+                    onClick={() => removeFromCart(id)}
+                  >
+                    −
+                  </button>
+
+                  <button
+                    className="addBtn"
+                    onClick={() => addToCart(id)}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="cartTotal">
+            Total: ₹{total.toLocaleString("en-IN")}
+          </div>
+
+          <button
+            className="addBtn"
+            style={{ width: "100%", marginTop: 15 }}
+            onClick={() => alert("Order placed successfully!")}
+          >
+            ✅ Order करें
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ChatPage({
+  setTab,
+  chat,
+  q,
+  setQ,
+  askAI
+}: {
+  setTab: (t: Tab) => void;
+  chat: string[];
+  q: string;
+  setQ: (v: string) => void;
+  askAI: () => void;
+}) {
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("home")}>
+          <ArrowLeft size={21} />
+        </button>
+        <h2>🤖 AI Kisan</h2>
+      </div>
+
+      <div className="chatBox">
+        {chat.length === 0 ? (
+          <div className="empty">
+            <MessageCircle size={50} />
+            <h3>Namaste Kisan Bhai 👋</h3>
+            <p>
+              खेती, फसल, मौसम या सामान्य कृषि सवाल पूछें।
+            </p>
+          </div>
+        ) : (
+          chat.map((m, i) => (
+            <div className="message" key={i}>
+              {m}
+            </div>
+          ))
+        )}
+
+        <div className="inputRow">
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="अपना सवाल लिखें..."
+            onKeyDown={e => {
+              if (e.key === "Enter") askAI();
+            }}
+          />
+
+          <button className="sendBtn" onClick={askAI}>
+            भेजें
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ProfilePage({
+  setTab,
+  name
+}: {
+  setTab: (t: Tab) => void;
+  name: string;
+}) {
+  return (
+    <>
+      <div className="pageTitle">
+        <button className="back" onClick={() => setTab("home")}>
+          <ArrowLeft size={21} />
+        </button>
+        <h2>👤 Profile</h2>
+      </div>
+
+      <div className="section" style={{ textAlign: "center" }}>
+        <div className="profileIcon" style={{ margin: "auto" }}>
+          <User size={25} />
+        </div>
+
+        <h2>{name}</h2>
+        <p style={{ color: "#777" }}>
+          KisanSaathi AI उपयोगकर्ता
+        </p>
+      </div>
+
+      <div className="section">
+        <h3>🏛️ सरकारी योजना</h3>
+        <p>PM-KISAN</p>
+        <p>फसल बीमा योजना</p>
+        <p>किसान क्रेडिट कार्ड</p>
+      </div>
+    </>
+  );
+}
+
+createRoot(document.getElementById("root")!).render(
+  <App />
+);
