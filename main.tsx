@@ -942,7 +942,14 @@ function WeatherPage({
           </div>
 
           <div className="forecastCard">
-            <b>परसों</b>
-          <div style={{ fontSize: 28, margin: 8 }}>
+  <b>परसों</b>
+  <div style={{ fontSize: 28, margin: 8 }}>
+    ☁️
+  </div>
+  <b>26°C</b>
+  <div style={{ fontSize: 11, color: "#777" }}>
+    बारिश 40%
+  </div>
+</div>
               ☁️
            
