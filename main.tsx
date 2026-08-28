@@ -517,3 +517,238 @@ function Info({icon,title,value}:any){
 }
 
 createRoot(document.getElementById("root")!).render(<App/>);
+function WeatherPage({setTab}:any){
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState("");
+  const [weather,setWeather] = useState<any>(null);
+  const [location,setLocation] = useState("आपकी लोकेशन");
+
+  const getWeather = () => {
+    setLoading(true);
+    setError("");
+
+    if(!navigator.geolocation){
+      setError("आपके फोन में Location सुविधा उपलब्ध नहीं है।");
+      setLoading(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos)=>{
+        try{
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          const url =
+            `https://api.open-meteo.com/v1/forecast` +
+            `?latitude=${lat}` +
+            `&longitude=${lon}` +
+            `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
+            `&hourly=precipitation_probability` +
+            `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
+            `&timezone=auto` +
+            `&forecast_days=3`;
+
+          const res = await fetch(url);
+
+          if(!res.ok){
+            throw new Error("Weather data नहीं मिला");
+          }
+
+          const data = await res.json();
+
+          setWeather(data);
+
+          setLocation(
+            `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`
+          );
+
+        }catch(e){
+          setError("मौसम की जानकारी नहीं मिल पाई। फिर से कोशिश करें।");
+        }
+
+        setLoading(false);
+      },
+      ()=>{
+        setError(
+          "Location की अनुमति दें, तभी आपके इलाके का मौसम दिखेगा।"
+        );
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy:true,
+        timeout:10000
+      }
+    );
+  };
+
+  const weatherText = (code:number) => {
+    if(code===0) return "साफ आसमान";
+    if(code<=3) return "आंशिक बादल";
+    if(code<=48) return "कोहरा";
+    if(code<=57) return "बूंदाबांदी";
+    if(code<=67) return "बारिश";
+    if(code<=77) return "बर्फ";
+    if(code<=82) return "तेज बारिश";
+    if(code<=86) return "बारिश / बर्फ";
+    return "गरज के साथ बारिश";
+  };
+
+  const weatherEmoji = (code:number) => {
+    if(code===0) return "☀️";
+    if(code<=3) return "🌤️";
+    if(code<=48) return "🌫️";
+    if(code<=67) return "🌧️";
+    if(code<=77) return "❄️";
+    return "⛈️";
+  };
+
+  return <Page title="मौसम" setTab={setTab}>
+
+    {!weather && !loading && (
+      <div className="weatherStart">
+        <div className="weatherStartIcon">🌦️</div>
+
+        <h2>अपने इलाके का मौसम देखें</h2>
+
+        <p>
+          Location की अनुमति देकर अपने आसपास का
+          live मौसम और अगले दिनों का forecast देखें।
+        </p>
+
+        <button
+          className="primary"
+          onClick={getWeather}
+        >
+          📍 मेरा मौसम देखें
+        </button>
+      </div>
+    )}
+
+    {loading && (
+      <div className="weatherStart">
+        <div className="weatherStartIcon">⏳</div>
+        <h2>मौसम पता कर रहे हैं...</h2>
+        <p>कृपया थोड़ी देर रुकें।</p>
+      </div>
+    )}
+
+    {error && (
+      <div className="sectionCard errorBox">
+        <b>⚠️ {error}</b>
+
+        <button
+          className="primary"
+          onClick={getWeather}
+        >
+          🔄 फिर कोशिश करें
+        </button>
+      </div>
+    )}
+
+    {weather && (
+      <>
+        <div className="locationText">
+          <MapPin size={17}/>
+          <span>{location}</span>
+
+          <button onClick={getWeather}>
+            ↻
+          </button>
+        </div>
+
+        <div className="weatherBig">
+
+          <div className="weatherEmoji">
+            {weatherEmoji(weather.current.weather_code)}
+          </div>
+
+          <div>
+            <span>अभी का मौसम</span>
+
+            <strong>
+              {Math.round(weather.current.temperature_2m)}°C
+            </strong>
+
+            <b>
+              {weatherText(weather.current.weather_code)}
+            </b>
+          </div>
+
+        </div>
+
+        <div className="infoGrid">
+
+          <Info
+            icon={<Droplets/>}
+            title="नमी"
+            value={`${weather.current.relative_humidity_2m}%`}
+          />
+
+          <Info
+            icon={<CloudSun/>}
+            title="बारिश की संभावना"
+            value={`${weather.daily.precipitation_probability_max[0]}%`}
+          />
+
+          <Info
+            icon={<Sprout/>}
+            title="हवा"
+            value={`${Math.round(weather.current.wind_speed_10m)} km/h`}
+          />
+
+          <Info
+            icon={<CalendarDays/>}
+            title="महसूस होगा"
+            value={`${Math.round(weather.current.apparent_temperature)}°C`}
+          />
+
+        </div>
+
+        <div className="sectionCard">
+
+          <h3>📅 अगले 3 दिन</h3>
+
+          {weather.daily.time.map((day:string,i:number)=>(
+            <div className="forecastRow" key={day}>
+
+              <div>
+                <b>
+                  {i===0 ? "आज" :
+                   i===1 ? "कल" : "परसों"}
+                </b>
+
+                <small>
+                  {weatherText(weather.daily.weather_code[i])}
+                </small>
+              </div>
+
+              <span>
+                {weatherEmoji(weather.daily.weather_code[i])}
+              </span>
+
+              <strong>
+                {Math.round(weather.daily.temperature_2m_max[i])}° /
+                {Math.round(weather.daily.temperature_2m_min[i])}°
+              </strong>
+
+            </div>
+          ))}
+
+        </div>
+
+        <div className="sectionCard">
+          <h3>🌾 किसान के लिए सलाह</h3>
+
+          <p>
+            आज का तापमान{" "}
+            {Math.round(weather.current.temperature_2m)}°C है।
+            खेत में काम या सिंचाई करने से पहले बारिश की
+            संभावना जरूर देखें।
+          </p>
+        </div>
+      </>
+    )}
+
+  </Page>;
+}
