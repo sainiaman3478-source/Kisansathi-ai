@@ -13,13 +13,14 @@ import {
   ArrowLeft,
   User,
   Stethoscope,
-  Store as StoreIcon,
+  Sun,
   X
 } from "lucide-react";
 
 type Tab =
   | "home"
   | "mandi"
+  | "weather"
   | "crops"
   | "doctor"
   | "store"
@@ -84,6 +85,7 @@ function App() {
   const removeFromCart = (id: number) => {
     setCart(c => {
       const copy = { ...c };
+
       if (!copy[id]) return copy;
 
       copy[id]--;
@@ -104,7 +106,7 @@ function App() {
     setChat(c => [
       ...c,
       "आप: " + question,
-      "AI किसान: आपकी फसल के लिए सही सलाह देने के लिए मौसम, मिट्टी और फसल की स्थिति भी ध्यान में रखें।"
+      "AI किसान: आपकी फसल के लिए मौसम, मिट्टी और फसल की स्थिति को ध्यान में रखकर सलाह लेना बेहतर रहेगा।"
     ]);
 
     setQ("");
@@ -112,6 +114,7 @@ function App() {
 
   return (
     <div className="app">
+
       <style>{`
         * {
           box-sizing: border-box;
@@ -223,8 +226,8 @@ function App() {
           cursor: pointer;
         }
 
-        .card:hover {
-          transform: translateY(-1px);
+        .card:active {
+          transform: scale(.98);
         }
 
         .cardIcon {
@@ -275,6 +278,14 @@ function App() {
           margin: 0;
         }
 
+        .section {
+          background: white;
+          border-radius: 17px;
+          padding: 16px;
+          margin-bottom: 12px;
+          box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+
         .mandiCard {
           background: white;
           border-radius: 16px;
@@ -304,13 +315,6 @@ function App() {
           text-align: right;
         }
 
-        .section {
-          background: white;
-          border-radius: 17px;
-          padding: 16px;
-          margin-bottom: 12px;
-        }
-
         .product {
           display: flex;
           align-items: center;
@@ -330,6 +334,7 @@ function App() {
         .productUnit {
           font-size: 12px;
           color: #777;
+          margin-top: 4px;
         }
 
         .addBtn {
@@ -368,6 +373,7 @@ function App() {
           border-radius: 12px;
           padding: 13px;
           font-size: 15px;
+          min-width: 0;
         }
 
         .sendBtn {
@@ -376,6 +382,34 @@ function App() {
           color: white;
           border-radius: 12px;
           padding: 0 17px;
+        }
+
+        .weatherBig {
+          background: linear-gradient(135deg,#e8f7ff,#ffffff);
+          border-radius: 20px;
+          padding: 25px;
+          text-align: center;
+          margin-bottom: 12px;
+        }
+
+        .temperature {
+          font-size: 52px;
+          font-weight: 700;
+          margin: 10px 0;
+          color: #28752e;
+        }
+
+        .forecast {
+          display: grid;
+          grid-template-columns: repeat(3,1fr);
+          gap: 9px;
+        }
+
+        .forecastCard {
+          background: white;
+          border-radius: 15px;
+          padding: 14px 8px;
+          text-align: center;
         }
 
         .bottomNav {
@@ -434,6 +468,13 @@ function App() {
           color: #777;
         }
 
+        .closeBtn {
+          float: right;
+          border: 0;
+          background: transparent;
+          cursor: pointer;
+        }
+
         @media(max-width:420px) {
           .grid {
             gap: 8px;
@@ -470,6 +511,10 @@ function App() {
           <MandiPage setTab={setTab} />
         )}
 
+        {tab === "weather" && (
+          <WeatherPage setTab={setTab} />
+        )}
+
         {tab === "crops" && (
           <CropsPage setTab={setTab} />
         )}
@@ -482,7 +527,6 @@ function App() {
           <StorePage
             setTab={setTab}
             products={products}
-            cart={cart}
             addToCart={addToCart}
           />
         )}
@@ -541,7 +585,9 @@ function App() {
           onClick={() => setTab("store")}
         >
           <ShoppingCart size={20} />
-          <div>Store {cartCount > 0 ? `(${cartCount})` : ""}</div>
+          <div>
+            Store {cartCount > 0 ? `(${cartCount})` : ""}
+          </div>
         </button>
 
         <button
@@ -553,6 +599,7 @@ function App() {
         </button>
 
       </nav>
+
     </div>
   );
 }
@@ -568,82 +615,165 @@ function HomePage({
     <>
       <section className="hero">
         <h1>Namaste {name} 👋</h1>
-        <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
 
-        <div className="weather">
+        <p>
+          आज खेती में आपकी मदद के लिए तैयार हूँ।
+        </p>
+
+        <button
+          className="weather"
+          onClick={() => setTab("weather")}
+          style={{
+            width: "100%",
+            border: 0,
+            cursor: "pointer",
+            textAlign: "left"
+          }}
+        >
           <CloudSun size={30} />
+
           <div>
             <strong>28°C · साफ मौसम</strong>
+
             <div style={{ color: "#777", fontSize: 12 }}>
               बारिश की संभावना: 20% · Demo Data
             </div>
           </div>
-        </div>
+        </button>
       </section>
 
       <div className="grid">
 
-        <button className="card" onClick={() => setTab("doctor")}>
+        <button
+          className="card"
+          onClick={() => setTab("doctor")}
+        >
           <div className="cardIcon">📸</div>
+
           <div>
-            <div className="cardTitle">Fasal Check Karein</div>
-            <div className="cardSub">देखें</div>
+            <div className="cardTitle">
+              Fasal Check Karein
+            </div>
+
+            <div className="cardSub">
+              देखें
+            </div>
           </div>
+
           <Camera size={19} />
         </button>
 
-        <button className="card" onClick={() => setTab("chat")}>
+        <button
+          className="card"
+          onClick={() => setTab("chat")}
+        >
           <div className="cardIcon">🤖</div>
+
           <div>
-            <div className="cardTitle">AI Kisan</div>
-            <div className="cardSub">देखें</div>
+            <div className="cardTitle">
+              AI Kisan
+            </div>
+
+            <div className="cardSub">
+              देखें
+            </div>
           </div>
+
           <MessageCircle size={19} />
         </button>
 
-        <button className="card" onClick={() => setTab("home")}>
+        <button
+          className="card"
+          onClick={() => setTab("weather")}
+        >
           <div className="cardIcon">🌦️</div>
+
           <div>
-            <div className="cardTitle">Mausam</div>
-            <div className="cardSub">देखें</div>
+            <div className="cardTitle">
+              Mausam
+            </div>
+
+            <div className="cardSub">
+              मौसम देखें
+            </div>
           </div>
+
           <CloudSun size={19} />
         </button>
 
-        {/* IMPORTANT: MANDI BHAV BUTTON */}
-        <button className="card" onClick={() => setTab("mandi")}>
+        <button
+          className="card"
+          onClick={() => setTab("mandi")}
+        >
           <div className="cardIcon">💰</div>
+
           <div>
-            <div className="cardTitle">Mandi Bhav</div>
-            <div className="cardSub">आज के भाव देखें</div>
+            <div className="cardTitle">
+              Mandi Bhav
+            </div>
+
+            <div className="cardSub">
+              आज के भाव देखें
+            </div>
           </div>
+
           <IndianRupee size={19} />
         </button>
 
-        <button className="card" onClick={() => setTab("crops")}>
+        <button
+          className="card"
+          onClick={() => setTab("crops")}
+        >
           <div className="cardIcon">🌱</div>
+
           <div>
-            <div className="cardTitle">Meri Fasal</div>
-            <div className="cardSub">देखें</div>
+            <div className="cardTitle">
+              Meri Fasal
+            </div>
+
+            <div className="cardSub">
+              देखें
+            </div>
           </div>
+
           <Leaf size={19} />
         </button>
 
-        <button className="card" onClick={() => setTab("store")}>
+        <button
+          className="card"
+          onClick={() => setTab("store")}
+        >
           <div className="cardIcon">🛒</div>
+
           <div>
-            <div className="cardTitle">Kisan Store</div>
-            <div className="cardSub">देखें</div>
+            <div className="cardTitle">
+              Kisan Store
+            </div>
+
+            <div className="cardSub">
+              देखें
+            </div>
           </div>
+
           <ShoppingCart size={19} />
         </button>
 
-        <button className="card" onClick={() => setTab("profile")}>
+        <button
+          className="card"
+          onClick={() => setTab("profile")}
+        >
           <div className="cardIcon">🏛️</div>
+
           <div>
-            <div className="cardTitle">Sarkari Yojana</div>
-            <div className="cardSub">देखें</div>
+            <div className="cardTitle">
+              Sarkari Yojana
+            </div>
+
+            <div className="cardSub">
+              देखें
+            </div>
           </div>
+
           <Landmark size={19} />
         </button>
 
@@ -651,31 +781,45 @@ function HomePage({
 
       <div className="advice">
         ⚠️ <b>खेती की सलाह</b>
+
         <br />
+
         <span style={{ fontSize: 13 }}>
-          कल बारिश की संभावना है। सिंचाई का निर्णय लेने से पहले स्थानीय forecast
-          चेक करें।
+          कल बारिश की संभावना है। सिंचाई का निर्णय लेने से पहले
+          स्थानीय forecast चेक करें।
         </span>
       </div>
     </>
   );
 }
 
-function MandiPage({ setTab }: { setTab: (t: Tab) => void }) {
+function MandiPage({
+  setTab
+}: {
+  setTab: (t: Tab) => void;
+}) {
   return (
     <>
       <div className="pageTitle">
-        <button className="back" onClick={() => setTab("home")}>
+        <button
+          className="back"
+          onClick={() => setTab("home")}
+        >
           <ArrowLeft size={21} />
         </button>
+
         <div>
           <h2>💰 Mandi Bhav</h2>
-          <small style={{ color: "#777" }}>आज के Demo मंडी भाव</small>
+
+          <small style={{ color: "#777" }}>
+            आज के Demo मंडी भाव
+          </small>
         </div>
       </div>
 
       <div className="section">
         <b>📍 फसल के आज के भाव</b>
+
         <p style={{ color: "#777", fontSize: 12 }}>
           भाव Demo Data हैं। वास्तविक भाव स्थानीय मंडी से verify करें।
         </p>
@@ -683,10 +827,12 @@ function MandiPage({ setTab }: { setTab: (t: Tab) => void }) {
 
       {mandiData.map((item, index) => (
         <div className="mandiCard" key={index}>
+
           <div>
             <div className="mandiCrop">
               🌾 {item.crop}
             </div>
+
             <div className="mandiName">
               {item.mandi}
             </div>
@@ -694,314 +840,109 @@ function MandiPage({ setTab }: { setTab: (t: Tab) => void }) {
 
           <div className="mandiPrice">
             ₹{item.price.toLocaleString("en-IN")}
-            <div style={{ fontSize: 11, color: "#777" }}>
+
+            <div
+              style={{
+                fontSize: 11,
+                color: "#777"
+              }}
+            >
               / {item.unit}
             </div>
           </div>
+
         </div>
       ))}
     </>
   );
 }
 
-function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
-  return (
-    <>
-      <div className="pageTitle">
-        <button className="back" onClick={() => setTab("home")}>
-          <ArrowLeft size={21} />
-        </button>
-        <h2>🌱 मेरी फसल</h2>
-      </div>
-
-      <div className="section">
-        <h3>गेहूं</h3>
-        <p>फसल स्थिति: अच्छी</p>
-        <p>💧 सिंचाई: आवश्यकता अनुसार</p>
-        <p>🌤️ मौसम: साफ</p>
-      </div>
-
-      <div className="section">
-        <h3>सरसों</h3>
-        <p>फसल स्थिति: सामान्य</p>
-        <p>🌱 पौधों की नियमित जांच करें।</p>
-      </div>
-
-      <div className="section">
-        <Sprout size={35} />
-        <h3>नई फसल जोड़ें</h3>
-        <p style={{ color: "#777" }}>
-          अपनी फसल की जानकारी यहां से manage कर सकते हैं।
-        </p>
-      </div>
-    </>
-  );
-}
-
-function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
-  return (
-    <>
-      <div className="pageTitle">
-        <button className="back" onClick={() => setTab("home")}>
-          <ArrowLeft size={21} />
-        </button>
-        <h2>👨‍🌾 Crop Doctor</h2>
-      </div>
-
-      <div className="section" style={{ textAlign: "center" }}>
-        <Camera size={55} />
-        <h3>फसल की फोटो जांचें</h3>
-        <p style={{ color: "#777" }}>
-          पत्तियों या फसल की साफ फोटो लेकर समस्या की पहचान में मदद लें।
-        </p>
-
-        <button className="addBtn">
-          📷 फोटो चुनें
-        </button>
-      </div>
-
-      <div className="section">
-        <Stethoscope size={30} />
-        <h3>सामान्य सलाह</h3>
-        <p>
-          पत्तियों पर दाग, कीड़े या रंग में बदलाव दिखे तो साफ फोटो लेकर जांच
-          करें।
-        </p>
-      </div>
-    </>
-  );
-}
-
-function StorePage({
-  setTab,
-  products,
-  addToCart
+function WeatherPage({
+  setTab
 }: {
   setTab: (t: Tab) => void;
-  products: Product[];
-  cart: Record<number, number>;
-  addToCart: (id: number) => void;
 }) {
   return (
     <>
       <div className="pageTitle">
-        <button className="back" onClick={() => setTab("home")}>
-          <ArrowLeft size={21} />
-        </button>
-        <h2>🛒 Kisan Store</h2>
-      </div>
-
-      <div className="section">
-        {products.map(p => (
-          <div className="product" key={p.id}>
-            <div>
-              <div className="productName">{p.name}</div>
-              <div className="productUnit">
-                ₹{p.price} · {p.unit}
-              </div>
-            </div>
-
-            <button
-              className="addBtn"
-              onClick={() => addToCart(p.id)}
-            >
-              + जोड़ें
-            </button>
-          </div>
-        ))}
 
         <button
-          className="addBtn"
-          style={{ width: "100%", marginTop: 15 }}
-          onClick={() => setTab("cart")}
+          className="back"
+          onClick={() => setTab("home")}
         >
-          🛒 Cart देखें
-        </button>
-      </div>
-    </>
-  );
-}
-
-function CartPage({
-  setTab,
-  products,
-  cart,
-  addToCart,
-  removeFromCart,
-  total
-}: {
-  setTab: (t: Tab) => void;
-  products: Product[];
-  cart: Record<number, number>;
-  addToCart: (id: number) => void;
-  removeFromCart: (id: number) => void;
-  total: number;
-}) {
-  const ids = Object.keys(cart).map(Number);
-
-  return (
-    <>
-      <div className="pageTitle">
-        <button className="back" onClick={() => setTab("store")}>
           <ArrowLeft size={21} />
         </button>
-        <h2>🛒 आपका Cart</h2>
-      </div>
 
-      {ids.length === 0 ? (
-        <div className="section empty">
-          <ShoppingCart size={50} />
-          <h3>Cart खाली है</h3>
-          <button className="addBtn" onClick={() => setTab("store")}>
-            Store देखें
-          </button>
-        </div>
-      ) : (
-        <div className="section">
-          {ids.map(id => {
-            const p = products.find(x => x.id === id);
-            if (!p) return null;
+        <div>
+          <h2>🌦️ Mausam</h2>
 
-            return (
-              <div className="product" key={id}>
-                <div>
-                  <div className="productName">{p.name}</div>
-                  <div className="productUnit">
-                    ₹{p.price} × {cart[id]}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button
-                    className="addBtn"
-                    onClick={() => removeFromCart(id)}
-                  >
-                    −
-                  </button>
-
-                  <button
-                    className="addBtn"
-                    onClick={() => addToCart(id)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          <div className="cartTotal">
-            Total: ₹{total.toLocaleString("en-IN")}
-          </div>
-
-          <button
-            className="addBtn"
-            style={{ width: "100%", marginTop: 15 }}
-            onClick={() => alert("Order placed successfully!")}
-          >
-            ✅ Order करें
-          </button>
-        </div>
-      )}
-    </>
-  );
-}
-
-function ChatPage({
-  setTab,
-  chat,
-  q,
-  setQ,
-  askAI
-}: {
-  setTab: (t: Tab) => void;
-  chat: string[];
-  q: string;
-  setQ: (v: string) => void;
-  askAI: () => void;
-}) {
-  return (
-    <>
-      <div className="pageTitle">
-        <button className="back" onClick={() => setTab("home")}>
-          <ArrowLeft size={21} />
-        </button>
-        <h2>🤖 AI Kisan</h2>
-      </div>
-
-      <div className="chatBox">
-        {chat.length === 0 ? (
-          <div className="empty">
-            <MessageCircle size={50} />
-            <h3>Namaste Kisan Bhai 👋</h3>
-            <p>
-              खेती, फसल, मौसम या सामान्य कृषि सवाल पूछें।
-            </p>
-          </div>
-        ) : (
-          chat.map((m, i) => (
-            <div className="message" key={i}>
-              {m}
-            </div>
-          ))
-        )}
-
-        <div className="inputRow">
-          <input
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="अपना सवाल लिखें..."
-            onKeyDown={e => {
-              if (e.key === "Enter") askAI();
-            }}
-          />
-
-          <button className="sendBtn" onClick={askAI}>
-            भेजें
-          </button>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function ProfilePage({
-  setTab,
-  name
-}: {
-  setTab: (t: Tab) => void;
-  name: string;
-}) {
-  return (
-    <>
-      <div className="pageTitle">
-        <button className="back" onClick={() => setTab("home")}>
-          <ArrowLeft size={21} />
-        </button>
-        <h2>👤 Profile</h2>
-      </div>
-
-      <div className="section" style={{ textAlign: "center" }}>
-        <div className="profileIcon" style={{ margin: "auto" }}>
-          <User size={25} />
+          <small style={{ color: "#777" }}>
+            आज का मौसम
+          </small>
         </div>
 
-        <h2>{name}</h2>
+      </div>
+
+      <div className="weatherBig">
+
+        <Sun size={55} />
+
+        <div className="temperature">
+          28°C
+        </div>
+
+        <h3 style={{ margin: 5 }}>
+          साफ मौसम
+        </h3>
+
         <p style={{ color: "#777" }}>
-          KisanSaathi AI उपयोगकर्ता
+          बारिश की संभावना: 20%
         </p>
+
       </div>
 
       <div className="section">
-        <h3>🏛️ सरकारी योजना</h3>
-        <p>PM-KISAN</p>
-        <p>फसल बीमा योजना</p>
-        <p>किसान क्रेडिट कार्ड</p>
-      </div>
-    </>
-  );
-}
 
-createRoot(document.getElementById("root")!).render(
-  <App />
-);
+        <h3>🌾 किसान के लिए मौसम सलाह</h3>
+
+        <p>
+          आज मौसम खेती के लिए सामान्य है।
+          सिंचाई और खेत में काम करने से पहले स्थानीय
+          मौसम की स्थिति जरूर देखें।
+        </p>
+
+      </div>
+
+      <div className="section">
+
+        <h3>📅 अगले कुछ दिनों का अनुमान</h3>
+
+        <div className="forecast">
+
+          <div className="forecastCard">
+            <b>आज</b>
+            <div style={{ fontSize: 28, margin: 8 }}>
+              ☀️
+            </div>
+            <b>28°C</b>
+            <div style={{ fontSize: 11, color: "#777" }}>
+              बारिश 20%
+            </div>
+          </div>
+
+          <div className="forecastCard">
+            <b>कल</b>
+            <div style={{ fontSize: 28, margin: 8 }}>
+              🌦️
+            </div>
+            <b>27°C</b>
+            <div style={{ fontSize: 11, color: "#777" }}>
+              बारिश 60%
+            </div>
+          </div>
+
+          <div className="forecastCard">
+            <b>परसों</b>
+            <div style={{ fontSize: 28, margin: 8 }}>
+              ☁️
+           
