@@ -1,75 +1,148 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 const green = "#2f7d32";
 
-const crops = [
+type PageName =
+  | "home"
+  | "weather"
+  | "market"
+  | "doctor"
+  | "ai"
+  | "crop"
+  | "schemes"
+  | "store"
+  | "profile";
+
+type Product = {
+  id: number;
+  name: string;
+  category: string;
+  price: number;
+  discountPrice: number | null;
+  stock: number;
+  unit: string;
+  image: string;
+};
+
+const fallbackCrops = [
   ["🌾", "गेहूं", "₹2,450"],
   ["🌾", "धान", "₹2,180"],
   ["🌻", "सरसों", "₹5,650"],
   ["🌱", "कपास", "₹7,200"],
 ];
 
+async function api(url: string, options?: RequestInit) {
+  const response = await fetch(url, options);
+
+  if (!response.ok) {
+    throw new Error("API error");
+  }
+
+  return response.json();
+}
+
 function App() {
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState<PageName>("home");
+
   const [crop, setCrop] = useState("");
   const [question, setQuestion] = useState("");
   const [chat, setChat] = useState(
-    "नमस्ते किसान भाई! अपना सवाल नीचे लिखकर भेजें।"
+    "नमस्ते किसान भाई! अपना खेती से जुड़ा सवाल नीचे लिखकर भेजें।"
   );
-  const [cart, setCart] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  const go = (page: string) => setTab(page);
+  const [cart, setCart] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [weather, setWeather] = useState<any>(null);
+  const [mandi, setMandi] = useState<any>(null);
+
+  const [farmSaved, setFarmSaved] = useState(false);
+  const [farmName, setFarmName] = useState("");
+  const [area, setArea] = useState("");
+
+  const go = (page: PageName) => setTab(page);
+
+  useEffect(() => {
+    api("/api/products")
+      .then(setProducts)
+      .catch(() => setProducts([]));
+  }, []);
 
   const sendQuestion = async () => {
-    if (!question.trim() || loading) return;
+    if (!question.trim()) return;
 
-    const q = question;
-    setQuestion("");
+    const q = question.trim();
+
     setLoading(true);
     setChat("🤖 AI Kisan सोच रहा है...");
 
     try {
-      const response = await fetch("/api/chat", {
+      const data = await api("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message: q,
+          question: q,
         }),
       });
 
-      const data = await response.json();
-
-      if (data.reply) {
-        setChat("🤖 AI Kisan: " + data.reply);
-      } else {
-        setChat("🤖 AI Kisan: अभी जवाब नहीं मिल पाया।");
-      }
+      setChat(`🤖 AI Kisan: ${data.reply || "अभी जवाब उपलब्ध नहीं है।"}`);
     } catch {
       setChat(
-        "⚠️ AI service से connection नहीं हो पाया। Server/API key check करें।"
+        "⚠️ AI service से connection नहीं हो पाया। Server/API configuration जांचें।"
       );
+    }
+
+    setQuestion("");
+    setLoading(false);
+  };
+
+  const loadWeather = async () => {
+    setLoading(true);
+
+    try {
+      const data = await api("/api/weather");
+      setWeather(data);
+    } catch {
+      setWeather(null);
     }
 
     setLoading(false);
   };
 
-  const saveCrop = async () => {
-    if (!crop.trim()) return;
+  const loadMandi = async () => {
+    setLoading(true);
 
     try {
-      await fetch("/api/farms", {
+      const data = await api("/api/mandi-prices");
+      setMandi(data);
+    } catch {
+      setMandi(null);
+    }
+
+    setLoading(false);
+  };
+
+  const saveFarm = async () => {
+    if (!farmName.trim()) {
+      alert("कृपया किसान/फार्म का नाम लिखें।");
+      return;
+    }
+
+    try {
+      await api("/api/farms", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: "मेरा खेत",
-          crop,
-          area: 1,
+          name: farmName,
+          crop: crop || "गेहूं",
+          area: Number(area) || 1,
           unit: "एकड़",
           sowingDate: "",
           soil: "",
@@ -77,10 +150,20 @@ function App() {
         }),
       });
 
-      alert("🌱 फसल सेव हो गई!");
+      setFarmSaved(true);
+      alert("🌱 फसल की जानकारी सेव हो गई!");
     } catch {
-      alert("फसल सेव नहीं हो पाई।");
+      alert("फसल सेव नहीं हो पाई। Server चालू है या नहीं जांचें।");
     }
+  };
+
+  const addToCart = (product: Product) => {
+    if (product.stock <= 0) {
+      alert("यह सामान अभी stock में नहीं है।");
+      return;
+    }
+
+    setCart((old) => [...old, product]);
   };
 
   const Home = () => (
@@ -90,10 +173,7 @@ function App() {
 
         <h2>आज खेती में आपकी मदद के लिए तैयार हैं।</h2>
 
-        <button
-          className="weatherBox"
-          onClick={() => go("weather")}
-        >
+        <button className="weatherBox" onClick={() => go("weather")}>
           <span className="weatherEmoji">☀️</span>
 
           <div>
@@ -164,78 +244,156 @@ function App() {
     </>
   );
 
-  const Weather = () => (
-    <Page title="मौसम" back={() => go("home")}>
-      <div className="location">
-        📍 आपका क्षेत्र
-        <span>↻</span>
-      </div>
+  const Weather = () => {
+    useEffect(() => {
+      loadWeather();
+    }, []);
 
-      <div className="weatherMain">
-        <div className="bigWeather">☀️</div>
+    const current = weather?.current;
 
-        <section>
-          <small>अभी का मौसम</small>
-          <strong>28°C</strong>
-          <b>साफ आसमान</b>
-        </section>
-      </div>
+    return (
+      <Page title="मौसम" back={() => go("home")}>
+        <div className="location">
+          📍 आपका इलाका
+          <button onClick={loadWeather}>↻</button>
+        </div>
 
-      <div className="grid">
-        <Info icon="💧" title="नमी" value="61%" />
-        <Info icon="🌧️" title="बारिश" value="20%" />
-        <Info icon="🌬️" title="हवा" value="8 km/h" />
-        <Info icon="🌡️" title="तापमान" value="28°C" />
-      </div>
+        <div className="weatherMain">
+          <div className="bigWeather">☀️</div>
 
-      <div className="box">
-        <h3>📅 अगले 3 दिन</h3>
+          <section>
+            <small>अभी का मौसम</small>
 
-        <p>
-          आज <span>☀️ 28°C</span>
-        </p>
+            <strong>
+              {current?.temperature ?? "--"}°C
+            </strong>
 
-        <p>
-          कल <span>🌧️ 27°C</span>
-        </p>
+            <b>
+              {current ? "मौसम की जानकारी" : "जानकारी लोड हो रही है"}
+            </b>
+          </section>
+        </div>
 
-        <p>
-          परसों <span>☀️ 29°C</span>
-        </p>
-      </div>
-    </Page>
-  );
+        <div className="grid">
+          <Info
+            icon="💧"
+            title="नमी"
+            value={
+              current ? `${current.humidity}%` : "--"
+            }
+          />
 
-  const Market = () => (
-    <Page title="मंडी भाव" back={() => go("home")}>
-      <div className="search">🔍　फसल खोजें...</div>
+          <Info
+            icon="🌧️"
+            title="बारिश की संभावना"
+            value={
+              current ? `${current.rainProbability}%` : "--"
+            }
+          />
 
-      <button className="greenBtn">
-        📊 मंडी भाव देखें
-      </button>
+          <Info
+            icon="🌬️"
+            title="हवा"
+            value={
+              current ? `${current.wind} km/h` : "--"
+            }
+          />
 
-      <div className="box">
-        {crops.map((c) => (
-          <div className="market" key={c[1]}>
-            <span>
-              {c[0]} <b>{c[1]}</b>
-              <small>आज का भाव</small>
-            </span>
+          <Info
+            icon="🌡️"
+            title="तापमान"
+            value={
+              current ? `${current.temperature}°C` : "--"
+            }
+          />
+        </div>
 
-            <strong>{c[2]}</strong>
+        <div className="box">
+          <h3>📅 अगले 3 दिन</h3>
+
+          {weather?.forecast?.length ? (
+            weather.forecast.map((x: any) => (
+              <p key={x.day}>
+                {x.day}
+                <span>
+                  🌦️ {x.temp}°C / बारिश {x.rain}%
+                </span>
+              </p>
+            ))
+          ) : (
+            <p>मौसम की जानकारी उपलब्ध नहीं है।</p>
+          )}
+        </div>
+
+        {weather?.demo && (
+          <div className="tip">
+            ⚠️ अभी Weather API demo mode में है। इसे live weather service
+            से जोड़ने पर वास्तविक मौसम आएगा।
           </div>
-        ))}
-      </div>
+        )}
 
-      <div className="tip">
-        ⚠️ मंडी भाव स्थान और मंडी के अनुसार बदल सकते हैं।
-      </div>
-    </Page>
-  );
+        {loading && <div className="loading">लोड हो रहा है...</div>}
+      </Page>
+    );
+  };
+
+  const Market = () => {
+    useEffect(() => {
+      loadMandi();
+    }, []);
+
+    return (
+      <Page title="मंडी भाव" back={() => go("home")}>
+        <div className="search">🔍 फसल खोजें...</div>
+
+        <button className="greenBtn" onClick={loadMandi}>
+          📊 मंडी भाव अपडेट करें
+        </button>
+
+        <div className="box">
+          {mandi?.data?.length ? (
+            mandi.data.map((x: any, index: number) => (
+              <div className="market" key={index}>
+                <span>
+                  🌾 <b>{x.crop}</b>
+                  <small>{x.mandi}</small>
+                </span>
+
+                <strong>
+                  ₹{x.modal}
+                </strong>
+              </div>
+            ))
+          ) : (
+            fallbackCrops.map((c) => (
+              <div className="market" key={c[1]}>
+                <span>
+                  {c[0]} <b>{c[1]}</b>
+                  <small>Demo भाव</small>
+                </span>
+
+                <strong>{c[2]}</strong>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="tip">
+          ⚠️ मंडी भाव स्थान और मंडी के अनुसार बदल सकते हैं।
+          {mandi?.demo && (
+            <>
+              <br />
+              अभी live mandi feed configure नहीं है।
+            </>
+          )}
+        </div>
+      </Page>
+    );
+  };
 
   const Doctor = () => {
     const [image, setImage] = useState<File | null>(null);
-    const [result, setResult] = useState("");
+    const [result, setResult] = useState<any>(null);
 
     const analyze = async () => {
       if (!image) {
@@ -243,29 +401,26 @@ function App() {
         return;
       }
 
-      setResult("🔍 फसल की जांच हो रही है...");
+      setLoading(true);
 
       try {
-        const response = await fetch("/api/crop/analyze", {
+        const data = await api("/api/crop/analyze", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            cropType: "फसल",
+            cropType: crop || "फसल",
+            imageName: image.name,
           }),
         });
 
-        const data = await response.json();
-
-        setResult(
-          `🌱 समस्या: ${data.issue}\n\n` +
-            `🔎 लक्षण: ${data.symptoms}\n\n` +
-            `💡 अगले कदम: ${data.nextSteps}`
-        );
+        setResult(data);
       } catch {
-        setResult("⚠️ जांच service उपलब्ध नहीं है।");
+        alert("फसल जांच service से connection नहीं हुआ।");
       }
+
+      setLoading(false);
     };
 
     return (
@@ -289,16 +444,47 @@ function App() {
             />
           </label>
 
+          {image && (
+            <div className="selectedFile">
+              📁 {image.name}
+            </div>
+          )}
+
           <button className="greenBtn" onClick={analyze}>
             🔍 फसल की जांच करें
           </button>
-
-          {result && (
-            <div className="result">
-              {result}
-            </div>
-          )}
         </div>
+
+        {result && (
+          <div className="box result">
+            <h3>🌱 जांच परिणाम</h3>
+
+            <p>
+              <b>समस्या:</b> {result.issue}
+            </p>
+
+            <p>
+              <b>लक्षण:</b> {result.symptoms}
+            </p>
+
+            <p>
+              <b>संभावित कारण:</b> {result.causes}
+            </p>
+
+            <p>
+              <b>अगला कदम:</b> {result.nextSteps}
+            </p>
+
+            <p>
+              <b>रोकथाम:</b> {result.prevention}
+            </p>
+
+            <div className="tip">
+              ⚠️ यह demo/प्रारंभिक अनुमान हो सकता है। दवा देने से पहले
+              विशेषज्ञ या विश्वसनीय कृषि सलाह से पुष्टि करें।
+            </div>
+          </div>
+        )}
       </Page>
     );
   };
@@ -341,23 +527,30 @@ function App() {
         </button>
       </div>
 
-      <div className="chat">
-        {chat}
-      </div>
+      <div className="chat">{chat}</div>
 
       <div className="inputRow">
         <input
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={(e) =>
+            setQuestion(e.target.value)
+          }
           onKeyDown={(e) => {
-            if (e.key === "Enter") sendQuestion();
+            if (e.key === "Enter") {
+              sendQuestion();
+            }
           }}
           placeholder="अपना सवाल लिखें..."
         />
 
-        <button onClick={sendQuestion}>
+        <button onClick={sendQuestion} disabled={loading}>
           {loading ? "…" : "➤"}
         </button>
+      </div>
+
+      <div className="tip">
+        💡 फसल का नाम, फसल की उम्र, मिट्टी और समस्या बताने पर सलाह
+        ज्यादा उपयोगी हो सकती है।
       </div>
     </Page>
   );
@@ -370,20 +563,47 @@ function App() {
         <input
           className="fullInput"
           value={crop}
-          onChange={(e) => setCrop(e.target.value)}
+          onChange={(e) =>
+            setCrop(e.target.value)
+          }
           placeholder="गेहूं, धान, कपास..."
         />
 
-        <button className="greenBtn" onClick={saveCrop}>
+        <input
+          className="fullInput"
+          value={farmName}
+          onChange={(e) =>
+            setFarmName(e.target.value)
+          }
+          placeholder="किसान / खेत का नाम"
+        />
+
+        <input
+          className="fullInput"
+          value={area}
+          onChange={(e) =>
+            setArea(e.target.value)
+          }
+          type="number"
+          placeholder="क्षेत्रफल (एकड़)"
+        />
+
+        <button className="greenBtn" onClick={saveFarm}>
           💾 फसल सेव करें
         </button>
+
+        {farmSaved && (
+          <div className="success">
+            ✅ आपकी फसल की जानकारी सेव है।
+          </div>
+        )}
       </div>
 
       <div className="box">
         <h3>📍 खेत की जानकारी</h3>
 
         <p>
-          गांव, क्षेत्रफल और सिंचाई की जानकारी बाद में जोड़ सकते हैं।
+          आगे चलकर गांव, मिट्टी, सिंचाई और बुवाई की तारीख भी जोड़ी जा सकती है।
         </p>
       </div>
     </Page>
@@ -398,19 +618,21 @@ function App() {
           <b>किसानों के लिए सरकारी योजनाएं</b>
 
           <small>
-            Official Government Website से जानकारी देखें
+            महत्वपूर्ण योजनाओं की जानकारी
           </small>
         </div>
       </div>
 
       {[
-        ["🌾", "PM-KISAN", "https://pmkisan.gov.in/"],
-        ["🛡️", "प्रधानमंत्री फसल बीमा योजना", "https://pmfby.gov.in/"],
-        ["💳", "किसान क्रेडिट कार्ड", "https://www.jansuraksha.gov.in/"],
-        ["👨‍🌾", "PM किसान मानधन योजना", "https://maandhan.in/"],
-        ["🧪", "Soil Health Card", "https://soilhealth.dac.gov.in/"],
-        ["📈", "e-NAM", "https://www.enam.gov.in/"],
-        ["🔎", "MyScheme", "https://www.myscheme.gov.in/"],
+        ["🌾", "PM-KISAN", "किसानों के लिए आर्थिक सहायता", "https://pmkisan.gov.in/"],
+        ["🛡️", "प्रधानमंत्री फसल बीमा योजना", "फसल नुकसान से सुरक्षा", "https://pmfby.gov.in/"],
+        ["💳", "किसान क्रेडिट कार्ड (KCC)", "कृषि के लिए ऋण सुविधा", "https://www.jansuraksha.gov.in/"],
+        ["👨‍🌾", "PM किसान मानधन योजना", "किसानों के लिए पेंशन योजना", "https://maandhan.in/"],
+        ["🧪", "Soil Health Card", "मिट्टी की जांच और पोषक तत्वों की जानकारी", "https://soilhealth.dac.gov.in/"],
+        ["🏗️", "Agriculture Infrastructure Fund", "कृषि इंफ्रास्ट्रक्चर सहायता", "https://agriinfra.dac.gov.in/"],
+        ["🌱", "परंपरागत कृषि विकास योजना", "जैविक खेती को बढ़ावा", "https://pgsindia-ncof.gov.in/"],
+        ["📈", "e-NAM", "ऑनलाइन कृषि मंडी प्लेटफॉर्म", "https://www.enam.gov.in/"],
+        ["🔎", "MyScheme", "सरकारी योजनाएं खोजें", "https://www.myscheme.gov.in/"],
       ].map((x) => (
         <div className="scheme" key={x[1]}>
           <span className="schemeIcon">{x[0]}</span>
@@ -418,8 +640,10 @@ function App() {
           <div className="schemeText">
             <b>{x[1]}</b>
 
+            <small>{x[2]}</small>
+
             <a
-              href={x[2]}
+              href={x[3]}
               target="_blank"
               rel="noopener noreferrer"
               className="official"
@@ -431,7 +655,8 @@ function App() {
       ))}
 
       <div className="tip">
-        ⚠️ आवेदन करने से पहले संबंधित सरकारी वेबसाइट पर जानकारी जरूर जांचें।
+        ⚠️ आवेदन करने से पहले संबंधित Official Government Website पर
+        जानकारी जरूर जांचें।
       </div>
     </Page>
   );
@@ -439,35 +664,86 @@ function App() {
   const Store = () => (
     <Page title="Kisan Store" back={() => go("home")}>
       <div className="storeGrid">
-        {[
-          ["🌿", "नीम ऑयल", "₹299"],
-          ["🌱", "जैविक खाद", "₹499"],
-          ["🧴", "फसल सुरक्षा किट", "₹699"],
-          ["🌾", "बीज उपचार किट", "₹399"],
-        ].map((x) => (
-          <div className="product" key={x[1]}>
-            <div className="productIcon">
-              {x[0]}
-            </div>
+        {products.length > 0
+          ? products.map((p) => (
+              <div className="product" key={p.id}>
+                <div className="productIcon">
+                  {p.image || "🌱"}
+                </div>
 
-            <b>{x[1]}</b>
+                <b>{p.name}</b>
 
-            <strong>{x[2]}</strong>
+                <strong>
+                  ₹{p.discountPrice ?? p.price}
+                </strong>
 
-            <button
-              onClick={() =>
-                setCart([...cart, x[1]])
-              }
-            >
-              🛒 कार्ट में डालें
-            </button>
-          </div>
-        ))}
+                <small>
+                  {p.unit} • Stock: {p.stock}
+                </small>
+
+                <button
+                  onClick={() => addToCart(p)}
+                  disabled={p.stock <= 0}
+                >
+                  {p.stock > 0
+                    ? "🛒 कार्ट में डालें"
+                    : "Out of Stock"}
+                </button>
+              </div>
+            ))
+          : [
+              ["🌿", "नीम ऑयल", "₹299"],
+              ["🌱", "जैविक खाद", "₹499"],
+              ["🧴", "फसल सुरक्षा किट", "₹699"],
+              ["🌾", "बीज उपचार किट", "₹399"],
+            ].map((x) => (
+              <div className="product" key={x[1]}>
+                <div className="productIcon">{x[0]}</div>
+
+                <b>{x[1]}</b>
+
+                <strong>{x[2]}</strong>
+
+                <button
+                  onClick={() =>
+                    alert("Demo product cart में जोड़ दिया गया।")
+                  }
+                >
+                  🛒 कार्ट में डालें
+                </button>
+              </div>
+            ))}
       </div>
 
-      <button className="greenBtn">
-        🛒 कार्ट देखें ({cart.length})
-      </button>
+      <div className="box">
+        <h3>🛒 आपका कार्ट</h3>
+
+        {cart.length === 0 ? (
+          <p>अभी cart खाली है।</p>
+        ) : (
+          <>
+            {cart.map((p, i) => (
+              <p key={`${p.id}-${i}`}>
+                {p.name}
+                <span>
+                  ₹{p.discountPrice ?? p.price}
+                </span>
+              </p>
+            ))}
+
+            <button
+              className="greenBtn"
+              onClick={() =>
+                alert(
+                  "Order system तैयार है। Payment gateway बाद में जोड़ा जा सकता है।"
+                )
+              }
+            >
+              🛍️ Order करें
+            </button>
+          </>
+        )}
+      </div>
     </Page>
   );
 
@@ -493,7 +769,12 @@ function App() {
           placeholder="जिला"
         />
 
-        <button className="greenBtn">
+        <button
+          className="greenBtn"
+          onClick={() =>
+            alert("प्रोफाइल सेव करने का अगला चरण backend में जोड़ा जा सकता है।")
+          }
+        >
           💾 प्रोफाइल सेव करें
         </button>
       </div>
@@ -507,6 +788,7 @@ function App() {
 
         <div>
           <b>KisanSaathi AI</b>
+
           <small>आपका डिजिटल किसान साथी</small>
         </div>
 
@@ -577,12 +859,17 @@ function Page({
 }: {
   title: string;
   children: React.ReactNode;
-  back: () => void;
+  back?: () => void;
 }) {
   return (
     <>
       <div className="pageTitle">
-        <button onClick={back}>←</button>
+        {back && (
+          <button onClick={back}>
+            ←
+          </button>
+        )}
+
         <h3>{title}</h3>
       </div>
 
@@ -628,7 +915,9 @@ function Info({
   return (
     <div className="info">
       <span>{icon}</span>
+
       <small>{title}</small>
+
       <b>{value}</b>
     </div>
   );
@@ -651,694 +940,731 @@ function Nav({
       onClick={onClick}
     >
       {icon}
+
       <small>{text}</small>
     </button>
   );
 }
 
 const css = `
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
 }
 
 html,
 body,
-#root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100%;
+#root{
+  margin:0;
+  padding:0;
+  width:100%;
+  min-height:100%;
 }
 
-body {
-  background: #f3f6f1;
-  font-family: Arial, sans-serif;
-  color: #172018;
-  overflow-x: hidden;
+body{
+  background:#f3f6f1;
+  font-family:Arial,sans-serif;
+  color:#172018;
+  overflow-x:hidden;
 }
 
 button,
-input {
-  font: inherit;
+input{
+  font:inherit;
 }
 
-button {
-  border: 0;
-  background: none;
-  cursor: pointer;
+button{
+  border:0;
+  background:none;
+  cursor:pointer;
 }
 
-.app {
-  width: 100%;
-  max-width: 720px;
-  margin: auto;
-  min-height: 100vh;
-  padding-bottom: 82px;
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
 }
 
-header {
-  width: calc(100% - 24px);
-  height: 64px;
-  background: white;
-  margin: 0 12px 12px;
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 2px 8px #00000008;
-  border-radius: 0 0 12px 12px;
+.app{
+  width:100%;
+  max-width:720px;
+  margin:auto;
+  min-height:100vh;
+  padding-bottom:82px;
 }
 
-.logo {
-  font-size: 25px;
-  background: #edf7e8;
-  padding: 7px;
-  border-radius: 12px;
+header{
+  width:calc(100% - 24px);
+  height:64px;
+  background:white;
+  margin:0 12px 12px;
+  padding:10px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 2px 8px #00000008;
+  border-radius:0 0 12px 12px;
 }
 
-header div {
-  flex: 1;
+.logo{
+  font-size:25px;
+  background:#edf7e8;
+  padding:7px;
+  border-radius:12px;
 }
 
-header b {
-  display: block;
-  font-size: 16px;
+header div{
+  flex:1;
 }
 
-header small {
-  display: block;
-  font-size: 9px;
-  color: #777;
-  margin-top: 2px;
+header b{
+  display:block;
+  font-size:16px;
 }
 
-.profileBtn {
-  background: #edf7e8;
-  border-radius: 50%;
-  padding: 9px;
-  font-size: 17px;
+header small{
+  display:block;
+  font-size:9px;
+  color:#777;
+  margin-top:2px;
 }
 
-main {
-  width: 100%;
-  padding: 0 12px;
+.profileBtn{
+  background:#edf7e8;
+  border-radius:50%;
+  padding:9px;
+  font-size:17px;
 }
 
-.welcome {
-  background: linear-gradient(135deg, #e4f7dc, #f8fcf5);
-  padding: 20px;
-  border-radius: 18px;
-  margin-bottom: 12px;
+main{
+  width:100%;
+  padding:0 12px;
 }
 
-.welcome small {
-  color: #4b754c;
+.welcome{
+  background:linear-gradient(135deg,#e4f7dc,#f8fcf5);
+  padding:20px;
+  border-radius:18px;
+  margin-bottom:12px;
 }
 
-.welcome h2 {
-  font-size: 22px;
-  margin: 8px 0 14px;
-  line-height: 1.3;
+.welcome small{
+  color:#4b754c;
 }
 
-.weatherBox {
-  background: white;
-  border-radius: 15px;
-  padding: 15px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  text-align: left;
-  gap: 12px;
-  box-shadow: 0 2px 8px #00000008;
+.welcome h2{
+  font-size:22px;
+  margin:8px 0 14px;
+  line-height:1.3;
 }
 
-.weatherEmoji {
-  font-size: 27px;
+.weatherBox{
+  background:white;
+  border-radius:15px;
+  padding:15px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  text-align:left;
+  gap:12px;
+  box-shadow:0 2px 8px #00000008;
 }
 
-.weatherBox div {
-  flex: 1;
+.weatherEmoji{
+  font-size:27px;
 }
 
-.weatherBox b {
-  display: block;
-  font-size: 15px;
+.weatherBox div{
+  flex:1;
 }
 
-.weatherBox small {
-  display: block;
-  font-size: 10px;
-  margin-top: 4px;
+.weatherBox b{
+  display:block;
+  font-size:15px;
 }
 
-.arrow {
-  font-size: 22px;
+.weatherBox small{
+  display:block;
+  font-size:10px;
+  margin-top:4px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.arrow{
+  font-size:22px;
 }
 
-.card {
-  background: white;
-  border-radius: 15px;
-  padding: 15px 12px;
-  display: flex;
-  align-items: center;
-  text-align: left;
-  min-height: 76px;
-  box-shadow: 0 2px 8px #00000008;
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
 
-.card > span {
-  font-size: 25px;
-  margin-right: 9px;
+.card{
+  background:white;
+  border-radius:15px;
+  padding:15px 12px;
+  display:flex;
+  align-items:center;
+  text-align:left;
+  min-height:76px;
+  box-shadow:0 2px 8px #00000008;
 }
 
-.card div {
-  flex: 1;
+.card>span{
+  font-size:25px;
+  margin-right:9px;
 }
 
-.card b {
-  font-size: 14px;
-  display: block;
+.card div{
+  flex:1;
 }
 
-.card small {
-  font-size: 9px;
-  color: #777;
-  display: block;
-  margin-top: 4px;
+.card b{
+  font-size:14px;
+  display:block;
 }
 
-.card i {
-  font-style: normal;
-  font-size: 20px;
+.card small{
+  font-size:9px;
+  color:#777;
+  display:block;
+  margin-top:4px;
 }
 
-.tip {
-  background: #fff4c9;
-  padding: 12px;
-  margin-top: 12px;
-  border-radius: 11px;
-  font-size: 10px;
-  color: #665b2a;
-  line-height: 1.5;
+.card i{
+  font-style:normal;
+  font-size:20px;
 }
 
-.pageTitle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 10px 0 12px;
+.tip{
+  background:#fff4c9;
+  padding:12px;
+  margin-top:12px;
+  border-radius:11px;
+  font-size:10px;
+  color:#665b2a;
+  line-height:1.5;
 }
 
-.pageTitle button {
-  background: white;
-  border-radius: 12px;
-  padding: 8px 11px;
-  font-size: 19px;
+.pageTitle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:10px 0 12px;
 }
 
-.pageTitle h3 {
-  margin: 0;
-  font-size: 18px;
+.pageTitle button{
+  background:white;
+  border-radius:12px;
+  padding:8px 11px;
+  font-size:19px;
+}
+
+.pageTitle h3{
+  margin:0;
+  font-size:18px;
 }
 
 .location,
-.search {
-  background: white;
-  border-radius: 11px;
-  padding: 13px;
-  margin-bottom: 10px;
-  font-size: 12px;
-  color: #777;
+.search{
+  background:white;
+  border-radius:11px;
+  padding:13px;
+  margin-bottom:10px;
+  font-size:12px;
+  color:#777;
 }
 
-.location span {
-  float: right;
+.location button{
+  float:right;
+  font-size:18px;
 }
 
-.weatherMain {
-  background: linear-gradient(135deg, #dff5d8, #fff);
-  border-radius: 18px;
-  padding: 22px;
-  display: flex;
-  gap: 22px;
-  align-items: center;
+.weatherMain{
+  background:linear-gradient(135deg,#dff5d8,#fff);
+  border-radius:18px;
+  padding:22px;
+  display:flex;
+  gap:22px;
+  align-items:center;
 }
 
-.bigWeather {
-  font-size: 55px;
+.bigWeather{
+  font-size:55px;
 }
 
-.weatherMain small {
-  display: block;
-  color: #666;
+.weatherMain small{
+  display:block;
+  color:#666;
 }
 
-.weatherMain strong {
-  display: block;
-  font-size: 30px;
-  margin: 5px 0;
+.weatherMain strong{
+  display:block;
+  font-size:30px;
+  margin:5px 0;
 }
 
-.weatherMain b {
-  font-size: 17px;
+.weatherMain b{
+  font-size:17px;
 }
 
-.info {
-  background: white;
-  border-radius: 13px;
-  padding: 14px;
-  margin-top: 10px;
+.info{
+  background:white;
+  border-radius:13px;
+  padding:14px;
+  margin-top:10px;
 }
 
-.info span {
-  display: block;
-  font-size: 20px;
+.info span{
+  display:block;
+  font-size:20px;
 }
 
-.info small {
-  display: block;
-  color: #777;
-  margin-top: 3px;
+.info small{
+  display:block;
+  color:#777;
+  margin-top:3px;
 }
 
-.info b {
-  font-size: 14px;
+.info b{
+  font-size:14px;
 }
 
 .box,
 .doctor,
-.aiHead {
-  background: white;
-  border-radius: 15px;
-  padding: 16px;
-  margin-top: 10px;
-  box-shadow: 0 2px 8px #00000008;
+.aiHead{
+  background:white;
+  border-radius:15px;
+  padding:16px;
+  margin-top:10px;
+  box-shadow:0 2px 8px #00000008;
 }
 
-.box h2 {
-  margin-top: 0;
-  font-size: 19px;
+.box h2{
+  margin-top:0;
+  font-size:19px;
 }
 
-.box p {
-  border-bottom: 1px solid #eee;
-  padding: 9px 0;
-  font-size: 12px;
-  line-height: 1.5;
+.box p{
+  border-bottom:1px solid #eee;
+  padding:9px 0;
+  font-size:12px;
+  line-height:1.5;
 }
 
-.box p:last-child {
-  border-bottom: 0;
+.box p:last-child{
+  border-bottom:0;
 }
 
-.box p span {
-  float: right;
+.box p span{
+  float:right;
 }
 
-.greenBtn {
-  background: ${green};
-  color: white;
-  border-radius: 10px;
-  width: 100%;
-  padding: 12px;
-  margin: 6px 0;
-  font-weight: bold;
-  box-shadow: 0 2px 5px #0002;
+.greenBtn{
+  background:${green};
+  color:white;
+  border-radius:10px;
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  font-weight:bold;
+  box-shadow:0 2px 5px #0002;
 }
 
-.doctor {
-  text-align: center;
+.doctor{
+  text-align:center;
 }
 
-.bigIcon {
-  font-size: 50px;
+.bigIcon{
+  font-size:50px;
 }
 
-.doctor p {
-  font-size: 11px;
-  color: #777;
+.doctor p{
+  font-size:11px;
+  color:#777;
 }
 
-.upload {
-  display: block;
-  background: #e9f5e4;
-  padding: 13px;
-  border-radius: 10px;
-  font-weight: bold;
-  margin-bottom: 8px;
+.upload{
+  display:block;
+  background:#e9f5e4;
+  padding:13px;
+  border-radius:10px;
+  font-weight:bold;
+  margin-bottom:8px;
 }
 
-.upload input {
-  display: block;
-  width: 100%;
-  margin-top: 9px;
+.upload input{
+  display:block;
+  width:100%;
+  margin-top:9px;
 }
 
-.result {
-  white-space: pre-line;
-  text-align: left;
-  background: #f3f8ef;
-  border-radius: 10px;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 11px;
-  line-height: 1.6;
+.market{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
+  font-size:12px;
 }
 
-.market {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-  font-size: 12px;
+.market:last-child{
+  border-bottom:0;
 }
 
-.market:last-child {
-  border-bottom: 0;
+.market small{
+  display:block;
+  color:#777;
+  font-size:9px;
+  margin-top:3px;
 }
 
-.market small {
-  display: block;
-  color: #777;
-  font-size: 9px;
-  margin-top: 3px;
+.market strong{
+  color:${green};
+  font-size:14px;
 }
 
-.market strong {
-  color: ${green};
-  font-size: 14px;
+.aiHead{
+  text-align:center;
+  background:linear-gradient(135deg,#e1f6dc,#fff);
 }
 
-.aiHead {
-  text-align: center;
-  background: linear-gradient(135deg, #e1f6dc, #fff);
+.aiIcon{
+  font-size:45px;
 }
 
-.aiIcon {
-  font-size: 45px;
+.aiHead h2{
+  margin:6px;
 }
 
-.aiHead h2 {
-  margin: 6px;
+.aiHead p{
+  font-size:11px;
+  color:#777;
 }
 
-.aiHead p {
-  font-size: 11px;
-  color: #777;
+.chips{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  padding:9px 0;
 }
 
-.chips {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 9px 0;
+.chips button{
+  background:white;
+  border-radius:15px;
+  padding:9px 11px;
+  font-size:10px;
+  white-space:nowrap;
+  box-shadow:0 2px 6px #00000008;
 }
 
-.chips button {
-  background: white;
-  border-radius: 15px;
-  padding: 9px 11px;
-  font-size: 10px;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px #00000008;
+.chat{
+  background:white;
+  border-radius:12px;
+  padding:15px;
+  font-size:12px;
+  min-height:70px;
+  line-height:1.5;
 }
 
-.chat {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  font-size: 12px;
-  min-height: 70px;
-  line-height: 1.5;
-  white-space: pre-line;
+.inputRow{
+  display:flex;
+  background:white;
+  border-radius:12px;
+  margin-top:9px;
+  padding:5px;
 }
 
-.inputRow {
-  display: flex;
-  background: white;
-  border-radius: 12px;
-  margin-top: 9px;
-  padding: 5px;
+.inputRow input{
+  border:0;
+  outline:0;
+  flex:1;
+  padding:9px;
+  min-width:0;
 }
 
-.inputRow input {
-  border: 0;
-  outline: 0;
-  flex: 1;
-  padding: 9px;
-  min-width: 0;
+.inputRow button{
+  background:${green};
+  color:white;
+  border-radius:9px;
+  width:44px;
 }
 
-.inputRow button {
-  background: ${green};
-  color: white;
-  border-radius: 9px;
-  width: 44px;
+.fullInput{
+  width:100%;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  outline:none;
+  margin-bottom:9px;
 }
 
-.fullInput {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  outline: none;
-  margin-bottom: 9px;
+.schemeIntro{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  background:#e9f7e4;
+  padding:14px;
+  border-radius:13px;
+  margin-bottom:9px;
 }
 
-.schemeIntro {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  background: #e9f7e4;
-  padding: 14px;
-  border-radius: 13px;
-  margin-bottom: 9px;
+.schemeIntro div{
+  flex:1;
 }
 
-.schemeIntro div {
-  flex: 1;
+.schemeIntro b{
+  display:block;
+  font-size:14px;
 }
 
-.schemeIntro b {
-  display: block;
-  font-size: 14px;
+.schemeIntro small{
+  display:block;
+  color:#777;
+  font-size:9px;
+  margin-top:4px;
 }
 
-.schemeIntro small {
-  display: block;
-  color: #777;
-  font-size: 9px;
-  margin-top: 4px;
+.scheme{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  background:white;
+  border-radius:13px;
+  padding:13px;
+  margin:8px 0;
+  box-shadow:0 2px 7px #00000008;
 }
 
-.scheme {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  background: white;
-  border-radius: 13px;
-  padding: 13px;
-  margin: 8px 0;
-  box-shadow: 0 2px 7px #00000008;
+.schemeIcon{
+  background:#edf7e8;
+  width:38px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  font-size:21px;
+  flex-shrink:0;
 }
 
-.schemeIcon {
-  background: #edf7e8;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  font-size: 21px;
-  flex-shrink: 0;
+.schemeText{
+  flex:1;
 }
 
-.schemeText {
-  flex: 1;
+.schemeText b{
+  display:block;
+  font-size:13px;
 }
 
-.schemeText b {
-  display: block;
-  font-size: 13px;
+.schemeText small{
+  display:block;
+  color:#777;
+  font-size:9px;
+  margin-top:3px;
+  line-height:1.4;
 }
 
-.official {
-  display: inline-block;
-  background: #edf7e8;
-  color: ${green};
-  text-decoration: none;
-  font-size: 8px;
-  padding: 5px 8px;
-  border-radius: 7px;
-  margin-top: 7px;
+.official{
+  display:inline-block;
+  background:#edf7e8;
+  color:${green};
+  text-decoration:none;
+  font-size:8px;
+  padding:5px 8px;
+  border-radius:7px;
+  margin-top:7px;
 }
 
-.storeGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.storeGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
 
-.product {
-  background: white;
-  border-radius: 14px;
-  padding: 9px;
-  box-shadow: 0 2px 7px #00000008;
+.product{
+  background:white;
+  border-radius:14px;
+  padding:9px;
+  box-shadow:0 2px 7px #00000008;
 }
 
-.productIcon {
-  height: 90px;
-  background: #edf7e8;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 42px;
+.productIcon{
+  height:90px;
+  background:#edf7e8;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:42px;
 }
 
 .product b,
-.product strong {
-  display: block;
-  font-size: 12px;
-  margin: 6px 0;
+.product strong{
+  display:block;
+  font-size:12px;
+  margin:6px 0;
 }
 
-.product strong {
-  color: ${green};
+.product strong{
+  color:${green};
 }
 
-.product button {
-  width: 100%;
-  background: ${green};
-  color: white;
-  border-radius: 8px;
-  padding: 9px;
-  font-size: 10px;
+.product small{
+  display:block;
+  color:#777;
+  font-size:9px;
+  margin-bottom:7px;
 }
 
-.profileBox {
-  text-align: center;
+.product button{
+  width:100%;
+  background:${green};
+  color:white;
+  border-radius:8px;
+  padding:9px;
+  font-size:10px;
 }
 
-.profileIcon {
-  font-size: 45px;
-  margin-bottom: 5px;
+.profileBox{
+  text-align:center;
 }
 
-.profileBox h2 {
-  margin-bottom: 16px;
+.profileIcon{
+  font-size:45px;
+  margin-bottom:5px;
 }
 
-.floating {
-  position: fixed;
-  right: 20px;
-  bottom: 76px;
-  background: ${green};
-  color: white;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  font-size: 20px;
-  box-shadow: 0 3px 12px #0004;
-  z-index: 10;
+.profileBox h2{
+  margin-bottom:16px;
 }
 
-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 720px;
-  height: 68px;
-  background: white;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  box-shadow: 0 -2px 12px #00000010;
-  z-index: 20;
+.success{
+  background:#e8f7e4;
+  color:${green};
+  padding:10px;
+  border-radius:9px;
+  font-size:11px;
 }
 
-nav button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #777;
-  font-size: 20px;
+.loading{
+  text-align:center;
+  padding:15px;
+  color:#777;
+  font-size:11px;
 }
 
-nav button small {
-  font-size: 9px;
-  margin-top: 4px;
+.selectedFile{
+  background:#f2f6f0;
+  padding:8px;
+  border-radius:8px;
+  margin:8px 0;
+  font-size:10px;
 }
 
-nav .active {
-  color: ${green};
+.result{
+  line-height:1.5;
 }
 
-@media (max-width: 420px) {
-  header {
-    height: 60px;
+.floating{
+  position:fixed;
+  right:20px;
+  bottom:76px;
+  background:${green};
+  color:white;
+  border-radius:50%;
+  width:48px;
+  height:48px;
+  font-size:20px;
+  box-shadow:0 3px 12px #0004;
+  z-index:10;
+}
+
+nav{
+  position:fixed;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:100%;
+  max-width:720px;
+  height:68px;
+  background:white;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  box-shadow:0 -2px 12px #00000010;
+  z-index:20;
+}
+
+nav button{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#777;
+  font-size:20px;
+}
+
+nav button small{
+  font-size:9px;
+  margin-top:4px;
+}
+
+nav .active{
+  color:${green};
+}
+
+@media(max-width:420px){
+  header{
+    height:60px;
   }
 
-  header b {
-    font-size: 14px;
+  header b{
+    font-size:14px;
   }
 
-  .welcome {
-    padding: 16px;
+  .welcome{
+    padding:16px;
   }
 
-  .welcome h2 {
-    font-size: 19px;
+  .welcome h2{
+    font-size:19px;
   }
 
-  .card {
-    min-height: 70px;
-    padding: 12px 9px;
+  .card{
+    min-height:70px;
+    padding:12px 9px;
   }
 
-  .card > span {
-    font-size: 21px;
+  .card>span{
+    font-size:21px;
   }
 
-  .card b {
-    font-size: 12px;
+  .card b{
+    font-size:12px;
   }
 
-  .card small {
-    font-size: 8px;
+  .card small{
+    font-size:8px;
   }
 
-  .tip {
-    font-size: 9px;
+  .tip{
+    font-size:9px;
   }
 }
 
-@media (max-width: 350px) {
-  main {
-    padding: 0 9px;
+@media(max-width:350px){
+  main{
+    padding:0 9px;
   }
 
-  .grid {
-    gap: 7px;
+  .grid{
+    gap:7px;
   }
 
-  .card {
-    padding: 10px 7px;
+  .card{
+    padding:10px 7px;
   }
 
-  .card > span {
-    margin-right: 5px;
+  .card>span{
+    margin-right:5px;
   }
 }
 `;
@@ -1347,8 +1673,4 @@ const style = document.createElement("style");
 style.innerHTML = css;
 document.head.appendChild(style);
 
-const root = document.getElementById("root");
-
-if (root) {
-  createRoot(root).render(<App />);
-}
+createRoot(document.getElementById("root")!).render(<App />);
