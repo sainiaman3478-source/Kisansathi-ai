@@ -47,6 +47,7 @@ function App() {
 
   const [crop, setCrop] = useState("");
   const [question, setQuestion] = useState("");
+
   const [chat, setChat] = useState(
     "नमस्ते किसान भाई! अपना खेती से जुड़ा सवाल नीचे लिखकर भेजें।"
   );
@@ -62,44 +63,15 @@ function App() {
   const [farmName, setFarmName] = useState("");
   const [area, setArea] = useState("");
 
-  const go = (page: PageName) => setTab(page);
+  const go = (page: PageName) => {
+    setTab(page);
+  };
 
   useEffect(() => {
     api("/api/products")
       .then(setProducts)
       .catch(() => setProducts([]));
   }, []);
-
-  const sendQuestion = async () => {
-    if (!question.trim()) return;
-
-    const q = question.trim();
-
-    setLoading(true);
-    setChat("🤖 AI Kisan सोच रहा है...");
-
-    try {
-      const data = await api("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: q,
-          question: q,
-        }),
-      });
-
-      setChat(`🤖 AI Kisan: ${data.reply || "अभी जवाब उपलब्ध नहीं है।"}`);
-    } catch {
-      setChat(
-        "⚠️ AI service से connection नहीं हो पाया। Server/API configuration जांचें।"
-      );
-    }
-
-    setQuestion("");
-    setLoading(false);
-  };
 
   const loadWeather = async () => {
     setLoading(true);
@@ -127,6 +99,41 @@ function App() {
     setLoading(false);
   };
 
+  const sendQuestion = async () => {
+    if (!question.trim()) return;
+
+    const q = question.trim();
+
+    setLoading(true);
+    setChat("🤖 AI Kisan सोच रहा है...");
+
+    try {
+      const data = await api("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: q,
+          question: q,
+        }),
+      });
+
+      setChat(
+        `🤖 AI Kisan: ${
+          data.reply || "अभी जवाब उपलब्ध नहीं है।"
+        }`
+      );
+    } catch {
+      setChat(
+        "⚠️ AI service से connection नहीं हो पाया। Server/API configuration जांचें।"
+      );
+    }
+
+    setQuestion("");
+    setLoading(false);
+  };
+
   const saveFarm = async () => {
     if (!farmName.trim()) {
       alert("कृपया किसान/फार्म का नाम लिखें।");
@@ -140,7 +147,7 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: farmName,
+          name: farmName.trim(),
           crop: crop || "गेहूं",
           area: Number(area) || 1,
           unit: "एकड़",
@@ -153,7 +160,9 @@ function App() {
       setFarmSaved(true);
       alert("🌱 फसल की जानकारी सेव हो गई!");
     } catch {
-      alert("फसल सेव नहीं हो पाई। Server चालू है या नहीं जांचें।");
+      alert(
+        "फसल सेव नहीं हो पाई। Server चालू है या नहीं जांचें।"
+      );
     }
   };
 
@@ -166,19 +175,214 @@ function App() {
     setCart((old) => [...old, product]);
   };
 
-  const Home = () => (
+  const placeOrder = async () => {
+    if (cart.length === 0) {
+      alert("पहले सामान cart में डालें।");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const items = cart.map((p) => ({
+        productId: p.id,
+        quantity: 1,
+      }));
+
+      const data = await api("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items,
+          paymentMethod: "COD",
+          customer: {
+            name: farmName || "किसान",
+          },
+        }),
+      });
+
+      alert(
+        `✅ Order सफल!\nOrder No: ${data.orderNo}\nकुल: ₹${data.total}\nPayment: COD`
+      );
+
+      setCart([]);
+
+      api("/api/products")
+        .then(setProducts)
+        .catch(() => {});
+    } catch {
+      alert("❌ Order नहीं हो पाया। Server/API जांचें।");
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="app">
+      <header>
+        <span className="logo">🌾</span>
+
+        <div>
+          <b>KisanSaathi AI</b>
+          <small>आपका डिजिटल किसान साथी</small>
+        </div>
+
+        <button
+          className="profileBtn"
+          onClick={() => go("profile")}
+        >
+          👤
+        </button>
+      </header>
+
+      <main>
+        {tab === "home" && (
+          <Home go={go} />
+        )}
+
+        {tab === "weather" && (
+          <Weather
+            weather={weather}
+            loading={loading}
+            loadWeather={loadWeather}
+            go={go}
+          />
+        )}
+
+        {tab === "market" && (
+          <Market
+            mandi={mandi}
+            loading={loading}
+            loadMandi={loadMandi}
+            go={go}
+          />
+        )}
+
+        {tab === "doctor" && (
+          <Doctor
+            crop={crop}
+            loading={loading}
+            setLoading={setLoading}
+            go={go}
+          />
+        )}
+
+        {tab === "ai" && (
+          <AI
+            question={question}
+            setQuestion={setQuestion}
+            chat={chat}
+            loading={loading}
+            sendQuestion={sendQuestion}
+            go={go}
+          />
+        )}
+
+        {tab === "crop" && (
+          <Crop
+            crop={crop}
+            setCrop={setCrop}
+            farmName={farmName}
+            setFarmName={setFarmName}
+            area={area}
+            setArea={setArea}
+            farmSaved={farmSaved}
+            saveFarm={saveFarm}
+            go={go}
+          />
+        )}
+
+        {tab === "schemes" && (
+          <Schemes go={go} />
+        )}
+
+        {tab === "store" && (
+          <Store
+            products={products}
+            cart={cart}
+            addToCart={addToCart}
+            placeOrder={placeOrder}
+            loading={loading}
+            go={go}
+          />
+        )}
+
+        {tab === "profile" && (
+          <Profile go={go} />
+        )}
+      </main>
+
+      <button
+        className="floating"
+        onClick={() => go("ai")}
+      >
+        💬
+      </button>
+
+      <nav>
+        <Nav
+          icon="⌂"
+          text="Home"
+          active={tab === "home"}
+          onClick={() => go("home")}
+        />
+
+        <Nav
+          icon="🌱"
+          text="फसल"
+          active={tab === "crop"}
+          onClick={() => go("crop")}
+        />
+
+        <Nav
+          icon="📷"
+          text="Doctor"
+          active={tab === "doctor"}
+          onClick={() => go("doctor")}
+        />
+
+        <Nav
+          icon="🛒"
+          text="Store"
+          active={tab === "store"}
+          onClick={() => go("store")}
+        />
+      </nav>
+    </div>
+  );
+}
+
+/* ================= HOME ================= */
+
+function Home({
+  go,
+}: {
+  go: (page: PageName) => void;
+}) {
+  return (
     <>
       <div className="welcome">
         <small>नमस्ते किसान भाई 👋</small>
 
-        <h2>आज खेती में आपकी मदद के लिए तैयार हैं।</h2>
+        <h2>
+          आज खेती में आपकी मदद के लिए तैयार हैं।
+        </h2>
 
-        <button className="weatherBox" onClick={() => go("weather")}>
-          <span className="weatherEmoji">☀️</span>
+        <button
+          className="weatherBox"
+          onClick={() => go("weather")}
+        >
+          <span className="weatherEmoji">
+            ☀️
+          </span>
 
           <div>
             <b>आज का मौसम</b>
-            <small>अपने इलाके का मौसम देखें</small>
+            <small>
+              अपने इलाके का मौसम देखें
+            </small>
           </div>
 
           <span className="arrow">›</span>
@@ -239,172 +443,277 @@ function App() {
       <div className="tip">
         ⚠️ <b>किसान सलाह:</b>
         <br />
-        दवा या सिंचाई का फैसला लेने से पहले मौसम और फसल की स्थिति जरूर जांचें।
+        दवा या सिंचाई का फैसला लेने से पहले
+        मौसम और फसल की स्थिति जरूर जांचें।
       </div>
     </>
   );
+}
 
-  const Weather = () => {
-    useEffect(() => {
+/* ================= WEATHER ================= */
+
+function Weather({
+  weather,
+  loading,
+  loadWeather,
+  go,
+}: {
+  weather: any;
+  loading: boolean;
+  loadWeather: () => void;
+  go: (page: PageName) => void;
+}) {
+  useEffect(() => {
+    if (!weather) {
       loadWeather();
-    }, []);
+    }
+  }, []);
 
-    const current = weather?.current;
+  const current = weather?.current;
 
-    return (
-      <Page title="मौसम" back={() => go("home")}>
-        <div className="location">
-          📍 आपका इलाका
-          <button onClick={loadWeather}>↻</button>
-        </div>
+  return (
+    <Page
+      title="मौसम"
+      back={() => go("home")}
+    >
+      <div className="location">
+        📍 आपका इलाका
 
-        <div className="weatherMain">
-          <div className="bigWeather">☀️</div>
-
-          <section>
-            <small>अभी का मौसम</small>
-
-            <strong>
-              {current?.temperature ?? "--"}°C
-            </strong>
-
-            <b>
-              {current ? "मौसम की जानकारी" : "जानकारी लोड हो रही है"}
-            </b>
-          </section>
-        </div>
-
-        <div className="grid">
-          <Info
-            icon="💧"
-            title="नमी"
-            value={
-              current ? `${current.humidity}%` : "--"
-            }
-          />
-
-          <Info
-            icon="🌧️"
-            title="बारिश की संभावना"
-            value={
-              current ? `${current.rainProbability}%` : "--"
-            }
-          />
-
-          <Info
-            icon="🌬️"
-            title="हवा"
-            value={
-              current ? `${current.wind} km/h` : "--"
-            }
-          />
-
-          <Info
-            icon="🌡️"
-            title="तापमान"
-            value={
-              current ? `${current.temperature}°C` : "--"
-            }
-          />
-        </div>
-
-        <div className="box">
-          <h3>📅 अगले 3 दिन</h3>
-
-          {weather?.forecast?.length ? (
-            weather.forecast.map((x: any) => (
-              <p key={x.day}>
-                {x.day}
-                <span>
-                  🌦️ {x.temp}°C / बारिश {x.rain}%
-                </span>
-              </p>
-            ))
-          ) : (
-            <p>मौसम की जानकारी उपलब्ध नहीं है।</p>
-          )}
-        </div>
-
-        {weather?.demo && (
-          <div className="tip">
-            ⚠️ अभी Weather API demo mode में है। इसे live weather service
-            से जोड़ने पर वास्तविक मौसम आएगा।
-          </div>
-        )}
-
-        {loading && <div className="loading">लोड हो रहा है...</div>}
-      </Page>
-    );
-  };
-
-  const Market = () => {
-    useEffect(() => {
-      loadMandi();
-    }, []);
-
-    return (
-      <Page title="मंडी भाव" back={() => go("home")}>
-        <div className="search">🔍 फसल खोजें...</div>
-
-        <button className="greenBtn" onClick={loadMandi}>
-          📊 मंडी भाव अपडेट करें
+        <button onClick={loadWeather}>
+          ↻
         </button>
+      </div>
 
-        <div className="box">
-          {mandi?.data?.length ? (
-            mandi.data.map((x: any, index: number) => (
-              <div className="market" key={index}>
+      <div className="weatherMain">
+        <div className="bigWeather">
+          ☀️
+        </div>
+
+        <section>
+          <small>अभी का मौसम</small>
+
+          <strong>
+            {current?.temperature ?? "--"}°C
+          </strong>
+
+          <b>
+            {current
+              ? "मौसम की जानकारी"
+              : "जानकारी लोड हो रही है"}
+          </b>
+        </section>
+      </div>
+
+      <div className="grid">
+        <Info
+          icon="💧"
+          title="नमी"
+          value={
+            current
+              ? `${current.humidity}%`
+              : "--"
+          }
+        />
+
+        <Info
+          icon="🌧️"
+          title="बारिश की संभावना"
+          value={
+            current
+              ? `${current.rainProbability}%`
+              : "--"
+          }
+        />
+
+        <Info
+          icon="🌬️"
+          title="हवा"
+          value={
+            current
+              ? `${current.wind} km/h`
+              : "--"
+          }
+        />
+
+        <Info
+          icon="🌡️"
+          title="तापमान"
+          value={
+            current
+              ? `${current.temperature}°C`
+              : "--"
+          }
+        />
+      </div>
+
+      <div className="box">
+        <h3>📅 अगले 3 दिन</h3>
+
+        {weather?.forecast?.length ? (
+          weather.forecast.map((x: any) => (
+            <p key={x.day}>
+              {x.day}
+
+              <span>
+                🌦️ {x.temp}°C / बारिश{" "}
+                {x.rain}%
+              </span>
+            </p>
+          ))
+        ) : (
+          <p>
+            मौसम की जानकारी उपलब्ध नहीं है।
+          </p>
+        )}
+      </div>
+
+      {weather?.demo && (
+        <div className="tip">
+          ⚠️ अभी Weather API demo mode में है।
+          Live weather service जोड़ने पर वास्तविक
+          मौसम आएगा।
+        </div>
+      )}
+
+      {loading && (
+        <div className="loading">
+          लोड हो रहा है...
+        </div>
+      )}
+    </Page>
+  );
+}
+
+/* ================= MARKET ================= */
+
+function Market({
+  mandi,
+  loading,
+  loadMandi,
+  go,
+}: {
+  mandi: any;
+  loading: boolean;
+  loadMandi: () => void;
+  go: (page: PageName) => void;
+}) {
+  useEffect(() => {
+    if (!mandi) {
+      loadMandi();
+    }
+  }, []);
+
+  return (
+    <Page
+      title="मंडी भाव"
+      back={() => go("home")}
+    >
+      <div className="search">
+        🔍 फसल खोजें...
+      </div>
+
+      <button
+        className="greenBtn"
+        onClick={loadMandi}
+      >
+        📊 मंडी भाव अपडेट करें
+      </button>
+
+      <div className="box">
+        {mandi?.data?.length ? (
+          mandi.data.map(
+            (x: any, index: number) => (
+              <div
+                className="market"
+                key={index}
+              >
                 <span>
                   🌾 <b>{x.crop}</b>
-                  <small>{x.mandi}</small>
+                  <small>
+                    {x.mandi}
+                  </small>
                 </span>
 
                 <strong>
                   ₹{x.modal}
                 </strong>
               </div>
-            ))
-          ) : (
-            fallbackCrops.map((c) => (
-              <div className="market" key={c[1]}>
-                <span>
-                  {c[0]} <b>{c[1]}</b>
-                  <small>Demo भाव</small>
-                </span>
+            )
+          )
+        ) : (
+          fallbackCrops.map((c) => (
+            <div
+              className="market"
+              key={c[1]}
+            >
+              <span>
+                {c[0]} <b>{c[1]}</b>
 
-                <strong>{c[2]}</strong>
-              </div>
-            ))
-          )}
+                <small>
+                  Demo भाव
+                </small>
+              </span>
+
+              <strong>
+                {c[2]}
+              </strong>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="tip">
+        ⚠️ मंडी भाव स्थान और मंडी के अनुसार
+        बदल सकते हैं।
+
+        {mandi?.demo && (
+          <>
+            <br />
+            अभी live mandi feed configure नहीं है।
+          </>
+        )}
+      </div>
+
+      {loading && (
+        <div className="loading">
+          मंडी भाव लोड हो रहे हैं...
         </div>
+      )}
+    </Page>
+  );
+}
 
-        <div className="tip">
-          ⚠️ मंडी भाव स्थान और मंडी के अनुसार बदल सकते हैं।
-          {mandi?.demo && (
-            <>
-              <br />
-              अभी live mandi feed configure नहीं है।
-            </>
-          )}
-        </div>
-      </Page>
-    );
-  };
+/* ================= DOCTOR ================= */
 
-  const Doctor = () => {
-    const [image, setImage] = useState<File | null>(null);
-    const [result, setResult] = useState<any>(null);
+function Doctor({
+  crop,
+  loading,
+  setLoading,
+  go,
+}: {
+  crop: string;
+  loading: boolean;
+  setLoading: (x: boolean) => void;
+  go: (page: PageName) => void;
+}) {
+  const [image, setImage] =
+    useState<File | null>(null);
 
-    const analyze = async () => {
-      if (!image) {
-        alert("पहले फसल की फोटो चुनें।");
-        return;
-      }
+  const [result, setResult] =
+    useState<any>(null);
 
-      setLoading(true);
+  const analyze = async () => {
+    if (!image) {
+      alert("पहले फसल की फोटो चुनें।");
+      return;
+    }
 
-      try {
-        const data = await api("/api/crop/analyze", {
+    setLoading(true);
+
+    try {
+      const data = await api(
+        "/api/crop/analyze",
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -413,98 +722,152 @@ function App() {
             cropType: crop || "फसल",
             imageName: image.name,
           }),
-        });
+        }
+      );
 
-        setResult(data);
-      } catch {
-        alert("फसल जांच service से connection नहीं हुआ।");
-      }
+      setResult(data);
+    } catch {
+      alert(
+        "फसल जांच service से connection नहीं हुआ।"
+      );
+    }
 
-      setLoading(false);
-    };
-
-    return (
-      <Page title="Crop Doctor" back={() => go("home")}>
-        <div className="doctor">
-          <div className="bigIcon">📷</div>
-
-          <h2>अपनी फसल की जांच करें</h2>
-
-          <p>पत्ते या फसल की साफ फोटो चुनें</p>
-
-          <label className="upload">
-            📷 फोटो चुनें
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setImage(e.target.files?.[0] || null)
-              }
-            />
-          </label>
-
-          {image && (
-            <div className="selectedFile">
-              📁 {image.name}
-            </div>
-          )}
-
-          <button className="greenBtn" onClick={analyze}>
-            🔍 फसल की जांच करें
-          </button>
-        </div>
-
-        {result && (
-          <div className="box result">
-            <h3>🌱 जांच परिणाम</h3>
-
-            <p>
-              <b>समस्या:</b> {result.issue}
-            </p>
-
-            <p>
-              <b>लक्षण:</b> {result.symptoms}
-            </p>
-
-            <p>
-              <b>संभावित कारण:</b> {result.causes}
-            </p>
-
-            <p>
-              <b>अगला कदम:</b> {result.nextSteps}
-            </p>
-
-            <p>
-              <b>रोकथाम:</b> {result.prevention}
-            </p>
-
-            <div className="tip">
-              ⚠️ यह demo/प्रारंभिक अनुमान हो सकता है। दवा देने से पहले
-              विशेषज्ञ या विश्वसनीय कृषि सलाह से पुष्टि करें।
-            </div>
-          </div>
-        )}
-      </Page>
-    );
+    setLoading(false);
   };
 
-  const AI = () => (
-    <Page title="AI Kisan" back={() => go("home")}>
+  return (
+    <Page
+      title="Crop Doctor"
+      back={() => go("home")}
+    >
+      <div className="doctor">
+        <div className="bigIcon">
+          📷
+        </div>
+
+        <h2>
+          अपनी फसल की जांच करें
+        </h2>
+
+        <p>
+          पत्ते या फसल की साफ फोटो चुनें
+        </p>
+
+        <label className="upload">
+          📷 फोटो चुनें
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              setImage(
+                e.target.files?.[0] ||
+                  null
+              )
+            }
+          />
+        </label>
+
+        {image && (
+          <div className="selectedFile">
+            📁 {image.name}
+          </div>
+        )}
+
+        <button
+          className="greenBtn"
+          onClick={analyze}
+          disabled={loading}
+        >
+          {loading
+            ? "जांच हो रही है..."
+            : "🔍 फसल की जांच करें"}
+        </button>
+      </div>
+
+      {result && (
+        <div className="box result">
+          <h3>
+            🌱 जांच परिणाम
+          </h3>
+
+          <p>
+            <b>समस्या:</b>{" "}
+            {result.issue}
+          </p>
+
+          <p>
+            <b>लक्षण:</b>{" "}
+            {result.symptoms}
+          </p>
+
+          <p>
+            <b>संभावित कारण:</b>{" "}
+            {result.causes}
+          </p>
+
+          <p>
+            <b>अगला कदम:</b>{" "}
+            {result.nextSteps}
+          </p>
+
+          <p>
+            <b>रोकथाम:</b>{" "}
+            {result.prevention}
+          </p>
+
+          <div className="tip">
+            ⚠️ यह demo/प्रारंभिक अनुमान हो सकता है।
+            दवा देने से पहले विशेषज्ञ या विश्वसनीय
+            कृषि सलाह से पुष्टि करें।
+          </div>
+        </div>
+      )}
+    </Page>
+  );
+}
+
+/* ================= AI ================= */
+
+function AI({
+  question,
+  setQuestion,
+  chat,
+  loading,
+  sendQuestion,
+  go,
+}: {
+  question: string;
+  setQuestion: (x: string) => void;
+  chat: string;
+  loading: boolean;
+  sendQuestion: () => void;
+  go: (page: PageName) => void;
+}) {
+  return (
+    <Page
+      title="AI Kisan"
+      back={() => go("home")}
+    >
       <div className="aiHead">
-        <div className="aiIcon">🤖</div>
+        <div className="aiIcon">
+          🤖
+        </div>
 
         <h2>AI Kisan</h2>
 
         <p>
-          खेती, मौसम, फसल और मंडी से जुड़े सवाल पूछें
+          खेती, मौसम, फसल और मंडी से जुड़े
+          सवाल पूछें
         </p>
       </div>
 
       <div className="chips">
         <button
           onClick={() =>
-            setQuestion("गेहूं में कौन सी खाद डालें?")
+            setQuestion(
+              "गेहूं में कौन सी खाद डालें?"
+            )
           }
         >
           गेहूं में कौन सी खाद डालें?
@@ -512,7 +875,9 @@ function App() {
 
         <button
           onClick={() =>
-            setQuestion("आज बारिश होगी?")
+            setQuestion(
+              "आज बारिश होगी?"
+            )
           }
         >
           आज बारिश होगी?
@@ -520,14 +885,18 @@ function App() {
 
         <button
           onClick={() =>
-            setQuestion("धान की खेती के लिए सलाह")
+            setQuestion(
+              "धान की खेती के लिए सलाह"
+            )
           }
         >
           धान की खेती के लिए सलाह
         </button>
       </div>
 
-      <div className="chat">{chat}</div>
+      <div className="chat">
+        {chat}
+      </div>
 
       <div className="inputRow">
         <input
@@ -543,22 +912,54 @@ function App() {
           placeholder="अपना सवाल लिखें..."
         />
 
-        <button onClick={sendQuestion} disabled={loading}>
+        <button
+          onClick={sendQuestion}
+          disabled={loading}
+        >
           {loading ? "…" : "➤"}
         </button>
       </div>
 
       <div className="tip">
-        💡 फसल का नाम, फसल की उम्र, मिट्टी और समस्या बताने पर सलाह
-        ज्यादा उपयोगी हो सकती है।
+        💡 फसल का नाम, फसल की उम्र, मिट्टी और
+        समस्या बताने पर सलाह ज्यादा उपयोगी हो सकती है।
       </div>
     </Page>
   );
+}
 
-  const Crop = () => (
-    <Page title="मेरी फसल" back={() => go("home")}>
+/* ================= CROP ================= */
+
+function Crop({
+  crop,
+  setCrop,
+  farmName,
+  setFarmName,
+  area,
+  setArea,
+  farmSaved,
+  saveFarm,
+  go,
+}: {
+  crop: string;
+  setCrop: (x: string) => void;
+  farmName: string;
+  setFarmName: (x: string) => void;
+  area: string;
+  setArea: (x: string) => void;
+  farmSaved: boolean;
+  saveFarm: () => void;
+  go: (page: PageName) => void;
+}) {
+  return (
+    <Page
+      title="मेरी फसल"
+      back={() => go("home")}
+    >
       <div className="box">
-        <h2>🌱 अपनी फसल जोड़ें</h2>
+        <h2>
+          🌱 अपनी फसल जोड़ें
+        </h2>
 
         <input
           className="fullInput"
@@ -588,7 +989,10 @@ function App() {
           placeholder="क्षेत्रफल (एकड़)"
         />
 
-        <button className="greenBtn" onClick={saveFarm}>
+        <button
+          className="greenBtn"
+          onClick={saveFarm}
+        >
           💾 फसल सेव करें
         </button>
 
@@ -600,22 +1004,95 @@ function App() {
       </div>
 
       <div className="box">
-        <h3>📍 खेत की जानकारी</h3>
+        <h3>
+          📍 खेत की जानकारी
+        </h3>
 
         <p>
-          आगे चलकर गांव, मिट्टी, सिंचाई और बुवाई की तारीख भी जोड़ी जा सकती है।
+          आगे चलकर गांव, मिट्टी, सिंचाई और बुवाई
+          की तारीख भी जोड़ी जा सकती है।
         </p>
       </div>
     </Page>
   );
+}
 
-  const Schemes = () => (
-    <Page title="सरकारी योजना" back={() => go("home")}>
+/* ================= SCHEMES ================= */
+
+function Schemes({
+  go,
+}: {
+  go: (page: PageName) => void;
+}) {
+  const schemes = [
+    [
+      "🌾",
+      "PM-KISAN",
+      "किसानों के लिए आर्थिक सहायता",
+      "https://pmkisan.gov.in/",
+    ],
+    [
+      "🛡️",
+      "प्रधानमंत्री फसल बीमा योजना",
+      "फसल नुकसान से सुरक्षा",
+      "https://pmfby.gov.in/",
+    ],
+    [
+      "💳",
+      "किसान क्रेडिट कार्ड (KCC)",
+      "कृषि के लिए ऋण सुविधा",
+      "https://www.jansuraksha.gov.in/",
+    ],
+    [
+      "👨‍🌾",
+      "PM किसान मानधन योजना",
+      "किसानों के लिए पेंशन योजना",
+      "https://maandhan.in/",
+    ],
+    [
+      "🧪",
+      "Soil Health Card",
+      "मिट्टी की जांच और पोषक तत्वों की जानकारी",
+      "https://soilhealth.dac.gov.in/",
+    ],
+    [
+      "🏗️",
+      "Agriculture Infrastructure Fund",
+      "कृषि इंफ्रास्ट्रक्चर सहायता",
+      "https://agriinfra.dac.gov.in/",
+    ],
+    [
+      "🌱",
+      "परंपरागत कृषि विकास योजना",
+      "जैविक खेती को बढ़ावा",
+      "https://pgsindia-ncof.gov.in/",
+    ],
+    [
+      "📈",
+      "e-NAM",
+      "ऑनलाइन कृषि मंडी प्लेटफॉर्म",
+      "https://www.enam.gov.in/",
+    ],
+    [
+      "🔎",
+      "MyScheme",
+      "सरकारी योजनाएं खोजें",
+      "https://www.myscheme.gov.in/",
+    ],
+  ];
+
+  return (
+    <Page
+      title="सरकारी योजना"
+      back={() => go("home")}
+    >
       <div className="schemeIntro">
         🏛️
 
         <div>
-          <b>किसानों के लिए सरकारी योजनाएं</b>
+          <b>
+            किसानों के लिए सरकारी योजनाएं
+          </b>
 
           <small>
             महत्वपूर्ण योजनाओं की जानकारी
@@ -623,19 +1100,14 @@ function App() {
         </div>
       </div>
 
-      {[
-        ["🌾", "PM-KISAN", "किसानों के लिए आर्थिक सहायता", "https://pmkisan.gov.in/"],
-        ["🛡️", "प्रधानमंत्री फसल बीमा योजना", "फसल नुकसान से सुरक्षा", "https://pmfby.gov.in/"],
-        ["💳", "किसान क्रेडिट कार्ड (KCC)", "कृषि के लिए ऋण सुविधा", "https://www.jansuraksha.gov.in/"],
-        ["👨‍🌾", "PM किसान मानधन योजना", "किसानों के लिए पेंशन योजना", "https://maandhan.in/"],
-        ["🧪", "Soil Health Card", "मिट्टी की जांच और पोषक तत्वों की जानकारी", "https://soilhealth.dac.gov.in/"],
-        ["🏗️", "Agriculture Infrastructure Fund", "कृषि इंफ्रास्ट्रक्चर सहायता", "https://agriinfra.dac.gov.in/"],
-        ["🌱", "परंपरागत कृषि विकास योजना", "जैविक खेती को बढ़ावा", "https://pgsindia-ncof.gov.in/"],
-        ["📈", "e-NAM", "ऑनलाइन कृषि मंडी प्लेटफॉर्म", "https://www.enam.gov.in/"],
-        ["🔎", "MyScheme", "सरकारी योजनाएं खोजें", "https://www.myscheme.gov.in/"],
-      ].map((x) => (
-        <div className="scheme" key={x[1]}>
-          <span className="schemeIcon">{x[0]}</span>
+      {schemes.map((x) => (
+        <div
+          className="scheme"
+          key={x[1]}
+        >
+          <span className="schemeIcon">
+            {x[0]}
+          </span>
 
           <div className="schemeText">
             <b>{x[1]}</b>
@@ -655,18 +1127,42 @@ function App() {
       ))}
 
       <div className="tip">
-        ⚠️ आवेदन करने से पहले संबंधित Official Government Website पर
-        जानकारी जरूर जांचें।
+        ⚠️ आवेदन करने से पहले संबंधित Official
+        Government Website पर जानकारी जरूर जांचें।
       </div>
     </Page>
   );
+}
 
-  const Store = () => (
-    <Page title="Kisan Store" back={() => go("home")}>
+/* ================= STORE ================= */
+
+function Store({
+  products,
+  cart,
+  addToCart,
+  placeOrder,
+  loading,
+  go,
+}: {
+  products: Product[];
+  cart: Product[];
+  addToCart: (p: Product) => void;
+  placeOrder: () => void;
+  loading: boolean;
+  go: (page: PageName) => void;
+}) {
+  return (
+    <Page
+      title="Kisan Store"
+      back={() => go("home")}
+    >
       <div className="storeGrid">
         {products.length > 0
           ? products.map((p) => (
-              <div className="product" key={p.id}>
+              <div
+                className="product"
+                key={p.id}
+              >
                 <div className="productIcon">
                   {p.image || "🌱"}
                 </div>
@@ -674,16 +1170,23 @@ function App() {
                 <b>{p.name}</b>
 
                 <strong>
-                  ₹{p.discountPrice ?? p.price}
+                  ₹
+                  {p.discountPrice ??
+                    p.price}
                 </strong>
 
                 <small>
-                  {p.unit} • Stock: {p.stock}
+                  {p.unit} • Stock:{" "}
+                  {p.stock}
                 </small>
 
                 <button
-                  onClick={() => addToCart(p)}
-                  disabled={p.stock <= 0}
+                  onClick={() =>
+                    addToCart(p)
+                  }
+                  disabled={
+                    p.stock <= 0
+                  }
                 >
                   {p.stock > 0
                     ? "🛒 कार्ट में डालें"
@@ -694,11 +1197,24 @@ function App() {
           : [
               ["🌿", "नीम ऑयल", "₹299"],
               ["🌱", "जैविक खाद", "₹499"],
-              ["🧴", "फसल सुरक्षा किट", "₹699"],
-              ["🌾", "बीज उपचार किट", "₹399"],
+              [
+                "🧴",
+                "फसल सुरक्षा किट",
+                "₹699",
+              ],
+              [
+                "🌾",
+                "बीज उपचार किट",
+                "₹399",
+              ],
             ].map((x) => (
-              <div className="product" key={x[1]}>
-                <div className="productIcon">{x[0]}</div>
+              <div
+                className="product"
+                key={x[1]}
+              >
+                <div className="productIcon">
+                  {x[0]}
+                </div>
 
                 <b>{x[1]}</b>
 
@@ -706,7 +1222,9 @@ function App() {
 
                 <button
                   onClick={() =>
-                    alert("Demo product cart में जोड़ दिया गया।")
+                    alert(
+                      "Demo product cart में जोड़ दिया गया।"
+                    )
                   }
                 >
                   🛒 कार्ट में डालें
@@ -716,43 +1234,71 @@ function App() {
       </div>
 
       <div className="box">
-        <h3>🛒 आपका कार्ट</h3>
+        <h3>
+          🛒 आपका कार्ट
+        </h3>
 
         {cart.length === 0 ? (
-          <p>अभी cart खाली है।</p>
+          <p>
+            अभी cart खाली है।
+          </p>
         ) : (
           <>
             {cart.map((p, i) => (
-              <p key={`${p.id}-${i}`}>
+              <p
+                key={`${p.id}-${i}`}
+              >
                 {p.name}
+
                 <span>
-                  ₹{p.discountPrice ?? p.price}
+                  ₹
+                  {p.discountPrice ??
+                    p.price}
                 </span>
               </p>
             ))}
 
             <button
               className="greenBtn"
-              onClick={() =>
-                alert(
-                  "Order system तैयार है। Payment gateway बाद में जोड़ा जा सकता है।"
-                )
-              }
+              onClick={placeOrder}
+              disabled={loading}
             >
-              🛍️ Order करें
+              {loading
+                ? "Order हो रहा है..."
+                : "🛍️ COD Order करें"}
             </button>
+
+            <div className="tip">
+              💵 Payment Method:{" "}
+              <b>Cash on Delivery (COD)</b>
+            </div>
           </>
         )}
       </div>
     </Page>
   );
+}
 
-  const Profile = () => (
-    <Page title="प्रोफाइल" back={() => go("home")}>
+/* ================= PROFILE ================= */
+
+function Profile({
+  go,
+}: {
+  go: (page: PageName) => void;
+}) {
+  return (
+    <Page
+      title="प्रोफाइल"
+      back={() => go("home")}
+    >
       <div className="box profileBox">
-        <div className="profileIcon">👤</div>
+        <div className="profileIcon">
+          👤
+        </div>
 
-        <h2>किसान प्रोफाइल</h2>
+        <h2>
+          किसान प्रोफाइल
+        </h2>
 
         <input
           className="fullInput"
@@ -772,7 +1318,9 @@ function App() {
         <button
           className="greenBtn"
           onClick={() =>
-            alert("प्रोफाइल सेव करने का अगला चरण backend में जोड़ा जा सकता है।")
+            alert(
+              "प्रोफाइल backend में सेव करने का अगला चरण जोड़ा जा सकता है।"
+            )
           }
         >
           💾 प्रोफाइल सेव करें
@@ -780,77 +1328,9 @@ function App() {
       </div>
     </Page>
   );
-
-  return (
-    <div className="app">
-      <header>
-        <span className="logo">🌾</span>
-
-        <div>
-          <b>KisanSaathi AI</b>
-
-          <small>आपका डिजिटल किसान साथी</small>
-        </div>
-
-        <button
-          className="profileBtn"
-          onClick={() => go("profile")}
-        >
-          👤
-        </button>
-      </header>
-
-      <main>
-        {tab === "home" && <Home />}
-        {tab === "weather" && <Weather />}
-        {tab === "market" && <Market />}
-        {tab === "doctor" && <Doctor />}
-        {tab === "ai" && <AI />}
-        {tab === "crop" && <Crop />}
-        {tab === "schemes" && <Schemes />}
-        {tab === "store" && <Store />}
-        {tab === "profile" && <Profile />}
-      </main>
-
-      <button
-        className="floating"
-        onClick={() => go("ai")}
-      >
-        💬
-      </button>
-
-      <nav>
-        <Nav
-          icon="⌂"
-          text="Home"
-          active={tab === "home"}
-          onClick={() => go("home")}
-        />
-
-        <Nav
-          icon="🌱"
-          text="फसल"
-          active={tab === "crop"}
-          onClick={() => go("crop")}
-        />
-
-        <Nav
-          icon="📷"
-          text="Doctor"
-          active={tab === "doctor"}
-          onClick={() => go("doctor")}
-        />
-
-        <Nav
-          icon="🛒"
-          text="Store"
-          active={tab === "store"}
-          onClick={() => go("store")}
-        />
-      </nav>
-    </div>
-  );
 }
+
+/* ================= COMMON ================= */
 
 function Page({
   title,
@@ -890,7 +1370,10 @@ function Card({
   onClick: () => void;
 }) {
   return (
-    <button className="card" onClick={onClick}>
+    <button
+      className="card"
+      onClick={onClick}
+    >
       <span>{icon}</span>
 
       <div>
@@ -945,6 +1428,8 @@ function Nav({
     </button>
   );
 }
+
+/* ================= CSS ================= */
 
 const css = `
 *{
@@ -1670,7 +2155,13 @@ nav .active{
 `;
 
 const style = document.createElement("style");
+
 style.innerHTML = css;
+
 document.head.appendChild(style);
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(
+  document.getElementById("root")!
+).render(
+  <App />
+);
