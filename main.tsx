@@ -14,63 +14,57 @@ const schemes = [
   {
     icon: "🌾",
     name: "PM-KISAN",
-    desc: "किसानों के लिए आर्थिक सहायता",
+    text: "किसानों के लिए आर्थिक सहायता",
     url: "https://pmkisan.gov.in/"
   },
   {
     icon: "🛡️",
     name: "प्रधानमंत्री फसल बीमा योजना",
-    desc: "फसल नुकसान से सुरक्षा",
+    text: "फसल नुकसान से सुरक्षा",
     url: "https://pmfby.gov.in/"
-  },
-  {
-    icon: "💧",
-    name: "प्रधानमंत्री कृषि सिंचाई योजना",
-    desc: "सिंचाई सुविधा और पानी की बचत",
-    url: "https://www.india.gov.in/category/agriculture-rural-environment/subcategory/resources-for-agriculture/details/website-of-prime-minister-krishi-sinchayee-yojana"
   },
   {
     icon: "💳",
     name: "किसान क्रेडिट कार्ड (KCC)",
-    desc: "किसानों के लिए आसान कृषि ऋण",
-    url: "https://pmkisan.gov.in/"
+    text: "खेती के लिए किसान ऋण सुविधा",
+    url: "https://www.myscheme.gov.in/"
   },
   {
-    icon: "👴",
+    icon: "👨‍🌾",
     name: "PM किसान मानधन योजना",
-    desc: "किसानों के लिए पेंशन योजना",
+    text: "किसानों के लिए पेंशन योजना",
     url: "https://maandhan.in/"
   },
   {
     icon: "🧪",
     name: "Soil Health Card",
-    desc: "मिट्टी की जांच और पोषक तत्वों की जानकारी",
+    text: "मिट्टी की जांच और पोषक जानकारी",
     url: "https://soilhealth.dac.gov.in/"
   },
   {
     icon: "🏗️",
     name: "Agriculture Infrastructure Fund",
-    desc: "कृषि इंफ्रास्ट्रक्चर के लिए वित्तीय सहायता",
+    text: "कृषि ढांचे के लिए वित्तीय सहायता",
     url: "https://agriinfra.dac.gov.in/"
   },
   {
     icon: "🌱",
     name: "परंपरागत कृषि विकास योजना",
-    desc: "जैविक खेती को बढ़ावा देने की योजना",
+    text: "जैविक खेती को बढ़ावा",
     url: "https://pgsindia-ncof.gov.in/"
   },
   {
     icon: "📈",
     name: "e-NAM",
-    desc: "राष्ट्रीय कृषि बाजार",
-    url: "https://www.enam.gov.in/"
+    text: "ऑनलाइन राष्ट्रीय कृषि बाजार",
+    url: "https://www.enam.gov.in/web/"
   },
   {
     icon: "🔎",
     name: "MyScheme",
-    desc: "सरकारी योजनाएं खोजने का पोर्टल",
+    text: "सरकारी योजनाएं खोजें",
     url: "https://www.myscheme.gov.in/"
-  },
+  }
 ];
 
 function App() {
@@ -117,6 +111,7 @@ function App() {
       </div>
 
       <div className="grid">
+
         <Card
           icon="📷"
           title="फसल जांच"
@@ -165,6 +160,7 @@ function App() {
           text="किसानों की योजनाएं"
           onClick={() => go("schemes")}
         />
+
       </div>
 
       <div className="tip">
@@ -176,12 +172,14 @@ function App() {
   );
 
   const Weather = () => (
-    <Page title="मौसम" back go={go}>
+    <Page title="मौसम" back>
+
       <div className="location">
         📍 30.17°, 77.61°　　↻
       </div>
 
       <div className="weatherMain">
+
         <div>☀️</div>
 
         <section>
@@ -189,35 +187,64 @@ function App() {
           <strong>30°C</strong>
           <b>साफ आसमान</b>
         </section>
+
       </div>
 
       <div className="grid">
-        <Info icon="💧" title="नमी" value="81%" />
-        <Info icon="☀️" title="बादल" value="75%" />
-        <Info icon="🌬️" title="हवा" value="7 km/h" />
-        <Info icon="🌡️" title="महसूस" value="37°C" />
+
+        <Info
+          icon="💧"
+          title="नमी"
+          value="81%"
+        />
+
+        <Info
+          icon="☀️"
+          title="बादल"
+          value="75%"
+        />
+
+        <Info
+          icon="🌬️"
+          title="हवा"
+          value="7 km/h"
+        />
+
+        <Info
+          icon="🌡️"
+          title="महसूस"
+          value="37°C"
+        />
+
       </div>
 
       <div className="box">
+
         <h3>📅 अगले 3 दिन</h3>
 
         <p>
-          आज <span>⛈️ 33° / 26°</span>
+          आज
+          <span>⛈️ 33° / 26°</span>
         </p>
 
         <p>
-          कल <span>⛈️ 31° / 25°</span>
+          कल
+          <span>⛈️ 31° / 25°</span>
         </p>
 
         <p>
-          परसों <span>⛈️ 31° / 25°</span>
+          परसों
+          <span>⛈️ 31° / 25°</span>
         </p>
+
       </div>
+
     </Page>
   );
 
   const Market = () => (
-    <Page title="मंडी भाव" back go={go}>
+    <Page title="मंडी भाव" back>
+
       <div className="search">
         🔍　फसल खोजें...
       </div>
@@ -227,54 +254,76 @@ function App() {
       </button>
 
       <div className="box">
-        {crops.map((c) => (
-          <div className="market" key={c[1]}>
+
+        {crops.map(c => (
+
+          <div
+            className="market"
+            key={c[1]}
+          >
+
             <span>
               {c[0]} <b>{c[1]}</b>
               <small>आज का भाव</small>
             </span>
 
             <strong>{c[2]}</strong>
+
           </div>
+
         ))}
+
       </div>
 
       <div className="tip">
         ⚠️ मंडी भाव स्थान और मंडी के अनुसार बदल सकते हैं।
       </div>
+
     </Page>
   );
 
   const Doctor = () => (
-    <Page title="Crop Doctor" back go={go}>
-      <div className="doctor">
-        <div className="bigIcon">📷</div>
+    <Page title="Crop Doctor" back>
 
-        <h2>अपनी फसल की जांच करें</h2>
+      <div className="doctor">
+
+        <div className="bigIcon">
+          📷
+        </div>
+
+        <h2>
+          अपनी फसल की जांच करें
+        </h2>
 
         <p>
           पत्ते या फसल की साफ फोटो चुनें
         </p>
 
         <label className="upload">
+
           📷 फोटो चुनें
 
           <input
             type="file"
             accept="image/*"
           />
+
         </label>
 
         <button className="greenBtn">
           🔍 फसल की जांच करें
         </button>
+
       </div>
+
     </Page>
   );
 
   const AI = () => (
-    <Page title="AI Kisan" back go={go}>
+    <Page title="AI Kisan" back>
+
       <div className="aiHead">
+
         <div>🤖</div>
 
         <h2>AI Kisan</h2>
@@ -282,9 +331,11 @@ function App() {
         <p>
           खेती, मौसम, फसल और मंडी से जुड़े सवाल पूछें
         </p>
+
       </div>
 
       <div className="chips">
+
         <button
           onClick={() =>
             setQuestion("गेहूं में कौन सी खाद डालें?")
@@ -308,6 +359,7 @@ function App() {
         >
           धान की खेती के लिए सलाह
         </button>
+
       </div>
 
       <div className="chat">
@@ -315,9 +367,10 @@ function App() {
       </div>
 
       <div className="inputRow">
+
         <input
           value={question}
-          onChange={(e) =>
+          onChange={e =>
             setQuestion(e.target.value)
           }
           placeholder="अपना सवाल लिखें..."
@@ -326,18 +379,24 @@ function App() {
         <button onClick={sendQuestion}>
           ➤
         </button>
+
       </div>
+
     </Page>
   );
 
   const Crop = () => (
-    <Page title="मेरी फसल" back go={go}>
+    <Page title="मेरी फसल" back>
+
       <div className="box">
-        <h2>🌱 अपनी फसल जोड़ें</h2>
+
+        <h2>
+          🌱 अपनी फसल जोड़ें
+        </h2>
 
         <input
           value={crop}
-          onChange={(e) =>
+          onChange={e =>
             setCrop(e.target.value)
           }
           placeholder="गेहूं, धान, कपास..."
@@ -346,48 +405,67 @@ function App() {
         <button className="greenBtn">
           💾 फसल सेव करें
         </button>
+
       </div>
 
       <div className="box">
-        <h3>📍 खेत की जानकारी</h3>
+
+        <h3>
+          📍 खेत की जानकारी
+        </h3>
 
         <p>
           गांव, क्षेत्रफल और सिंचाई की जानकारी बाद में जोड़ सकते हैं।
         </p>
+
       </div>
+
     </Page>
   );
 
   const Schemes = () => (
-    <Page title="सरकारी योजनाएं" back go={go}>
+    <Page title="सरकारी योजनाएं" back>
 
       <div className="schemeIntro">
-        <span>🏛️</span>
+
+        <div className="schemeBigIcon">
+          🏛️
+        </div>
 
         <div>
-          <b>किसानों के लिए सरकारी योजनाएं</b>
+          <h2>
+            किसानों के लिए सरकारी योजनाएं
+          </h2>
 
-          <small>
-            नीचे दी गई योजनाओं की जानकारी और Official Website खोलने के लिए बटन दबाएं।
-          </small>
+          <p>
+            नीचे दी गई योजनाओं की जानकारी और Official Website
+            सीधे खोल सकते हैं।
+          </p>
         </div>
+
       </div>
 
-      {schemes.map((x) => (
-        <div className="schemeCard" key={x.name}>
+      {schemes.map((s) => (
+
+        <div
+          className="schemeCard"
+          key={s.name}
+        >
 
           <div className="schemeIcon">
-            {x.icon}
+            {s.icon}
           </div>
 
           <div className="schemeInfo">
 
-            <b>{x.name}</b>
+            <b>{s.name}</b>
 
-            <small>{x.desc}</small>
+            <small>
+              {s.text}
+            </small>
 
             <a
-              href={x.url}
+              href={s.url}
               target="_blank"
               rel="noopener noreferrer"
               className="officialBtn"
@@ -398,19 +476,25 @@ function App() {
           </div>
 
         </div>
+
       ))}
 
-      <div className="tip">
+      <div className="schemeWarning">
+
         ⚠️ <b>जरूरी सूचना:</b>
+
         <br />
-        योजना की पात्रता, आवेदन और लाभ की जानकारी हमेशा संबंधित Official Government Website पर ही जांचें।
+
+        आवेदन करने से पहले योजना की पात्रता और जानकारी
+        Official Government Website पर जरूर जांचें।
+
       </div>
 
     </Page>
   );
 
   const Store = () => (
-    <Page title="Kisan Store" back go={go}>
+    <Page title="Kisan Store" back>
 
       <div className="storeGrid">
 
@@ -418,10 +502,13 @@ function App() {
           ["🌿", "नीम ऑयल", "₹299"],
           ["🌱", "जैविक खाद", "₹499"],
           ["🧴", "फसल सुरक्षा किट", "₹699"],
-          ["🌾", "बीज उपचार किट", "₹399"],
-        ].map((x) => (
+          ["🌾", "बीज उपचार किट", "₹399"]
+        ].map(x => (
 
-          <div className="product" key={x[1]}>
+          <div
+            className="product"
+            key={x[1]}
+          >
 
             <div className="productIcon">
               {x[0]}
@@ -453,6 +540,7 @@ function App() {
   );
 
   return (
+
     <div className="app">
 
       <header>
@@ -466,7 +554,9 @@ function App() {
           </small>
         </div>
 
-        <button>
+        <button
+          onClick={() => go("profile")}
+        >
           ♙
         </button>
 
@@ -475,19 +565,12 @@ function App() {
       <main>
 
         {tab === "home" && <Home />}
-
         {tab === "weather" && <Weather />}
-
         {tab === "market" && <Market />}
-
         {tab === "doctor" && <Doctor />}
-
         {tab === "ai" && <AI />}
-
         {tab === "crop" && <Crop />}
-
         {tab === "schemes" && <Schemes />}
-
         {tab === "store" && <Store />}
 
       </main>
@@ -532,22 +615,27 @@ function App() {
       </nav>
 
     </div>
+
   );
 }
 
 function Page({
   title,
   children,
-  back,
-  go,
+  back
 }: any) {
 
   return (
+
     <>
       <div className="pageTitle">
 
         {back && (
-          <button onClick={() => go("home")}>
+          <button
+            onClick={() =>
+              window.history.back()
+            }
+          >
             ←
           </button>
         )}
@@ -557,7 +645,9 @@ function Page({
       </div>
 
       {children}
+
     </>
+
   );
 }
 
@@ -565,33 +655,41 @@ function Card({
   icon,
   title,
   text,
-  onClick,
+  onClick
 }: any) {
 
   return (
+
     <button
       className="card"
       onClick={onClick}
     >
+
       <span>{icon}</span>
 
       <div>
+
         <b>{title}</b>
+
         <small>{text}</small>
+
       </div>
 
       <i>›</i>
+
     </button>
+
   );
 }
 
 function Info({
   icon,
   title,
-  value,
+  value
 }: any) {
 
   return (
+
     <div className="info">
 
       <span>{icon}</span>
@@ -601,6 +699,7 @@ function Info({
       <b>{value}</b>
 
     </div>
+
   );
 }
 
@@ -608,49 +707,58 @@ function Nav({
   icon,
   text,
   active,
-  onClick,
+  onClick
 }: any) {
 
   return (
+
     <button
       className={active ? "active" : ""}
       onClick={onClick}
     >
+
       {icon}
 
       <small>{text}</small>
+
     </button>
+
   );
 }
 
 const css = `
 
 *{
-  box-sizing:border-box
+  box-sizing:border-box;
 }
 
 body{
   margin:0;
   background:#f3f6f1;
   font-family:Arial,sans-serif;
-  color:#172018
+  color:#172018;
 }
 
-button,input{
-  font:inherit
+button,
+input{
+  font:inherit;
 }
 
 button{
   border:0;
   background:none;
-  cursor:pointer
+  cursor:pointer;
+}
+
+a{
+  text-decoration:none;
 }
 
 .app{
   max-width:520px;
   margin:auto;
   min-height:100vh;
-  padding-bottom:78px
+  padding-bottom:78px;
 }
 
 header{
@@ -661,54 +769,54 @@ header{
   display:flex;
   align-items:center;
   gap:9px;
-  box-shadow:0 2px 8px #00000008
+  box-shadow:0 2px 8px #00000008;
 }
 
 header>span{
   font-size:25px;
   background:#edf7e8;
   padding:7px;
-  border-radius:12px
+  border-radius:12px;
 }
 
 header div{
-  flex:1
+  flex:1;
 }
 
 header b{
   display:block;
-  font-size:13px
+  font-size:13px;
 }
 
 header small{
   font-size:8px;
-  color:#777
+  color:#777;
 }
 
 header button{
   background:#edf7e8;
   border-radius:50%;
-  padding:8px
+  padding:8px;
 }
 
 main{
-  padding:0 12px
+  padding:0 12px;
 }
 
 .welcome{
   background:linear-gradient(135deg,#e4f7dc,#f8fcf5);
   padding:18px;
   border-radius:18px;
-  margin-bottom:10px
+  margin-bottom:10px;
 }
 
 .welcome small{
-  color:#4b754c
+  color:#4b754c;
 }
 
 .welcome h2{
   font-size:19px;
-  margin:7px 0 13px
+  margin:7px 0 13px;
 }
 
 .weatherBox{
@@ -719,23 +827,23 @@ main{
   display:flex;
   align-items:center;
   text-align:left;
-  gap:10px
+  gap:10px;
 }
 
 .weatherBox div{
-  flex:1
+  flex:1;
 }
 
 .weatherBox small{
   display:block;
   font-size:9px;
-  margin-top:3px
+  margin-top:3px;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px
+  gap:8px;
 }
 
 .card{
@@ -746,30 +854,30 @@ main{
   align-items:center;
   text-align:left;
   min-height:62px;
-  box-shadow:0 2px 7px #00000008
+  box-shadow:0 2px 7px #00000008;
 }
 
 .card>span{
   font-size:20px;
-  margin-right:8px
+  margin-right:8px;
 }
 
 .card div{
-  flex:1
+  flex:1;
 }
 
 .card b{
   font-size:12px;
-  display:block
+  display:block;
 }
 
 .card small{
   font-size:8px;
-  color:#777
+  color:#777;
 }
 
 .card i{
-  font-style:normal
+  font-style:normal;
 }
 
 .tip{
@@ -778,26 +886,26 @@ main{
   margin-top:10px;
   border-radius:10px;
   font-size:9px;
-  color:#665b2a
+  color:#665b2a;
 }
 
 .pageTitle{
   display:flex;
   align-items:center;
   gap:7px;
-  margin:10px 0
+  margin:10px 0;
 }
 
 .pageTitle button{
   background:white;
   border-radius:12px;
   padding:8px;
-  font-size:18px
+  font-size:18px;
 }
 
 .pageTitle h3{
   margin:0;
-  font-size:16px
+  font-size:16px;
 }
 
 .location,
@@ -807,7 +915,7 @@ main{
   padding:12px;
   margin-bottom:9px;
   font-size:11px;
-  color:#777
+  color:#777;
 }
 
 .weatherMain{
@@ -816,46 +924,46 @@ main{
   padding:20px;
   display:flex;
   gap:20px;
-  align-items:center
+  align-items:center;
 }
 
 .weatherMain>div{
-  font-size:48px
+  font-size:48px;
 }
 
 .weatherMain small{
   display:block;
-  color:#666
+  color:#666;
 }
 
 .weatherMain strong{
   display:block;
   font-size:27px;
-  margin:5px 0
+  margin:5px 0;
 }
 
 .weatherMain b{
-  font-size:18px
+  font-size:18px;
 }
 
 .info{
   background:white;
   border-radius:13px;
   padding:13px;
-  margin-top:8px
+  margin-top:8px;
 }
 
 .info span{
-  display:block
+  display:block;
 }
 
 .info small{
   display:block;
-  color:#777
+  color:#777;
 }
 
 .info b{
-  font-size:13px
+  font-size:13px;
 }
 
 .box,
@@ -864,25 +972,25 @@ main{
   background:white;
   border-radius:15px;
   padding:14px;
-  margin-top:9px
+  margin-top:9px;
 }
 
 .box p{
   border-bottom:1px solid #eee;
   padding:8px 0;
-  font-size:11px
+  font-size:11px;
 }
 
 .box p span{
-  float:right
+  float:right;
 }
 
 .box input{
   width:100%;
-  border:1px solid #ddd;
-  border-radius:10px;
   padding:11px;
-  outline:none
+  border:1px solid #ddd;
+  border-radius:9px;
+  outline:none;
 }
 
 .greenBtn{
@@ -892,20 +1000,20 @@ main{
   width:100%;
   padding:10px;
   margin:5px 0;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .doctor{
-  text-align:center
+  text-align:center;
 }
 
 .bigIcon{
-  font-size:40px
+  font-size:40px;
 }
 
 .doctor p{
   font-size:10px;
-  color:#777
+  color:#777;
 }
 
 .upload{
@@ -913,13 +1021,13 @@ main{
   background:#e9f5e4;
   padding:12px;
   border-radius:10px;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .upload input{
   display:block;
   width:100%;
-  margin-top:8px
+  margin-top:8px;
 }
 
 .market{
@@ -927,37 +1035,37 @@ main{
   justify-content:space-between;
   padding:11px 0;
   border-bottom:1px solid #eee;
-  font-size:11px
+  font-size:11px;
 }
 
 .market small{
   display:block;
-  color:#777
+  color:#777;
 }
 
 .aiHead{
   text-align:center;
-  background:linear-gradient(135deg,#e1f6dc,#fff)
+  background:linear-gradient(135deg,#e1f6dc,#fff);
 }
 
 .aiHead>div{
-  font-size:35px
+  font-size:35px;
 }
 
 .aiHead h2{
-  margin:5px
+  margin:5px;
 }
 
 .aiHead p{
   font-size:10px;
-  color:#777
+  color:#777;
 }
 
 .chips{
   display:flex;
   gap:5px;
   overflow:auto;
-  padding:8px 0
+  padding:8px 0;
 }
 
 .chips button{
@@ -965,7 +1073,7 @@ main{
   border-radius:14px;
   padding:8px;
   font-size:9px;
-  white-space:nowrap
+  white-space:nowrap;
 }
 
 .chat{
@@ -973,7 +1081,7 @@ main{
   border-radius:12px;
   padding:15px;
   font-size:11px;
-  min-height:65px
+  min-height:65px;
 }
 
 .inputRow{
@@ -981,115 +1089,115 @@ main{
   background:white;
   border-radius:12px;
   margin-top:8px;
-  padding:5px
+  padding:5px;
 }
 
 .inputRow input{
   border:0;
   outline:0;
   flex:1;
-  padding:8px
+  padding:8px;
 }
 
 .inputRow button{
   background:${green};
   color:white;
   border-radius:9px;
-  width:42px
+  width:42px;
 }
 
-/* GOVERNMENT SCHEMES */
-
 .schemeIntro{
-  background:linear-gradient(135deg,#e4f7dc,#f8fcf5);
-  border-radius:14px;
-  padding:13px;
+  background:linear-gradient(135deg,#e5f7df,#fff);
+  border-radius:15px;
+  padding:14px;
   display:flex;
   gap:10px;
   align-items:center;
-  margin-bottom:8px
+  margin-bottom:8px;
 }
 
-.schemeIntro>span{
-  font-size:28px
+.schemeBigIcon{
+  font-size:34px;
 }
 
-.schemeIntro div{
-  flex:1
+.schemeIntro h2{
+  margin:0 0 5px;
+  font-size:15px;
 }
 
-.schemeIntro b{
-  display:block;
-  font-size:12px
-}
-
-.schemeIntro small{
-  display:block;
-  font-size:8px;
+.schemeIntro p{
+  margin:0;
+  font-size:9px;
   color:#777;
-  margin-top:4px;
-  line-height:1.5
 }
 
 .schemeCard{
   background:white;
   border-radius:13px;
-  padding:10px;
+  padding:11px;
   margin:7px 0;
   display:flex;
   gap:10px;
   align-items:flex-start;
-  box-shadow:0 2px 6px #00000006
+  box-shadow:0 2px 7px #00000008;
 }
 
 .schemeIcon{
-  width:40px;
-  height:40px;
   background:#edf7e8;
+  width:42px;
+  height:42px;
   border-radius:10px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:22px
+  font-size:22px;
 }
 
 .schemeInfo{
-  flex:1
+  flex:1;
 }
 
 .schemeInfo>b{
   display:block;
-  font-size:11px
+  font-size:11px;
 }
 
 .schemeInfo>small{
   display:block;
   color:#777;
   font-size:8px;
-  margin:3px 0 5px
+  margin:4px 0 6px;
 }
 
 .officialBtn{
   display:inline-block;
-  text-decoration:none;
-  background:#e9f5e4;
-  color:#26722b;
-  border-radius:8px;
+  background:#e7f5e2;
+  color:#18732b;
+  border-radius:7px;
   padding:5px 8px;
   font-size:8px;
-  font-weight:bold
+  font-weight:bold;
+}
+
+.schemeWarning{
+  background:#fff4c9;
+  padding:10px;
+  border-radius:10px;
+  font-size:8px;
+  color:#665b2a;
+  margin-top:9px;
 }
 
 .storeGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px
+  gap:8px;
 }
 
 .product{
   background:white;
   border-radius:14px;
-  padding:8px
+  padding:8px;
 }
 
 .productIcon{
@@ -1099,14 +1207,14 @@ main{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:38px
+  font-size:38px;
 }
 
 .product b,
 .product strong{
   display:block;
   font-size:11px;
-  margin:5px 0
+  margin:5px 0;
 }
 
 .product button{
@@ -1115,7 +1223,7 @@ main{
   color:white;
   border-radius:8px;
   padding:8px;
-  font-size:10px
+  font-size:10px;
 }
 
 .floating{
@@ -1126,7 +1234,7 @@ main{
   color:white;
   border-radius:25px;
   padding:12px 15px;
-  box-shadow:0 3px 10px #0003
+  box-shadow:0 3px 10px #0003;
 }
 
 nav{
@@ -1139,7 +1247,7 @@ nav{
   background:white;
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  box-shadow:0 -2px 10px #00000010
+  box-shadow:0 -2px 10px #00000010;
 }
 
 nav button{
@@ -1148,16 +1256,16 @@ nav button{
   align-items:center;
   justify-content:center;
   color:#777;
-  font-size:18px
+  font-size:18px;
 }
 
 nav button small{
   font-size:8px;
-  margin-top:3px
+  margin-top:3px;
 }
 
 nav .active{
-  color:${green}
+  color:${green};
 }
 
 `;
