@@ -1288,13 +1288,40 @@ function CartPage({
 
 /* ================= PROFILE ================= */
 
-function ProfilePage({ setTab }: any) {
+    function ProfilePage({ setTab }: any) {
+  const [name, setName] = useState(
+    localStorage.getItem("kisan_name") || "किसान भाई"
+  );
+
+  const [village, setVillage] = useState(
+    localStorage.getItem("kisan_village") || ""
+  );
+
+  const [district, setDistrict] = useState(
+    localStorage.getItem("kisan_district") || ""
+  );
+
+  const [state, setState] = useState(
+    localStorage.getItem("kisan_state") || ""
+  );
+
+  const [saved, setSaved] = useState(false);
+
+  const saveProfile = () => {
+    localStorage.setItem("kisan_name", name);
+    localStorage.setItem("kisan_village", village);
+    localStorage.setItem("kisan_district", district);
+    localStorage.setItem("kisan_state", state);
+
+    setSaved(true);
+
+    setTimeout(() => {
+      setSaved(false);
+    }, 2000);
+  };
 
   return (
-    <Page
-      title="प्रोफाइल"
-      setTab={setTab}
-    >
+    <Page title="प्रोफाइल" setTab={setTab}>
 
       <div className="card success">
 
@@ -1302,9 +1329,7 @@ function ProfilePage({ setTab }: any) {
           👨‍🌾
         </div>
 
-        <h2>
-          किसान भाई
-        </h2>
+        <h2>{name}</h2>
 
         <p>
           KisanSaathi उपयोगकर्ता
@@ -1314,21 +1339,84 @@ function ProfilePage({ setTab }: any) {
 
       <div className="card">
 
-        <h3>
-          👤 नाम
-        </h3>
+        <h3>👤 किसान की जानकारी</h3>
 
-        <p>
-          किसान भाई
-        </p>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="अपना नाम लिखें"
+        />
+
+        <input
+          value={village}
+          onChange={(e) => setVillage(e.target.value)}
+          placeholder="गांव का नाम"
+        />
+
+        <input
+          value={district}
+          onChange={(e) => setDistrict(e.target.value)}
+          placeholder="जिला"
+        />
+
+        <input
+          value={state}
+          onChange={(e) => setState(e.target.value)}
+          placeholder="राज्य"
+        />
+
+        <button
+          className="primary"
+          onClick={saveProfile}
+        >
+          💾 जानकारी सेव करें
+        </button>
+
+        {saved && (
+          <div className="notice" style={{ marginTop: 10 }}>
+            ✅ आपकी जानकारी सेव हो गई।
+          </div>
+        )}
 
       </div>
 
       <div className="card">
 
-        <h3>
-          🌾 मेरी फसल
-        </h3>
+        <h3>📍 मेरा पता</h3>
+
+        {village || district || state ? (
+          <p>
+            {village && (
+              <>
+                <b>गांव:</b> {village}
+                <br />
+              </>
+            )}
+
+            {district && (
+              <>
+                <b>जिला:</b> {district}
+                <br />
+              </>
+            )}
+
+            {state && (
+              <>
+                <b>राज्य:</b> {state}
+              </>
+            )}
+          </p>
+        ) : (
+          <p>
+            अभी पता नहीं जोड़ा गया है।
+          </p>
+        )}
+
+      </div>
+
+      <div className="card">
+
+        <h3>🌾 मेरी फसल</h3>
 
         <button
           className="secondary"
@@ -1341,188 +1429,22 @@ function ProfilePage({ setTab }: any) {
 
       <div className="card">
 
-        <h3>
-          📍 स्थान
-        </h3>
+        <h3>🌦️ मौसम</h3>
 
         <p>
-          मौसम पेज से अपना live location
-          इस्तेमाल कर सकते हैं।
+          आपके live location से मौसम की जानकारी
+          देखी जा सकती है।
         </p>
-
-      </div>
-
-    </Page>
-  );
-}
-
-
-/* ================= CHAT ================= */
-
-function ChatPage({
-  message,
-  setMessage,
-  sendMessage,
-  setTab,
-}: any) {
-
-  const quick = (text: string) => {
-    setMessage(text);
-  };
-
-  return (
-    <Page
-      title="AI Kisan"
-      setTab={setTab}
-    >
-
-      <div className="chat">
-
-        <div className="ai">
-          🤖 <b>AI Kisan</b>
-
-          <p>
-            नमस्ते किसान भाई! खेती,
-            मौसम, फसल और मंडी से जुड़ा
-            सवाल पूछें।
-          </p>
-        </div>
-
-        <div className="quickQuestions">
-
-          <button
-            className="secondary"
-            onClick={() =>
-              quick(
-                "गेहूं में कौन सी खाद डालें?"
-              )
-            }
-          >
-            गेहूं में कौन सी खाद डालें?
-          </button>
-
-          <button
-            className="secondary"
-            onClick={() =>
-              quick("आज बारिश होगी?")
-            }
-          >
-            आज बारिश होगी?
-          </button>
-
-          <button
-            className="secondary"
-            onClick={() =>
-              quick("धान की खेती के लिए सलाह दें")
-            }
-          >
-            धान की खेती के लिए सलाह दें
-          </button>
-
-        </div>
-
-      </div>
-
-      <div className="composer">
-
-        <input
-          value={message}
-          onChange={(e) =>
-            setMessage(e.target.value)
-          }
-          placeholder="अपना सवाल लिखें..."
-          onKeyDown={(e) => {
-
-            if (e.key === "Enter") {
-              sendMessage();
-            }
-
-          }}
-        />
-
-        <button
-          onClick={sendMessage}
-        >
-          <Send size={20} />
-        </button>
-
-      </div>
-
-    </Page>
-  );
-}
-
-
-/* ================= COMMON PAGE ================= */
-
-function Page({
-  title,
-  setTab,
-  children,
-}: any) {
-
-  return (
-    <>
-
-      <div className="title">
 
         <button
           className="secondary"
-          onClick={() => setTab("home")}
-          style={{
-            width: "auto",
-            marginRight: 8,
-          }}
+          onClick={() => setTab("weather")}
         >
-          <ArrowLeft size={18} />
+          मौसम देखें
         </button>
-
-        <h1>
-          {title}
-        </h1>
 
       </div>
 
-      {children}
-
-    </>
+    </Page>
   );
-}
-
-
-/* ================= INFO ================= */
-
-function Info({
-  icon,
-  title,
-  value,
-}: any) {
-
-  return (
-    <div className="card">
-
-      {icon}
-
-      <small>
-        {title}
-      </small>
-
-      <h3>
-        {value}
-      </h3>
-
-    </div>
-  );
-}
-
-
-/* ================= START ================= */
-
-const root =
-  document.getElementById("root");
-
-if (root) {
-  createRoot(root).render(
-    <App />
-  );
-}
+}            
