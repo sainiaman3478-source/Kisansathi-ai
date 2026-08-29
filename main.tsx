@@ -14,14 +14,9 @@ function App() {
   const [tab, setTab] = useState("home");
   const [crop, setCrop] = useState("");
   const [question, setQuestion] = useState("");
-  const [chat, setChat] = useState(
-    "नमस्ते किसान भाई! अपना सवाल नीचे लिखकर भेजें।"
-  );
+  const [chat, setChat] =
+    useState("नमस्ते किसान भाई! अपना सवाल नीचे लिखकर भेजें।");
   const [cart, setCart] = useState<string[]>([]);
-
-  const [name, setName] = useState(
-    localStorage.getItem("farmerName") || "किसान भाई"
-  );
 
   const go = (page: string) => setTab(page);
 
@@ -38,7 +33,7 @@ function App() {
   const Home = () => (
     <>
       <div className="welcome">
-        <small>नमस्ते {name} 👋</small>
+        <small>नमस्ते किसान भाई 👋</small>
         <h2>आज खेती में आपकी मदद के लिए तैयार हैं।</h2>
 
         <button className="weatherBox" onClick={() => go("weather")}>
@@ -111,7 +106,7 @@ function App() {
   );
 
   const Weather = () => (
-    <Page title="मौसम" back onBack={() => go("home")}>
+    <Page title="मौसम" back>
       <div className="location">📍 30.17°, 77.61°　　↻</div>
 
       <div className="weatherMain">
@@ -147,7 +142,7 @@ function App() {
   );
 
   const Market = () => (
-    <Page title="मंडी भाव" back onBack={() => go("home")}>
+    <Page title="मंडी भाव" back>
       <div className="search">🔍　फसल खोजें...</div>
 
       <button className="greenBtn">📊 मंडी भाव देखें</button>
@@ -172,7 +167,7 @@ function App() {
   );
 
   const Doctor = () => (
-    <Page title="Crop Doctor" back onBack={() => go("home")}>
+    <Page title="Crop Doctor" back>
       <div className="doctor">
         <div className="bigIcon">📷</div>
 
@@ -193,9 +188,10 @@ function App() {
   );
 
   const AI = () => (
-    <Page title="AI Kisan" back onBack={() => go("home")}>
+    <Page title="AI Kisan" back>
       <div className="aiHead">
         <div>🤖</div>
+
         <h2>AI Kisan</h2>
 
         <p>
@@ -213,9 +209,7 @@ function App() {
         </button>
 
         <button
-          onClick={() =>
-            setQuestion("आज बारिश होगी?")
-          }
+          onClick={() => setQuestion("आज बारिश होगी?")}
         >
           आज बारिश होगी?
         </button>
@@ -244,7 +238,7 @@ function App() {
   );
 
   const Crop = () => (
-    <Page title="मेरी फसल" back onBack={() => go("home")}>
+    <Page title="मेरी फसल" back>
       <div className="box">
         <h2>🌱 अपनी फसल जोड़ें</h2>
 
@@ -254,17 +248,13 @@ function App() {
           placeholder="गेहूं, धान, कपास..."
         />
 
-        <button
-          className="greenBtn"
-          onClick={() => alert("फसल सेव हो गई")}
-        >
+        <button className="greenBtn">
           💾 फसल सेव करें
         </button>
       </div>
 
       <div className="box">
         <h3>📍 खेत की जानकारी</h3>
-
         <p>
           गांव, क्षेत्रफल और सिंचाई की जानकारी बाद में जोड़ सकते हैं।
         </p>
@@ -272,45 +262,132 @@ function App() {
     </Page>
   );
 
-  const Schemes = () => (
-    <Page
-      title="सरकारी योजना"
-      back
-      onBack={() => go("home")}
-    >
-      {[
-        [
-          "🌾",
-          "PM-KISAN",
-          "किसानों के लिए आर्थिक सहायता",
-        ],
-        [
-          "💧",
-          "प्रधानमंत्री कृषि सिंचाई योजना",
-          "सिंचाई सुविधा का बढ़ावा",
-        ],
-        [
-          "🌱",
-          "प्रधानमंत्री फसल बीमा योजना",
-          "फसल नुकसान से सुरक्षा",
-        ],
-      ].map((x) => (
-        <div className="scheme" key={x[1]}>
-          <span>{x[0]}</span>
+  /* ================================
+     सरकारी योजनाएं
+     ================================ */
+
+  const Schemes = () => {
+    const schemes = [
+      {
+        icon: "🌾",
+        name: "PM-KISAN",
+        text: "किसानों को आर्थिक सहायता",
+        url: "https://pmkisan.gov.in/",
+      },
+
+      {
+        icon: "🛡️",
+        name: "प्रधानमंत्री फसल बीमा योजना",
+        text: "फसल नुकसान से सुरक्षा",
+        url: "https://pmfby.gov.in/",
+      },
+
+      {
+        icon: "💳",
+        name: "किसान क्रेडिट कार्ड (KCC)",
+        text: "खेती के लिए कृषि ऋण",
+        url: "https://fasalrin.gov.in/",
+      },
+
+      {
+        icon: "👴",
+        name: "PM किसान मानधन योजना",
+        text: "किसानों के लिए पेंशन योजना",
+        url: "https://pmkmy.gov.in/",
+      },
+
+      {
+        icon: "🧪",
+        name: "Soil Health Card",
+        text: "मिट्टी की जांच और खाद की सलाह",
+        url: "https://soilhealth.dac.gov.in/",
+      },
+
+      {
+        icon: "🏗️",
+        name: "Agriculture Infrastructure Fund",
+        text: "कृषि इंफ्रास्ट्रक्चर के लिए सहायता",
+        url: "https://agriinfra.dac.gov.in/",
+      },
+
+      {
+        icon: "🌱",
+        name: "परंपरागत कृषि विकास योजना",
+        text: "जैविक और टिकाऊ खेती को बढ़ावा",
+        url: "https://pgsindia-ncof.gov.in/",
+      },
+
+      {
+        icon: "📈",
+        name: "e-NAM",
+        text: "ऑनलाइन राष्ट्रीय कृषि मंडी",
+        url: "https://enam.gov.in/",
+      },
+
+      {
+        icon: "🔎",
+        name: "MyScheme",
+        text: "सरकार की दूसरी योजनाएं खोजें",
+        url: "https://www.myscheme.gov.in/",
+      },
+    ];
+
+    return (
+      <Page title="सरकारी योजनाएं" back>
+
+        <div className="schemeIntro">
+          <div className="schemeIntroIcon">🏛️</div>
 
           <div>
-            <b>{x[1]}</b>
-            <small>{x[2]}</small>
-          </div>
+            <h2>किसानों के लिए सरकारी योजनाएं</h2>
 
-          <span>↗</span>
+            <p>
+              किसान भाई यहां से जरूरी सरकारी योजनाओं की
+              जानकारी और उनकी Official Website खोल सकते हैं।
+            </p>
+          </div>
         </div>
-      ))}
-    </Page>
-  );
+
+        <div className="schemeList">
+          {schemes.map((x) => (
+            <div className="schemeCard" key={x.name}>
+
+              <div className="schemeIcon">
+                {x.icon}
+              </div>
+
+              <div className="schemeInfo">
+                <b>{x.name}</b>
+
+                <small>{x.text}</small>
+
+                <a
+                  href={x.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="schemeLink"
+                >
+                  🌐 Official Website ↗
+                </a>
+              </div>
+
+            </div>
+          ))}
+        </div>
+
+        <div className="tip">
+          ⚠️ <b>जरूरी सूचना:</b>
+          <br />
+          योजना की पात्रता, आवेदन और लाभ की जानकारी हमेशा
+          Official Government Website पर ही जांचें।
+        </div>
+
+      </Page>
+    );
+  };
 
   const Store = () => (
-    <Page title="Kisan Store" back onBack={() => go("home")}>
+    <Page title="Kisan Store" back>
       <div className="storeGrid">
         {[
           ["🌿", "नीम ऑयल", "₹299"],
@@ -319,7 +396,10 @@ function App() {
           ["🌾", "बीज उपचार किट", "₹399"],
         ].map((x) => (
           <div className="product" key={x[1]}>
-            <div className="productIcon">{x[0]}</div>
+
+            <div className="productIcon">
+              {x[0]}
+            </div>
 
             <b>{x[1]}</b>
 
@@ -332,6 +412,7 @@ function App() {
             >
               🛒 कार्ट में डालें
             </button>
+
           </div>
         ))}
       </div>
@@ -342,147 +423,9 @@ function App() {
     </Page>
   );
 
-  const Profile = () => {
-    const [edit, setEdit] = useState(false);
-
-    const [village, setVillage] = useState(
-      localStorage.getItem("village") || ""
-    );
-
-    const [district, setDistrict] = useState(
-      localStorage.getItem("district") || ""
-    );
-
-    const [mobile, setMobile] = useState(
-      localStorage.getItem("mobile") || ""
-    );
-
-    const saveProfile = () => {
-      localStorage.setItem("farmerName", name);
-      localStorage.setItem("village", village);
-      localStorage.setItem("district", district);
-      localStorage.setItem("mobile", mobile);
-
-      setName(name.trim() || "किसान भाई");
-      setEdit(false);
-    };
-
-    return (
-      <>
-        <div className="pageTitle">
-          <button onClick={() => go("home")}>←</button>
-          <h3>प्रोफाइल</h3>
-        </div>
-
-        <div className="profileBox">
-          <div className="profileIcon">👤</div>
-
-          {!edit ? (
-            <>
-              <h1>{name}</h1>
-
-              {village || district ? (
-                <p>
-                  📍 {village}
-                  {village && district ? ", " : ""}
-                  {district}
-                </p>
-              ) : (
-                <p>अपनी जानकारी जोड़ें</p>
-              )}
-
-              {mobile && <p>📱 {mobile}</p>}
-
-              <div className="savedCrop">
-                🌱 {crop ? crop : "0 फसल सेव है"}
-              </div>
-
-              <button
-                className="greenBtn"
-                onClick={() => setEdit(true)}
-              >
-                ✏️ प्रोफाइल एडिट करें
-              </button>
-            </>
-          ) : (
-            <>
-              <h2>प्रोफाइल एडिट करें</h2>
-
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="आपका नाम"
-              />
-
-              <input
-                value={village}
-                onChange={(e) => setVillage(e.target.value)}
-                placeholder="गाँव का नाम"
-              />
-
-              <input
-                value={district}
-                onChange={(e) => setDistrict(e.target.value)}
-                placeholder="जिला"
-              />
-
-              <input
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="मोबाइल नंबर"
-                type="tel"
-              />
-
-              <button
-                className="greenBtn"
-                onClick={saveProfile}
-              >
-                💾 प्रोफाइल सेव करें
-              </button>
-
-              <button
-                className="cancelBtn"
-                onClick={() => setEdit(false)}
-              >
-                वापस जाएँ
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="box">
-          <h2>🏛️ सरकारी योजनाएँ</h2>
-
-          <div className="profileList">
-            🌾 <b>PM-KISAN</b>
-            <small>किसानों के लिए आर्थिक सहायता</small>
-          </div>
-
-          <div className="profileList">
-            💧 <b>कृषि सिंचाई योजना</b>
-            <small>सिंचाई सुविधा को बढ़ावा</small>
-          </div>
-
-          <div className="profileList">
-            🌱 <b>फसल बीमा योजना</b>
-            <small>फसल नुकसान से सुरक्षा</small>
-          </div>
-        </div>
-
-        <div className="box">
-          <h2>ℹ️ ऐप की स्थिति</h2>
-
-          <p>
-            KisanSaathi AI आपकी खेती से जुड़ी जानकारी,
-            मौसम, फसल और मंडी की जानकारी में मदद करता है।
-          </p>
-        </div>
-      </>
-    );
-  };
-
   return (
     <div className="app">
+
       <header>
         <span>🌾</span>
 
@@ -491,7 +434,7 @@ function App() {
           <small>आपका डिजिटल किसान साथी</small>
         </div>
 
-        <button onClick={() => go("profile")}>👤</button>
+        <button>♙</button>
       </header>
 
       <main>
@@ -503,7 +446,6 @@ function App() {
         {tab === "crop" && <Crop />}
         {tab === "schemes" && <Schemes />}
         {tab === "store" && <Store />}
-        {tab === "profile" && <Profile />}
       </main>
 
       <button
@@ -546,17 +488,15 @@ function App() {
   );
 }
 
-function Page({
-  title,
-  children,
-  back,
-  onBack,
-}: any) {
+function Page({ title, children, back }: any) {
   return (
     <>
       <div className="pageTitle">
+
         {back && (
-          <button onClick={onBack}>←</button>
+          <button onClick={() => history.back()}>
+            ←
+          </button>
         )}
 
         <h3>{title}</h3>
@@ -575,6 +515,7 @@ function Card({
 }: any) {
   return (
     <button className="card" onClick={onClick}>
+
       <span>{icon}</span>
 
       <div>
@@ -619,30 +560,32 @@ function Nav({
 }
 
 const css = `
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
   background:#f3f6f1;
   font-family:Arial,sans-serif;
-  color:#172018
+  color:#172018;
 }
 
 button,input{
-  font:inherit
+  font:inherit;
 }
 
 button{
   border:0;
   background:none;
-  cursor:pointer
+  cursor:pointer;
 }
 
 .app{
   max-width:520px;
   margin:auto;
   min-height:100vh;
-  padding-bottom:78px
+  padding-bottom:78px;
 }
 
 header{
@@ -653,54 +596,54 @@ header{
   display:flex;
   align-items:center;
   gap:9px;
-  box-shadow:0 2px 8px #00000008
+  box-shadow:0 2px 8px #00000008;
 }
 
 header>span{
   font-size:25px;
   background:#edf7e8;
   padding:7px;
-  border-radius:12px
+  border-radius:12px;
 }
 
 header div{
-  flex:1
+  flex:1;
 }
 
 header b{
   display:block;
-  font-size:13px
+  font-size:13px;
 }
 
 header small{
   font-size:8px;
-  color:#777
+  color:#777;
 }
 
 header button{
   background:#edf7e8;
   border-radius:50%;
-  padding:8px
+  padding:8px;
 }
 
 main{
-  padding:0 12px
+  padding:0 12px;
 }
 
 .welcome{
   background:linear-gradient(135deg,#e4f7dc,#f8fcf5);
   padding:18px;
   border-radius:18px;
-  margin-bottom:10px
+  margin-bottom:10px;
 }
 
 .welcome small{
-  color:#4b754c
+  color:#4b754c;
 }
 
 .welcome h2{
   font-size:19px;
-  margin:7px 0 13px
+  margin:7px 0 13px;
 }
 
 .weatherBox{
@@ -711,23 +654,23 @@ main{
   display:flex;
   align-items:center;
   text-align:left;
-  gap:10px
+  gap:10px;
 }
 
 .weatherBox div{
-  flex:1
+  flex:1;
 }
 
 .weatherBox small{
   display:block;
   font-size:9px;
-  margin-top:3px
+  margin-top:3px;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px
+  gap:8px;
 }
 
 .card{
@@ -738,30 +681,30 @@ main{
   align-items:center;
   text-align:left;
   min-height:62px;
-  box-shadow:0 2px 7px #00000008
+  box-shadow:0 2px 7px #00000008;
 }
 
 .card>span{
   font-size:20px;
-  margin-right:8px
+  margin-right:8px;
 }
 
 .card div{
-  flex:1
+  flex:1;
 }
 
 .card b{
   font-size:12px;
-  display:block
+  display:block;
 }
 
 .card small{
   font-size:8px;
-  color:#777
+  color:#777;
 }
 
 .card i{
-  font-style:normal
+  font-style:normal;
 }
 
 .tip{
@@ -770,35 +713,36 @@ main{
   margin-top:10px;
   border-radius:10px;
   font-size:9px;
-  color:#665b2a
+  color:#665b2a;
 }
 
 .pageTitle{
   display:flex;
   align-items:center;
   gap:7px;
-  margin:10px 0
+  margin:10px 0;
 }
 
 .pageTitle button{
   background:white;
   border-radius:12px;
   padding:8px;
-  font-size:18px
+  font-size:18px;
 }
 
 .pageTitle h3{
   margin:0;
-  font-size:16px
+  font-size:16px;
 }
 
-.location,.search{
+.location,
+.search{
   background:white;
   border-radius:11px;
   padding:12px;
   margin-bottom:9px;
   font-size:11px;
-  color:#777
+  color:#777;
 }
 
 .weatherMain{
@@ -807,63 +751,65 @@ main{
   padding:20px;
   display:flex;
   gap:20px;
-  align-items:center
+  align-items:center;
 }
 
 .weatherMain>div{
-  font-size:48px
+  font-size:48px;
 }
 
 .weatherMain small{
   display:block;
-  color:#666
+  color:#666;
 }
 
 .weatherMain strong{
   display:block;
   font-size:27px;
-  margin:5px 0
+  margin:5px 0;
 }
 
 .weatherMain b{
-  font-size:18px
+  font-size:18px;
 }
 
 .info{
   background:white;
   border-radius:13px;
   padding:13px;
-  margin-top:8px
+  margin-top:8px;
 }
 
 .info span{
-  display:block
+  display:block;
 }
 
 .info small{
   display:block;
-  color:#777
+  color:#777;
 }
 
 .info b{
-  font-size:13px
+  font-size:13px;
 }
 
-.box,.doctor,.aiHead{
+.box,
+.doctor,
+.aiHead{
   background:white;
   border-radius:15px;
   padding:14px;
-  margin-top:9px
+  margin-top:9px;
 }
 
 .box p{
   border-bottom:1px solid #eee;
   padding:8px 0;
-  font-size:11px
+  font-size:11px;
 }
 
 .box p span{
-  float:right
+  float:right;
 }
 
 .greenBtn{
@@ -873,20 +819,20 @@ main{
   width:100%;
   padding:10px;
   margin:5px 0;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .doctor{
-  text-align:center
+  text-align:center;
 }
 
 .bigIcon{
-  font-size:40px
+  font-size:40px;
 }
 
 .doctor p{
   font-size:10px;
-  color:#777
+  color:#777;
 }
 
 .upload{
@@ -894,13 +840,13 @@ main{
   background:#e9f5e4;
   padding:12px;
   border-radius:10px;
-  font-weight:bold
+  font-weight:bold;
 }
 
 .upload input{
   display:block;
   width:100%;
-  margin-top:8px
+  margin-top:8px;
 }
 
 .market{
@@ -908,37 +854,37 @@ main{
   justify-content:space-between;
   padding:11px 0;
   border-bottom:1px solid #eee;
-  font-size:11px
+  font-size:11px;
 }
 
 .market small{
   display:block;
-  color:#777
+  color:#777;
 }
 
 .aiHead{
   text-align:center;
-  background:linear-gradient(135deg,#e1f6dc,#fff)
+  background:linear-gradient(135deg,#e1f6dc,#fff);
 }
 
 .aiHead>div{
-  font-size:35px
+  font-size:35px;
 }
 
 .aiHead h2{
-  margin:5px
+  margin:5px;
 }
 
 .aiHead p{
   font-size:10px;
-  color:#777
+  color:#777;
 }
 
 .chips{
   display:flex;
   gap:5px;
   overflow:auto;
-  padding:8px 0
+  padding:8px 0;
 }
 
 .chips button{
@@ -946,7 +892,7 @@ main{
   border-radius:14px;
   padding:8px;
   font-size:9px;
-  white-space:nowrap
+  white-space:nowrap;
 }
 
 .chat{
@@ -954,7 +900,7 @@ main{
   border-radius:12px;
   padding:15px;
   font-size:11px;
-  min-height:65px
+  min-height:65px;
 }
 
 .inputRow{
@@ -962,54 +908,120 @@ main{
   background:white;
   border-radius:12px;
   margin-top:8px;
-  padding:5px
+  padding:5px;
 }
 
 .inputRow input{
   border:0;
   outline:0;
   flex:1;
-  padding:8px
+  padding:8px;
 }
 
 .inputRow button{
   background:${green};
   color:white;
   border-radius:9px;
-  width:42px
+  width:42px;
 }
 
-.scheme{
+/* सरकारी योजना */
+
+.schemeIntro{
+  background:linear-gradient(135deg,#e3f5dd,#ffffff);
+  border-radius:16px;
+  padding:15px;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom:10px;
+}
+
+.schemeIntroIcon{
+  font-size:32px;
+  background:#edf7e8;
+  padding:8px;
+  border-radius:12px;
+}
+
+.schemeIntro h2{
+  margin:2px 0 5px;
+  font-size:18px;
+}
+
+.schemeIntro p{
+  margin:0;
+  color:#666;
+  font-size:10px;
+  line-height:1.5;
+}
+
+.schemeList{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.schemeCard{
+  background:white;
+  border-radius:14px;
+  padding:12px;
   display:flex;
   align-items:center;
-  gap:10px;
-  background:white;
-  border-radius:13px;
-  padding:12px;
-  margin:7px 0
+  gap:12px;
+  box-shadow:0 2px 7px #00000008;
 }
 
-.scheme div{
-  flex:1
+.schemeIcon{
+  width:45px;
+  height:45px;
+  border-radius:12px;
+  background:#edf7e8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:25px;
+  flex-shrink:0;
 }
 
-.scheme small{
+.schemeInfo{
+  flex:1;
+}
+
+.schemeInfo b{
+  display:block;
+  font-size:13px;
+  margin-bottom:3px;
+}
+
+.schemeInfo small{
   display:block;
   color:#777;
   font-size:9px;
-  margin-top:3px
+  margin-bottom:7px;
+}
+
+.schemeLink{
+  display:inline-block;
+  color:#2f7d32;
+  background:#edf7e8;
+  padding:6px 9px;
+  border-radius:7px;
+  text-decoration:none;
+  font-size:9px;
+  font-weight:bold;
 }
 
 .storeGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px
+  gap:8px;
 }
 
 .product{
   background:white;
   border-radius:14px;
-  padding:8px
+  padding:8px;
 }
 
 .productIcon{
@@ -1019,13 +1031,14 @@ main{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:38px
+  font-size:38px;
 }
 
-.product b,.product strong{
+.product b,
+.product strong{
   display:block;
   font-size:11px;
-  margin:5px 0
+  margin:5px 0;
 }
 
 .product button{
@@ -1034,79 +1047,7 @@ main{
   color:white;
   border-radius:8px;
   padding:8px;
-  font-size:10px
-}
-
-.profileBox{
-  background:white;
-  border-radius:16px;
-  padding:18px;
-  text-align:center;
-  box-shadow:0 2px 8px #00000008
-}
-
-.profileIcon{
-  width:65px;
-  height:65px;
-  margin:auto;
-  border-radius:50%;
-  background:#e8f5e4;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:34px
-}
-
-.profileBox h1{
-  margin:10px 0 5px;
-  font-size:22px
-}
-
-.profileBox h2{
-  font-size:17px;
-  margin:12px 0
-}
-
-.profileBox p{
-  color:#777;
-  font-size:11px
-}
-
-.profileBox input{
-  width:100%;
-  border:1px solid #ddd;
-  border-radius:9px;
-  padding:11px;
-  margin:5px 0;
-  outline:none
-}
-
-.savedCrop{
-  background:#edf7e8;
-  border-radius:10px;
-  padding:10px;
-  margin:10px 0;
-  font-size:11px
-}
-
-.cancelBtn{
-  width:100%;
-  padding:9px;
-  color:#666;
-  font-size:11px
-}
-
-.profileList{
-  padding:10px 0;
-  border-bottom:1px solid #eee;
-  font-size:11px
-}
-
-.profileList small{
-  display:block;
-  color:#777;
-  margin:4px 0 0 22px;
-  font-size:9px
+  font-size:10px;
 }
 
 .floating{
@@ -1117,7 +1058,7 @@ main{
   color:white;
   border-radius:25px;
   padding:12px 15px;
-  box-shadow:0 3px 10px #0003
+  box-shadow:0 3px 10px #0003;
 }
 
 nav{
@@ -1130,7 +1071,7 @@ nav{
   background:white;
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  box-shadow:0 -2px 10px #00000010
+  box-shadow:0 -2px 10px #00000010;
 }
 
 nav button{
@@ -1139,16 +1080,16 @@ nav button{
   align-items:center;
   justify-content:center;
   color:#777;
-  font-size:18px
+  font-size:18px;
 }
 
 nav button small{
   font-size:8px;
-  margin-top:3px
+  margin-top:3px;
 }
 
 nav .active{
-  color:${green}
+  color:${green};
 }
 `;
 
