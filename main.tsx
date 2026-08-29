@@ -53,7 +53,10 @@ function App() {
   const [message, setMessage] = useState("");
 
   const addCart = (id: number) => {
-    setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
+    setCart((c) => ({
+      ...c,
+      [id]: (c[id] || 0) + 1,
+    }));
   };
 
   const removeCart = (id: number) => {
@@ -70,15 +73,9 @@ function App() {
     });
   };
 
-  const sendMessage = () => {
-    if (!message.trim()) return;
-
-    alert("आपका सवाल किसान साथी AI को भेज दिया गया है।");
-    setMessage("");
-  };
-
   return (
     <div className="app">
+
       <header className="topbar">
         <div className="brand">
           <div className="logo">🌾</div>
@@ -98,8 +95,12 @@ function App() {
       </header>
 
       <main className="content">
+
         {tab === "home" && (
-          <HomePage name={name} setTab={setTab} />
+          <HomePage
+            name={name}
+            setTab={setTab}
+          />
         )}
 
         {tab === "weather" && (
@@ -149,13 +150,14 @@ function App() {
           <ChatPage
             message={message}
             setMessage={setMessage}
-            sendMessage={sendMessage}
             setTab={setTab}
           />
         )}
+
       </main>
 
       <nav className="bottomNav">
+
         <button
           className={tab === "home" ? "active" : ""}
           onClick={() => setTab("home")}
@@ -187,6 +189,7 @@ function App() {
           <ShoppingCart size={21} />
           <span>Store</span>
         </button>
+
       </nav>
 
       <button
@@ -196,13 +199,18 @@ function App() {
         <MessageCircle size={24} />
         <span>AI Kisan</span>
       </button>
+
     </div>
   );
 }
 
 /* HOME */
 
-function HomePage({ name, setTab }: any) {
+function HomePage({
+  name,
+  setTab,
+}: any) {
+
   const cards = [
     {
       icon: <Camera />,
@@ -251,6 +259,7 @@ function HomePage({ name, setTab }: any) {
   return (
     <>
       <section className="hero">
+
         <p className="hello">
           नमस्ते {name} 👋
         </p>
@@ -274,9 +283,11 @@ function HomePage({ name, setTab }: any) {
 
           <span>›</span>
         </button>
+
       </section>
 
       <div className="grid">
+
         {cards.map((c: any) => (
           <button
             className="featureCard"
@@ -295,15 +306,18 @@ function HomePage({ name, setTab }: any) {
             <span className="arrow">›</span>
           </button>
         ))}
+
       </div>
 
       <section className="advice">
+
         <b>⚠️ खेती की सलाह</b>
 
         <p>
           सिंचाई या दवा का फैसला लेने से पहले
           स्थानीय मौसम और फसल की स्थिति जरूर जांचें।
         </p>
+
       </section>
     </>
   );
@@ -311,29 +325,48 @@ function HomePage({ name, setTab }: any) {
 
 /* WEATHER */
 
-function WeatherPage({ setTab }: any) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [weather, setWeather] = useState<any>(null);
-  const [location, setLocation] = useState("");
+function WeatherPage({
+  setTab,
+}: any) {
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [weather, setWeather] =
+    useState<any>(null);
+
+  const [location, setLocation] =
+    useState("");
 
   const getWeather = () => {
+
     setLoading(true);
     setError("");
 
     if (!navigator.geolocation) {
+
       setError(
         "आपके फोन में Location सुविधा उपलब्ध नहीं है।"
       );
+
       setLoading(false);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
+
       async (pos) => {
+
         try {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+
+          const lat =
+            pos.coords.latitude;
+
+          const lon =
+            pos.coords.longitude;
 
           const url =
             `https://api.open-meteo.com/v1/forecast` +
@@ -344,34 +377,42 @@ function WeatherPage({ setTab }: any) {
             `&timezone=auto` +
             `&forecast_days=3`;
 
-          const response = await fetch(url);
+          const response =
+            await fetch(url);
 
           if (!response.ok) {
             throw new Error("Weather error");
           }
 
-          const data = await response.json();
+          const data =
+            await response.json();
 
           setWeather(data);
 
           setLocation(
             `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`
           );
+
         } catch {
+
           setError(
             "मौसम की जानकारी नहीं मिल पाई। फिर से कोशिश करें।"
           );
+
         }
 
         setLoading(false);
       },
+
       () => {
+
         setError(
           "Location की अनुमति दें, तभी आपके इलाके का मौसम दिखेगा।"
         );
 
         setLoading(false);
       },
+
       {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -380,33 +421,69 @@ function WeatherPage({ setTab }: any) {
     );
   };
 
-  const weatherText = (code: number) => {
-    if (code === 0) return "साफ आसमान";
-    if (code <= 3) return "आंशिक बादल";
-    if (code <= 48) return "कोहरा";
-    if (code <= 57) return "बूंदाबांदी";
-    if (code <= 67) return "बारिश";
-    if (code <= 77) return "बर्फ";
-    if (code <= 82) return "तेज बारिश";
-    if (code <= 86) return "बारिश / बर्फ";
+  const weatherText = (
+    code: number
+  ) => {
+
+    if (code === 0)
+      return "साफ आसमान";
+
+    if (code <= 3)
+      return "आंशिक बादल";
+
+    if (code <= 48)
+      return "कोहरा";
+
+    if (code <= 57)
+      return "बूंदाबांदी";
+
+    if (code <= 67)
+      return "बारिश";
+
+    if (code <= 77)
+      return "बर्फ";
+
+    if (code <= 82)
+      return "तेज बारिश";
+
+    if (code <= 86)
+      return "बारिश / बर्फ";
 
     return "गरज के साथ बारिश";
   };
 
-  const weatherEmoji = (code: number) => {
-    if (code === 0) return "☀️";
-    if (code <= 3) return "🌤️";
-    if (code <= 48) return "🌫️";
-    if (code <= 67) return "🌧️";
-    if (code <= 77) return "❄️";
+  const weatherEmoji = (
+    code: number
+  ) => {
+
+    if (code === 0)
+      return "☀️";
+
+    if (code <= 3)
+      return "🌤️";
+
+    if (code <= 48)
+      return "🌫️";
+
+    if (code <= 67)
+      return "🌧️";
+
+    if (code <= 77)
+      return "❄️";
 
     return "⛈️";
   };
 
   return (
-    <Page title="मौसम" setTab={setTab}>
+    <Page
+      title="मौसम"
+      setTab={setTab}
+    >
+
       {!weather && !loading && (
+
         <div className="weatherStart">
+
           <div className="weatherStartIcon">
             🌦️
           </div>
@@ -426,11 +503,14 @@ function WeatherPage({ setTab }: any) {
           >
             📍 मेरा मौसम देखें
           </button>
+
         </div>
       )}
 
       {loading && (
+
         <div className="weatherStart">
+
           <div className="weatherStartIcon">
             ⏳
           </div>
@@ -442,12 +522,17 @@ function WeatherPage({ setTab }: any) {
           <p>
             कृपया थोड़ी देर रुकें।
           </p>
+
         </div>
       )}
 
       {error && (
+
         <div className="sectionCard errorBox">
-          <b>⚠️ {error}</b>
+
+          <b>
+            ⚠️ {error}
+          </b>
 
           <button
             className="primary"
@@ -455,22 +540,30 @@ function WeatherPage({ setTab }: any) {
           >
             🔄 फिर कोशिश करें
           </button>
+
         </div>
       )}
 
       {weather && (
+
         <>
+
           <div className="locationText">
+
             <MapPin size={17} />
 
-            <span>{location}</span>
+            <span>
+              {location}
+            </span>
 
             <button onClick={getWeather}>
               ↻
             </button>
+
           </div>
 
           <div className="weatherBig">
+
             <div className="weatherEmoji">
               {weatherEmoji(
                 weather.current.weather_code
@@ -478,7 +571,10 @@ function WeatherPage({ setTab }: any) {
             </div>
 
             <div>
-              <span>अभी का मौसम</span>
+
+              <span>
+                अभी का मौसम
+              </span>
 
               <strong>
                 {Math.round(
@@ -491,49 +587,67 @@ function WeatherPage({ setTab }: any) {
                   weather.current.weather_code
                 )}
               </b>
+
             </div>
+
           </div>
 
           <div className="infoGrid">
+
             <Info
               icon={<Droplets />}
               title="नमी"
-              value={`${weather.current.relative_humidity_2m}%`}
+              value={
+                `${weather.current.relative_humidity_2m}%`
+              }
             />
 
             <Info
               icon={<CloudSun />}
               title="बारिश की संभावना"
-              value={`${weather.daily.precipitation_probability_max[0]}%`}
+              value={
+                `${weather.daily.precipitation_probability_max[0]}%`
+              }
             />
 
             <Info
               icon={<Sprout />}
               title="हवा"
-              value={`${Math.round(
-                weather.current.wind_speed_10m
-              )} km/h`}
+              value={
+                `${Math.round(
+                  weather.current.wind_speed_10m
+                )} km/h`
+              }
             />
 
             <Info
               icon={<CalendarDays />}
               title="महसूस होगा"
-              value={`${Math.round(
-                weather.current.apparent_temperature
-              )}°C`}
+              value={
+                `${Math.round(
+                  weather.current.apparent_temperature
+                )}°C`
+              }
             />
+
           </div>
 
           <div className="sectionCard">
-            <h3>📅 अगले 3 दिन</h3>
+
+            <h3>
+              📅 अगले 3 दिन
+            </h3>
 
             {weather.daily.time.map(
               (day: string, i: number) => (
+
                 <div
                   className="forecastRow"
                   key={day}
                 >
+
                   <div>
+
                     <b>
                       {i === 0
                         ? "आज"
@@ -547,6 +661,7 @@ function WeatherPage({ setTab }: any) {
                         weather.daily.weather_code[i]
                       )}
                     </small>
+
                   </div>
 
                   <span>
@@ -558,19 +673,25 @@ function WeatherPage({ setTab }: any) {
                   <strong>
                     {Math.round(
                       weather.daily.temperature_2m_max[i]
-                    )}°
-                    /
+                    )}
+                    ° /
                     {Math.round(
                       weather.daily.temperature_2m_min[i]
-                    )}°
+                    )}
+                    °
                   </strong>
+
                 </div>
               )
             )}
+
           </div>
 
           <div className="sectionCard">
-            <h3>🌾 किसान के लिए सलाह</h3>
+
+            <h3>
+              🌾 किसान के लिए सलाह
+            </h3>
 
             <p>
               आज का तापमान{" "}
@@ -579,21 +700,33 @@ function WeatherPage({ setTab }: any) {
               )}°C है। खेत में काम या सिंचाई करने से पहले
               बारिश की संभावना जरूर देखें।
             </p>
+
           </div>
+
         </>
       )}
+
     </Page>
   );
 }
 
 /* DOCTOR */
 
-function DoctorPage({ setTab }: any) {
-  const [checked, setChecked] = useState(false);
+function DoctorPage({
+  setTab,
+}: any) {
+
+  const [checked, setChecked] =
+    useState(false);
 
   return (
-    <Page title="Crop Doctor" setTab={setTab}>
+    <Page
+      title="Crop Doctor"
+      setTab={setTab}
+    >
+
       <div className="doctorBox">
+
         <div className="doctorIcon">
           📷
         </div>
@@ -608,40 +741,64 @@ function DoctorPage({ setTab }: any) {
         </p>
 
         <label className="uploadBtn">
+
           📷 फोटो चुनें
 
           <input
             type="file"
             accept="image/*"
-            onChange={() => setChecked(true)}
+            onChange={() =>
+              setChecked(true)
+            }
             hidden
           />
+
         </label>
 
         {checked && (
+
           <div className="result">
-            <b>✅ फोटो प्राप्त हो गई</b>
+
+            <b>
+              ✅ फोटो प्राप्त हो गई
+            </b>
 
             <p>
               फसल की जांच के लिए फोटो तैयार है।
             </p>
+
           </div>
         )}
+
       </div>
+
     </Page>
   );
 }
 
 /* CROPS */
 
-function CropsPage({ setTab }: any) {
-  const [crop, setCrop] = useState("");
-  const [saved, setSaved] = useState(false);
+function CropsPage({
+  setTab,
+}: any) {
+
+  const [crop, setCrop] =
+    useState("");
+
+  const [saved, setSaved] =
+    useState(false);
 
   return (
-    <Page title="मेरी फसल" setTab={setTab}>
+    <Page
+      title="मेरी फसल"
+      setTab={setTab}
+    >
+
       <div className="sectionCard">
-        <h3>🌱 अपनी फसल जोड़ें</h3>
+
+        <h3>
+          🌱 अपनी फसल जोड़ें
+        </h3>
 
         <input
           className="input"
@@ -656,38 +813,52 @@ function CropsPage({ setTab }: any) {
         <button
           className="primary"
           onClick={() => {
-            if (crop.trim()) setSaved(true);
+            if (crop.trim()) {
+              setSaved(true);
+            }
           }}
         >
           फसल सेव करें
         </button>
 
         {saved && crop && (
+
           <div className="savedCrop">
+
             🌾 <b>{crop}</b>
 
             <span>
               आपकी फसल सेव हो गई
             </span>
+
           </div>
         )}
+
       </div>
 
       <div className="sectionCard">
-        <h3>📍 खेत की जानकारी</h3>
+
+        <h3>
+          📍 खेत की जानकारी
+        </h3>
 
         <p>
           गांव, क्षेत्रफल और सिंचाई की जानकारी
           जोड़कर बेहतर सलाह पाएं।
         </p>
+
       </div>
+
     </Page>
   );
 }
 
 /* MANDI */
 
-function MandiPage({ setTab }: any) {
+function MandiPage({
+  setTab,
+}: any) {
+
   const data = [
     ["गेहूं", "₹2,450", "क्विंटल"],
     ["धान", "₹2,180", "क्विंटल"],
@@ -696,40 +867,71 @@ function MandiPage({ setTab }: any) {
   ];
 
   return (
-    <Page title="मंडी भाव" setTab={setTab}>
+    <Page
+      title="मंडी भाव"
+      setTab={setTab}
+    >
+
       <div className="searchBox">
+
         <Search size={20} />
 
-        <input placeholder="फसल खोजें..." />
+        <input
+          placeholder="फसल खोजें..."
+        />
+
       </div>
 
       <div className="mandiList">
-        {data.map((x) => (
-          <div className="mandiRow" key={x[0]}>
-            <div>
-              <b>{x[0]}</b>
 
-              <small>आज का भाव</small>
+        {data.map((x) => (
+
+          <div
+            className="mandiRow"
+            key={x[0]}
+          >
+
+            <div>
+
+              <b>
+                {x[0]}
+              </b>
+
+              <small>
+                आज का भाव
+              </small>
+
             </div>
 
-            <strong>{x[1]}</strong>
+            <strong>
+              {x[1]}
+            </strong>
 
-            <span>{x[2]}</span>
+            <span>
+              {x[2]}
+            </span>
+
           </div>
+
         ))}
+
       </div>
 
       <p className="note">
         * भाव Demo Data हैं।
         स्थानीय मंडी में कीमत की पुष्टि करें।
       </p>
+
     </Page>
   );
 }
 
 /* SCHEME */
 
-function SchemePage({ setTab }: any) {
+function SchemePage({
+  setTab,
+}: any) {
+
   const schemes = [
     [
       "🌾",
@@ -749,25 +951,42 @@ function SchemePage({ setTab }: any) {
   ];
 
   return (
-    <Page title="सरकारी योजना" setTab={setTab}>
+    <Page
+      title="सरकारी योजना"
+      setTab={setTab}
+    >
+
       {schemes.map((s) => (
+
         <div
           className="schemeCard"
           key={s[1]}
         >
+
           <div className="schemeEmoji">
             {s[0]}
           </div>
 
           <div>
-            <b>{s[1]}</b>
 
-            <p>{s[2]}</p>
+            <b>
+              {s[1]}
+            </b>
+
+            <p>
+              {s[2]}
+            </p>
+
           </div>
 
-          <span>›</span>
+          <span>
+            ›
+          </span>
+
         </div>
+
       ))}
+
     </Page>
   );
 }
@@ -778,37 +997,57 @@ function StorePage({
   setTab,
   addCart,
 }: any) {
+
   return (
-    <Page title="Kisan Store" setTab={setTab}>
+    <Page
+      title="Kisan Store"
+      setTab={setTab}
+    >
+
       <div className="productGrid">
+
         {products.map((p) => (
+
           <div
             className="product"
             key={p.id}
           >
+
             <div className="productEmoji">
               {p.emoji}
             </div>
 
-            <b>{p.name}</b>
+            <b>
+              {p.name}
+            </b>
 
-            <strong>₹{p.price}</strong>
+            <strong>
+              ₹{p.price}
+            </strong>
 
             <button
-              onClick={() => addCart(p.id)}
+              onClick={() =>
+                addCart(p.id)
+              }
             >
               कार्ट में डालें
             </button>
+
           </div>
+
         ))}
+
       </div>
 
       <button
         className="primary"
-        onClick={() => setTab("cart")}
+        onClick={() =>
+          setTab("cart")
+        }
       >
         🛒 कार्ट देखें
       </button>
+
     </Page>
   );
 }
@@ -821,48 +1060,73 @@ function CartPage({
   addCart,
   removeCart,
 }: any) {
-  const items = products.filter(
-    (p) => cart[p.id]
-  );
 
-  const total = items.reduce(
-    (sum, p) =>
-      sum + p.price * cart[p.id],
-    0
-  );
+  const items =
+    products.filter(
+      (p) => cart[p.id]
+    );
+
+  const total =
+    items.reduce(
+      (sum, p) =>
+        sum + p.price * cart[p.id],
+      0
+    );
 
   return (
-    <Page title="कार्ट" setTab={setTab}>
-      {items.length === 0 ? (
-        <div className="empty">
-          <div className="emptyIcon">🛒</div>
+    <Page
+      title="कार्ट"
+      setTab={setTab}
+    >
 
-          <h3>कार्ट खाली है</h3>
+      {items.length === 0 ? (
+
+        <div className="empty">
+
+          <div className="emptyIcon">
+            🛒
+          </div>
+
+          <h3>
+            कार्ट खाली है
+          </h3>
 
           <button
             className="primary"
-            onClick={() => setTab("store")}
+            onClick={() =>
+              setTab("store")
+            }
           >
             Store देखें
           </button>
+
         </div>
+
       ) : (
+
         <>
+
           {items.map((p) => (
+
             <div
               className="cartRow"
               key={p.id}
             >
+
               <span className="cartEmoji">
                 {p.emoji}
               </span>
 
               <div>
-                <b>{p.name}</b>
+
+                <b>
+                  {p.name}
+                </b>
 
                 <small>
                   ₹{p.price} × {cart[p.id]}
                 </small>
+
               </div>
 
               <button
@@ -873,20 +1137,32 @@ function CartPage({
                 −
               </button>
 
-              <b>{cart[p.id]}</b>
+              <b>
+                {cart[p.id]}
+              </b>
 
               <button
-                onClick={() => addCart(p.id)}
+                onClick={() =>
+                  addCart(p.id)
+                }
               >
                 +
               </button>
+
             </div>
+
           ))}
 
           <div className="total">
-            <span>कुल राशि</span>
 
-            <strong>₹{total}</strong>
+            <span>
+              कुल राशि
+            </span>
+
+            <strong>
+              ₹{total}
+            </strong>
+
           </div>
 
           <button
@@ -899,32 +1175,51 @@ function CartPage({
           >
             ऑर्डर करें
           </button>
+
         </>
       )}
+
     </Page>
   );
 }
 
 /* PROFILE */
 
-function ProfilePage({ name, setTab }: any) {
+function ProfilePage({
+  name,
+  setTab,
+}: any) {
+
   return (
-    <Page title="प्रोफाइल" setTab={setTab}>
+    <Page
+      title="प्रोफाइल"
+      setTab={setTab}
+    >
+
       <div className="profileHero">
+
         <div className="avatar">
           <User size={42} />
         </div>
 
-        <h2>{name}</h2>
+        <h2>
+          {name}
+        </h2>
 
-        <p>KisanSaathi उपयोगकर्ता</p>
+        <p>
+          KisanSaathi उपयोगकर्ता
+        </p>
+
       </div>
 
       <div className="profileList">
+
         <div>
           <span>👤</span>
           <b>नाम</b>
-          <small>{name}</small>
+          <small>
+            {name}
+          </small>
         </div>
 
         <div>
@@ -950,7 +1245,9 @@ function ProfilePage({ name, setTab }: any) {
             किसान सहायता केंद्र
           </small>
         </div>
+
       </div>
+
     </Page>
   );
 }
@@ -960,16 +1257,117 @@ function ProfilePage({ name, setTab }: any) {
 function ChatPage({
   message,
   setMessage,
-  sendMessage,
   setTab,
 }: any) {
-  const quick = (text: string) => {
+
+  const [messages, setMessages] =
+    useState<
+      {
+        text: string;
+        user: boolean;
+      }[]
+    >([]);
+
+  const getAnswer = (
+    question: string
+  ) => {
+
+    const q =
+      question.toLowerCase();
+
+    if (
+      q.includes("गेहूं") &&
+      q.includes("खाद")
+    ) {
+      return "गेहूं में खाद की मात्रा मिट्टी और फसल की अवस्था पर निर्भर करती है। मिट्टी की जांच के आधार पर खाद देना सबसे सही रहेगा।";
+    }
+
+    if (
+      q.includes("बारिश") ||
+      q.includes("मौसम")
+    ) {
+      return "अपने इलाके का सही मौसम देखने के लिए Home से 'मौसम देखें' खोलें और Location की अनुमति दें।";
+    }
+
+    if (
+      q.includes("धान") &&
+      q.includes("भाव")
+    ) {
+      return "धान का भाव मंडी और गुणवत्ता के हिसाब से बदलता है। मंडी भाव सेक्शन में Demo Data दिया गया है; स्थानीय मंडी में पुष्टि जरूर करें।";
+    }
+
+    if (
+      q.includes("कीड़ा") ||
+      q.includes("कीट") ||
+      q.includes("रोग")
+    ) {
+      return "फसल की समस्या समझने के लिए Crop Doctor में पत्ते या फसल की साफ फोटो चुनें।";
+    }
+
+    return "मैं आपकी खेती से जुड़े सवाल में मदद करने की कोशिश करूंगा। फसल का नाम, समस्या और खेत की स्थिति थोड़ी विस्तार से बताएं।";
+  };
+
+  const send = () => {
+
+    const text =
+      message.trim();
+
+    if (!text) return;
+
+    const answer =
+      getAnswer(text);
+
+    setMessages((old) => [
+      ...old,
+      {
+        text,
+        user: true,
+      },
+      {
+        text: answer,
+        user: false,
+      },
+    ]);
+
+    setMessage("");
+  };
+
+  const quick = (
+    text: string
+  ) => {
+
     setMessage(text);
+
+    setTimeout(() => {
+
+      const answer =
+        getAnswer(text);
+
+      setMessages((old) => [
+        ...old,
+        {
+          text,
+          user: true,
+        },
+        {
+          text: answer,
+          user: false,
+        },
+      ]);
+
+      setMessage("");
+
+    }, 50);
   };
 
   return (
-    <Page title="AI Kisan" setTab={setTab}>
+    <Page
+      title="AI Kisan"
+      setTab={setTab}
+    >
+
       <div className="chatIntro">
+
         🤖
 
         <h2>
@@ -980,9 +1378,35 @@ function ChatPage({
           फसल, मौसम, मंडी या खेती से
           जुड़ा सवाल पूछें।
         </p>
+
       </div>
 
+      {messages.length > 0 && (
+
+        <div className="messages">
+
+          {messages.map(
+            (m, i) => (
+
+              <div
+                key={i}
+                className={
+                  m.user
+                    ? "message userMessage"
+                    : "message aiMessage"
+                }
+              >
+                {m.text}
+              </div>
+
+            )
+          )}
+
+        </div>
+      )}
+
       <div className="quickQuestions">
+
         <button
           onClick={() =>
             quick(
@@ -995,7 +1419,9 @@ function ChatPage({
 
         <button
           onClick={() =>
-            quick("आज बारिश होगी?")
+            quick(
+              "आज बारिश होगी?"
+            )
           }
         >
           आज बारिश होगी?
@@ -1003,14 +1429,18 @@ function ChatPage({
 
         <button
           onClick={() =>
-            quick("धान का भाव क्या है?")
+            quick(
+              "धान का भाव क्या है?"
+            )
           }
         >
           धान का भाव क्या है?
         </button>
+
       </div>
 
       <div className="chatInput">
+
         <input
           value={message}
           onChange={(e) =>
@@ -1018,16 +1448,20 @@ function ChatPage({
           }
           placeholder="अपना सवाल लिखें..."
           onKeyDown={(e) => {
+
             if (e.key === "Enter") {
-              sendMessage();
+              send();
             }
+
           }}
         />
 
-        <button onClick={sendMessage}>
+        <button onClick={send}>
           <Send size={19} />
         </button>
+
       </div>
+
     </Page>
   );
 }
@@ -1039,19 +1473,28 @@ function Page({
   setTab,
   children,
 }: any) {
+
   return (
     <>
+
       <div className="pageHead">
+
         <button
-          onClick={() => setTab("home")}
+          onClick={() =>
+            setTab("home")
+          }
         >
           <ArrowLeft size={20} />
         </button>
 
-        <h2>{title}</h2>
+        <h2>
+          {title}
+        </h2>
+
       </div>
 
       {children}
+
     </>
   );
 }
@@ -1061,19 +1504,29 @@ function Info({
   title,
   value,
 }: any) {
+
   return (
     <div className="infoCard">
+
       {icon}
 
-      <small>{title}</small>
+      <small>
+        {title}
+      </small>
 
-      <b>{value}</b>
+      <b>
+        {value}
+      </b>
+
     </div>
   );
 }
 
-const root = document.getElementById("root");
+const root =
+  document.getElementById("root");
 
 if (root) {
-  createRoot(root).render(<App />);
+  createRoot(root).render(
+    <App />
+  );
 }
