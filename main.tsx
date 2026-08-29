@@ -8,75 +8,49 @@ const crops = [
   ["🌾", "धान", "₹2,180"],
   ["🌻", "सरसों", "₹5,650"],
   ["🌱", "कपास", "₹7,200"],
-];
-
-const schemes = [
-  {
-    icon: "🌾",
-    name: "PM-KISAN",
-    text: "किसानों के लिए आर्थिक सहायता",
-    url: "https://pmkisan.gov.in/"
-  },
-  {
-    icon: "🛡️",
-    name: "प्रधानमंत्री फसल बीमा योजना",
-    text: "फसल नुकसान से सुरक्षा",
-    url: "https://pmfby.gov.in/"
-  },
-  {
-    icon: "💳",
-    name: "किसान क्रेडिट कार्ड (KCC)",
-    text: "खेती के लिए किसान ऋण सुविधा",
-    url: "https://www.myscheme.gov.in/"
-  },
-  {
-    icon: "👨‍🌾",
-    name: "PM किसान मानधन योजना",
-    text: "किसानों के लिए पेंशन योजना",
-    url: "https://maandhan.in/"
-  },
-  {
-    icon: "🧪",
-    name: "Soil Health Card",
-    text: "मिट्टी की जांच और पोषक जानकारी",
-    url: "https://soilhealth.dac.gov.in/"
-  },
-  {
-    icon: "🏗️",
-    name: "Agriculture Infrastructure Fund",
-    text: "कृषि ढांचे के लिए वित्तीय सहायता",
-    url: "https://agriinfra.dac.gov.in/"
-  },
-  {
-    icon: "🌱",
-    name: "परंपरागत कृषि विकास योजना",
-    text: "जैविक खेती को बढ़ावा",
-    url: "https://pgsindia-ncof.gov.in/"
-  },
-  {
-    icon: "📈",
-    name: "e-NAM",
-    text: "ऑनलाइन राष्ट्रीय कृषि बाजार",
-    url: "https://www.enam.gov.in/web/"
-  },
-  {
-    icon: "🔎",
-    name: "MyScheme",
-    text: "सरकारी योजनाएं खोजें",
-    url: "https://www.myscheme.gov.in/"
-  }
+  ["🌽", "मक्का", "₹2,100"],
+  ["🥔", "आलू", "₹1,850"],
 ];
 
 function App() {
   const [tab, setTab] = useState("home");
-  const [crop, setCrop] = useState("");
+
+  const [profile, setProfile] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("kisanProfile") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  const [crop, setCrop] = useState(
+    () => localStorage.getItem("kisanCrop") || ""
+  );
+
   const [question, setQuestion] = useState("");
   const [chat, setChat] = useState(
     "नमस्ते किसान भाई! अपना सवाल नीचे लिखकर भेजें।"
   );
+
   const [cart, setCart] = useState<string[]>([]);
 
   const go = (page: string) => setTab(page);
+
+  const saveProfile = (data: any) => {
+    setProfile(data);
+    localStorage.setItem("kisanProfile", JSON.stringify(data));
+    setTab("profile");
+  };
+
+  const saveCrop = () => {
+    if (!crop.trim()) {
+      alert("पहले अपनी फसल का नाम लिखें।");
+      return;
+    }
+
+    localStorage.setItem("kisanCrop", crop);
+    alert("🌱 आपकी फसल सेव हो गई!");
+  };
 
   const sendQuestion = () => {
     if (!question.trim()) return;
@@ -91,7 +65,9 @@ function App() {
   const Home = () => (
     <>
       <div className="welcome">
-        <small>नमस्ते किसान भाई 👋</small>
+        <small>
+          नमस्ते {profile.name || "किसान भाई"} 👋
+        </small>
 
         <h2>आज खेती में आपकी मदद के लिए तैयार हैं।</h2>
 
@@ -110,8 +86,14 @@ function App() {
         </button>
       </div>
 
-      <div className="grid">
+      {crop && (
+        <div className="savedCrop">
+          🌱 <b>मेरी फसल:</b> {crop}
+          <button onClick={() => go("crop")}>देखें ›</button>
+        </div>
+      )}
 
+      <div className="grid">
         <Card
           icon="📷"
           title="फसल जांच"
@@ -160,7 +142,6 @@ function App() {
           text="किसानों की योजनाएं"
           onClick={() => go("schemes")}
         />
-
       </div>
 
       <div className="tip">
@@ -172,14 +153,12 @@ function App() {
   );
 
   const Weather = () => (
-    <Page title="मौसम" back>
-
+    <Page title="मौसम" onBack={() => go("home")}>
       <div className="location">
-        📍 30.17°, 77.61°　　↻
+        📍 आपका क्षेत्र　　↻
       </div>
 
       <div className="weatherMain">
-
         <div>☀️</div>
 
         <section>
@@ -187,64 +166,35 @@ function App() {
           <strong>30°C</strong>
           <b>साफ आसमान</b>
         </section>
-
       </div>
 
       <div className="grid">
-
-        <Info
-          icon="💧"
-          title="नमी"
-          value="81%"
-        />
-
-        <Info
-          icon="☀️"
-          title="बादल"
-          value="75%"
-        />
-
-        <Info
-          icon="🌬️"
-          title="हवा"
-          value="7 km/h"
-        />
-
-        <Info
-          icon="🌡️"
-          title="महसूस"
-          value="37°C"
-        />
-
+        <Info icon="💧" title="नमी" value="81%" />
+        <Info icon="☁️" title="बादल" value="75%" />
+        <Info icon="🌬️" title="हवा" value="7 km/h" />
+        <Info icon="🌡️" title="महसूस" value="37°C" />
       </div>
 
       <div className="box">
-
         <h3>📅 अगले 3 दिन</h3>
 
         <p>
-          आज
-          <span>⛈️ 33° / 26°</span>
+          आज <span>⛈️ 33° / 26°</span>
         </p>
 
         <p>
-          कल
-          <span>⛈️ 31° / 25°</span>
+          कल <span>⛈️ 31° / 25°</span>
         </p>
 
         <p>
-          परसों
-          <span>⛈️ 31° / 25°</span>
+          परसों <span>⛈️ 31° / 25°</span>
         </p>
-
       </div>
-
     </Page>
   );
 
   const Market = () => (
-    <Page title="मंडी भाव" back>
-
+    <Page title="मंडी भाव" onBack={() => go("home")}>
       <div className="search">
         🔍　फसल खोजें...
       </div>
@@ -254,76 +204,61 @@ function App() {
       </button>
 
       <div className="box">
-
-        {crops.map(c => (
-
-          <div
-            className="market"
-            key={c[1]}
-          >
-
+        {crops.map((c) => (
+          <div className="market" key={c[1]}>
             <span>
               {c[0]} <b>{c[1]}</b>
               <small>आज का भाव</small>
             </span>
 
             <strong>{c[2]}</strong>
-
           </div>
-
         ))}
-
       </div>
 
       <div className="tip">
         ⚠️ मंडी भाव स्थान और मंडी के अनुसार बदल सकते हैं।
       </div>
-
     </Page>
   );
 
   const Doctor = () => (
-    <Page title="Crop Doctor" back>
-
+    <Page title="Crop Doctor" onBack={() => go("home")}>
       <div className="doctor">
+        <div className="bigIcon">📷</div>
 
-        <div className="bigIcon">
-          📷
-        </div>
-
-        <h2>
-          अपनी फसल की जांच करें
-        </h2>
+        <h2>अपनी फसल की जांच करें</h2>
 
         <p>
           पत्ते या फसल की साफ फोटो चुनें
         </p>
 
         <label className="upload">
-
           📷 फोटो चुनें
 
           <input
             type="file"
             accept="image/*"
           />
-
         </label>
 
-        <button className="greenBtn">
+        <button
+          className="greenBtn"
+          onClick={() =>
+            alert(
+              "📷 फोटो मिल गई। AI Crop Doctor को जोड़ने के बाद बीमारी की पहचान की जाएगी।"
+            )
+          }
+        >
           🔍 फसल की जांच करें
         </button>
-
       </div>
-
     </Page>
   );
 
   const AI = () => (
-    <Page title="AI Kisan" back>
-
+    <Page title="AI Kisan" onBack={() => go("home")}>
       <div className="aiHead">
-
         <div>🤖</div>
 
         <h2>AI Kisan</h2>
@@ -331,11 +266,9 @@ function App() {
         <p>
           खेती, मौसम, फसल और मंडी से जुड़े सवाल पूछें
         </p>
-
       </div>
 
       <div className="chips">
-
         <button
           onClick={() =>
             setQuestion("गेहूं में कौन सी खाद डालें?")
@@ -359,7 +292,6 @@ function App() {
         >
           धान की खेती के लिए सलाह
         </button>
-
       </div>
 
       <div className="chat">
@@ -367,10 +299,9 @@ function App() {
       </div>
 
       <div className="inputRow">
-
         <input
           value={question}
-          onChange={e =>
+          onChange={(e) =>
             setQuestion(e.target.value)
           }
           placeholder="अपना सवाल लिखें..."
@@ -379,137 +310,305 @@ function App() {
         <button onClick={sendQuestion}>
           ➤
         </button>
-
       </div>
-
     </Page>
   );
 
   const Crop = () => (
-    <Page title="मेरी फसल" back>
-
+    <Page title="मेरी फसल" onBack={() => go("home")}>
       <div className="box">
-
-        <h2>
-          🌱 अपनी फसल जोड़ें
-        </h2>
+        <h2>🌱 अपनी फसल जोड़ें</h2>
 
         <input
+          className="fullInput"
           value={crop}
-          onChange={e =>
+          onChange={(e) =>
             setCrop(e.target.value)
           }
           placeholder="गेहूं, धान, कपास..."
         />
 
-        <button className="greenBtn">
+        <button
+          className="greenBtn"
+          onClick={saveCrop}
+        >
           💾 फसल सेव करें
         </button>
-
       </div>
+
+      {crop && (
+        <div className="savedBox">
+          <div className="cropCircle">
+            🌱
+          </div>
+
+          <div>
+            <small>मेरी सेव की हुई फसल</small>
+            <h3>{crop}</h3>
+          </div>
+        </div>
+      )}
 
       <div className="box">
-
-        <h3>
-          📍 खेत की जानकारी
-        </h3>
+        <h3>📍 खेत की जानकारी</h3>
 
         <p>
-          गांव, क्षेत्रफल और सिंचाई की जानकारी बाद में जोड़ सकते हैं।
+          गांव, क्षेत्रफल और सिंचाई की जानकारी
+          आगे जोड़ सकते हैं।
         </p>
-
       </div>
-
     </Page>
   );
 
-  const Schemes = () => (
-    <Page title="सरकारी योजनाएं" back>
+  const Profile = () => {
+    const [name, setName] = useState(
+      profile.name || ""
+    );
 
-      <div className="schemeIntro">
+    const [village, setVillage] = useState(
+      profile.village || ""
+    );
 
-        <div className="schemeBigIcon">
-          🏛️
-        </div>
+    const [district, setDistrict] = useState(
+      profile.district || ""
+    );
 
-        <div>
-          <h2>
-            किसानों के लिए सरकारी योजनाएं
-          </h2>
+    const [mobile, setMobile] = useState(
+      profile.mobile || ""
+    );
 
-          <p>
-            नीचे दी गई योजनाओं की जानकारी और Official Website
-            सीधे खोल सकते हैं।
-          </p>
-        </div>
+    const save = () => {
+      if (!name.trim()) {
+        alert("कृपया किसान का नाम लिखें।");
+        return;
+      }
 
-      </div>
+      saveProfile({
+        name,
+        village,
+        district,
+        mobile,
+      });
 
-      {schemes.map((s) => (
+      alert("✅ प्रोफाइल सेव हो गई!");
+    };
 
-        <div
-          className="schemeCard"
-          key={s.name}
-        >
-
-          <div className="schemeIcon">
-            {s.icon}
+    return (
+      <Page
+        title="प्रोफाइल"
+        onBack={() => go("home")}
+      >
+        <div className="profileCard">
+          <div className="profileIcon">
+            👤
           </div>
 
-          <div className="schemeInfo">
+          <h2>प्रोफाइल एडिट करें</h2>
 
-            <b>{s.name}</b>
+          <input
+            value={name}
+            onChange={(e) =>
+              setName(e.target.value)
+            }
+            placeholder="किसान का नाम"
+          />
 
-            <small>
-              {s.text}
-            </small>
+          <input
+            value={village}
+            onChange={(e) =>
+              setVillage(e.target.value)
+            }
+            placeholder="गाँव का नाम"
+          />
+
+          <input
+            value={district}
+            onChange={(e) =>
+              setDistrict(e.target.value)
+            }
+            placeholder="जिला"
+          />
+
+          <input
+            value={mobile}
+            onChange={(e) =>
+              setMobile(e.target.value)
+            }
+            placeholder="मोबाइल नंबर"
+            inputMode="numeric"
+          />
+
+          <button
+            className="greenBtn"
+            onClick={save}
+          >
+            💾 प्रोफाइल सेव करें
+          </button>
+
+          <button
+            className="backText"
+            onClick={() => go("home")}
+          >
+            वापस जाएं
+          </button>
+        </div>
+
+        {profile.name && (
+          <div className="box">
+            <h3>👤 आपकी जानकारी</h3>
+
+            <p>
+              <b>नाम:</b> {profile.name}
+            </p>
+
+            {profile.village && (
+              <p>
+                <b>गाँव:</b> {profile.village}
+              </p>
+            )}
+
+            {profile.district && (
+              <p>
+                <b>जिला:</b> {profile.district}
+              </p>
+            )}
+
+            {profile.mobile && (
+              <p>
+                <b>मोबाइल:</b> {profile.mobile}
+              </p>
+            )}
+          </div>
+        )}
+      </Page>
+    );
+  };
+
+  const Schemes = () => (
+    <Page
+      title="सरकारी योजनाएं"
+      onBack={() => go("home")}
+    >
+      <div className="schemeIntro">
+        🏛️
+
+        <div>
+          <h3>किसानों के लिए सरकारी योजनाएं</h3>
+          <small>
+            नीचे दी गई वेबसाइटों पर योजना की
+            आधिकारिक जानकारी देखें।
+          </small>
+        </div>
+      </div>
+
+      {[
+        [
+          "🌾",
+          "PM-KISAN",
+          "किसानों के लिए आर्थिक सहायता",
+          "https://pmkisan.gov.in/"
+        ],
+
+        [
+          "🛡️",
+          "प्रधानमंत्री फसल बीमा योजना",
+          "फसल नुकसान से सुरक्षा",
+          "https://pmfby.gov.in/"
+        ],
+
+        [
+          "💳",
+          "किसान क्रेडिट कार्ड (KCC)",
+          "किसानों के लिए आसान कृषि ऋण",
+          "https://www.pmkisan.gov.in/"
+        ],
+
+        [
+          "👨‍🌾",
+          "PM किसान मानधन योजना",
+          "किसानों के लिए पेंशन योजना",
+          "https://maandhan.in/"
+        ],
+
+        [
+          "🧪",
+          "Soil Health Card",
+          "मिट्टी की जांच और स्वास्थ्य जानकारी",
+          "https://soilhealth.dac.gov.in/"
+        ],
+
+        [
+          "🏗️",
+          "Agriculture Infrastructure Fund",
+          "कृषि बुनियादी ढांचे के लिए सहायता",
+          "https://agriinfra.dac.gov.in/"
+        ],
+
+        [
+          "🌱",
+          "परंपरागत कृषि विकास योजना",
+          "जैविक खेती को बढ़ावा देने की योजना",
+          "https://pgsindia-ncof.gov.in/"
+        ],
+
+        [
+          "📈",
+          "e-NAM",
+          "ऑनलाइन कृषि मंडी प्लेटफॉर्म",
+          "https://www.enam.gov.in/"
+        ],
+
+        [
+          "🔎",
+          "MyScheme",
+          "सरकारी योजनाएं खोजने का पोर्टल",
+          "https://www.myscheme.gov.in/"
+        ],
+      ].map((x) => (
+        <div className="scheme" key={x[1]}>
+          <span className="schemeIcon">
+            {x[0]}
+          </span>
+
+          <div>
+            <b>{x[1]}</b>
+            <small>{x[2]}</small>
 
             <a
-              href={s.url}
+              href={x[3]}
               target="_blank"
-              rel="noopener noreferrer"
-              className="officialBtn"
+              rel="noreferrer"
+              className="official"
             >
               🌐 Official Website ↗
             </a>
-
           </div>
-
         </div>
-
       ))}
 
-      <div className="schemeWarning">
-
+      <div className="tip">
         ⚠️ <b>जरूरी सूचना:</b>
-
         <br />
-
-        आवेदन करने से पहले योजना की पात्रता और जानकारी
-        Official Government Website पर जरूर जांचें।
-
+        योजना की पात्रता, राशि और नियम बदल सकते हैं।
+        आवेदन करने से पहले Official Government Website
+        पर जानकारी जरूर जांचें।
       </div>
-
     </Page>
   );
 
   const Store = () => (
-    <Page title="Kisan Store" back>
-
+    <Page
+      title="Kisan Store"
+      onBack={() => go("home")}
+    >
       <div className="storeGrid">
-
         {[
           ["🌿", "नीम ऑयल", "₹299"],
           ["🌱", "जैविक खाद", "₹499"],
           ["🧴", "फसल सुरक्षा किट", "₹699"],
-          ["🌾", "बीज उपचार किट", "₹399"]
-        ].map(x => (
-
-          <div
-            className="product"
-            key={x[1]}
-          >
-
+          ["🌾", "बीज उपचार किट", "₹399"],
+        ].map((x) => (
+          <div className="product" key={x[1]}>
             <div className="productIcon">
               {x[0]}
             </div>
@@ -525,26 +624,30 @@ function App() {
             >
               🛒 कार्ट में डालें
             </button>
-
           </div>
-
         ))}
-
       </div>
 
-      <button className="greenBtn">
-        🛒 कार्ट देखें ({cart.length})
-      </button>
+      <div className="cartBox">
+        🛒 <b>कार्ट में सामान:</b>{" "}
+        {cart.length}
 
+        {cart.length > 0 && (
+          <div className="cartItems">
+            {cart.map((item, i) => (
+              <div key={i}>
+                {item}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </Page>
   );
 
   return (
-
     <div className="app">
-
       <header>
-
         <span>🌾</span>
 
         <div>
@@ -555,24 +658,23 @@ function App() {
         </div>
 
         <button
+          className="profileBtn"
           onClick={() => go("profile")}
         >
-          ♙
+          👤
         </button>
-
       </header>
 
       <main>
-
         {tab === "home" && <Home />}
         {tab === "weather" && <Weather />}
         {tab === "market" && <Market />}
         {tab === "doctor" && <Doctor />}
         {tab === "ai" && <AI />}
         {tab === "crop" && <Crop />}
+        {tab === "profile" && <Profile />}
         {tab === "schemes" && <Schemes />}
         {tab === "store" && <Store />}
-
       </main>
 
       <button
@@ -583,7 +685,6 @@ function App() {
       </button>
 
       <nav>
-
         <Nav
           icon="⌂"
           text="Home"
@@ -611,43 +712,25 @@ function App() {
           active={tab === "store"}
           onClick={() => go("store")}
         />
-
       </nav>
-
     </div>
-
   );
 }
 
 function Page({
   title,
   children,
-  back
+  onBack,
 }: any) {
-
   return (
-
     <>
       <div className="pageTitle">
-
-        {back && (
-          <button
-            onClick={() =>
-              window.history.back()
-            }
-          >
-            ←
-          </button>
-        )}
-
+        <button onClick={onBack}>←</button>
         <h3>{title}</h3>
-
       </div>
 
       {children}
-
     </>
-
   );
 }
 
@@ -655,51 +738,36 @@ function Card({
   icon,
   title,
   text,
-  onClick
+  onClick,
 }: any) {
-
   return (
-
     <button
       className="card"
       onClick={onClick}
     >
-
       <span>{icon}</span>
 
       <div>
-
         <b>{title}</b>
-
         <small>{text}</small>
-
       </div>
 
       <i>›</i>
-
     </button>
-
   );
 }
 
 function Info({
   icon,
   title,
-  value
+  value,
 }: any) {
-
   return (
-
     <div className="info">
-
       <span>{icon}</span>
-
       <small>{title}</small>
-
       <b>{value}</b>
-
     </div>
-
   );
 }
 
@@ -707,40 +775,36 @@ function Nav({
   icon,
   text,
   active,
-  onClick
+  onClick,
 }: any) {
-
   return (
-
     <button
       className={active ? "active" : ""}
       onClick={onClick}
     >
-
       {icon}
-
       <small>{text}</small>
-
     </button>
-
   );
 }
 
 const css = `
-
 *{
-  box-sizing:border-box;
+  box-sizing:border-box
+}
+
+html,body,#root{
+  margin:0;
+  min-height:100%;
 }
 
 body{
-  margin:0;
   background:#f3f6f1;
   font-family:Arial,sans-serif;
   color:#172018;
 }
 
-button,
-input{
+button,input{
   font:inherit;
 }
 
@@ -755,28 +819,28 @@ a{
 }
 
 .app{
-  max-width:520px;
+  max-width:620px;
   margin:auto;
   min-height:100vh;
-  padding-bottom:78px;
+  padding-bottom:82px;
 }
 
 header{
-  height:62px;
+  height:74px;
   background:white;
-  margin:0 12px 12px;
+  margin:0 12px 14px;
   padding:10px 14px;
   display:flex;
   align-items:center;
-  gap:9px;
+  gap:10px;
   box-shadow:0 2px 8px #00000008;
 }
 
 header>span{
-  font-size:25px;
+  font-size:27px;
   background:#edf7e8;
-  padding:7px;
-  border-radius:12px;
+  padding:8px;
+  border-radius:13px;
 }
 
 header div{
@@ -785,18 +849,19 @@ header div{
 
 header b{
   display:block;
-  font-size:13px;
+  font-size:16px;
 }
 
 header small{
-  font-size:8px;
+  font-size:9px;
   color:#777;
 }
 
-header button{
+.profileBtn{
   background:#edf7e8;
   border-radius:50%;
-  padding:8px;
+  padding:10px;
+  font-size:18px;
 }
 
 main{
@@ -805,8 +870,8 @@ main{
 
 .welcome{
   background:linear-gradient(135deg,#e4f7dc,#f8fcf5);
-  padding:18px;
-  border-radius:18px;
+  padding:20px;
+  border-radius:20px;
   margin-bottom:10px;
 }
 
@@ -815,14 +880,14 @@ main{
 }
 
 .welcome h2{
-  font-size:19px;
-  margin:7px 0 13px;
+  font-size:21px;
+  margin:8px 0 14px;
 }
 
 .weatherBox{
   background:white;
-  border-radius:14px;
-  padding:13px;
+  border-radius:15px;
+  padding:14px;
   width:100%;
   display:flex;
   align-items:center;
@@ -836,30 +901,44 @@ main{
 
 .weatherBox small{
   display:block;
-  font-size:9px;
+  font-size:10px;
   margin-top:3px;
+}
+
+.savedCrop{
+  background:#eaf7e4;
+  border-radius:12px;
+  padding:11px 13px;
+  margin-bottom:10px;
+  font-size:12px;
+}
+
+.savedCrop button{
+  float:right;
+  color:#2f7d32;
+  font-weight:bold;
 }
 
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:8px;
+  gap:9px;
 }
 
 .card{
   background:white;
-  border-radius:14px;
-  padding:14px 10px;
+  border-radius:15px;
+  padding:15px 11px;
   display:flex;
   align-items:center;
   text-align:left;
-  min-height:62px;
+  min-height:70px;
   box-shadow:0 2px 7px #00000008;
 }
 
 .card>span{
-  font-size:20px;
-  margin-right:8px;
+  font-size:23px;
+  margin-right:9px;
 }
 
 .card div{
@@ -867,52 +946,53 @@ main{
 }
 
 .card b{
-  font-size:12px;
+  font-size:13px;
   display:block;
 }
 
 .card small{
-  font-size:8px;
+  font-size:9px;
   color:#777;
 }
 
 .card i{
   font-style:normal;
+  font-size:18px;
 }
 
 .tip{
   background:#fff4c9;
-  padding:11px;
+  padding:12px;
   margin-top:10px;
-  border-radius:10px;
-  font-size:9px;
+  border-radius:11px;
+  font-size:10px;
   color:#665b2a;
 }
 
 .pageTitle{
   display:flex;
   align-items:center;
-  gap:7px;
+  gap:8px;
   margin:10px 0;
 }
 
 .pageTitle button{
   background:white;
   border-radius:12px;
-  padding:8px;
+  padding:9px 12px;
   font-size:18px;
 }
 
 .pageTitle h3{
   margin:0;
-  font-size:16px;
+  font-size:17px;
 }
 
 .location,
 .search{
   background:white;
   border-radius:11px;
-  padding:12px;
+  padding:13px;
   margin-bottom:9px;
   font-size:11px;
   color:#777;
@@ -921,14 +1001,14 @@ main{
 .weatherMain{
   background:linear-gradient(135deg,#dff5d8,#fff);
   border-radius:18px;
-  padding:20px;
+  padding:22px;
   display:flex;
   gap:20px;
   align-items:center;
 }
 
 .weatherMain>div{
-  font-size:48px;
+  font-size:52px;
 }
 
 .weatherMain small{
@@ -938,7 +1018,7 @@ main{
 
 .weatherMain strong{
   display:block;
-  font-size:27px;
+  font-size:30px;
   margin:5px 0;
 }
 
@@ -971,13 +1051,13 @@ main{
 .aiHead{
   background:white;
   border-radius:15px;
-  padding:14px;
+  padding:15px;
   margin-top:9px;
 }
 
 .box p{
   border-bottom:1px solid #eee;
-  padding:8px 0;
+  padding:9px 0;
   font-size:11px;
 }
 
@@ -985,21 +1065,13 @@ main{
   float:right;
 }
 
-.box input{
-  width:100%;
-  padding:11px;
-  border:1px solid #ddd;
-  border-radius:9px;
-  outline:none;
-}
-
 .greenBtn{
   background:${green};
   color:white;
-  border-radius:9px;
+  border-radius:10px;
   width:100%;
-  padding:10px;
-  margin:5px 0;
+  padding:12px;
+  margin:6px 0;
   font-weight:bold;
 }
 
@@ -1008,7 +1080,7 @@ main{
 }
 
 .bigIcon{
-  font-size:40px;
+  font-size:45px;
 }
 
 .doctor p{
@@ -1019,7 +1091,7 @@ main{
 .upload{
   display:block;
   background:#e9f5e4;
-  padding:12px;
+  padding:13px;
   border-radius:10px;
   font-weight:bold;
 }
@@ -1033,14 +1105,15 @@ main{
 .market{
   display:flex;
   justify-content:space-between;
-  padding:11px 0;
+  padding:12px 0;
   border-bottom:1px solid #eee;
-  font-size:11px;
+  font-size:12px;
 }
 
 .market small{
   display:block;
   color:#777;
+  margin-top:3px;
 }
 
 .aiHead{
@@ -1049,7 +1122,7 @@ main{
 }
 
 .aiHead>div{
-  font-size:35px;
+  font-size:38px;
 }
 
 .aiHead h2{
@@ -1063,7 +1136,7 @@ main{
 
 .chips{
   display:flex;
-  gap:5px;
+  gap:6px;
   overflow:auto;
   padding:8px 0;
 }
@@ -1071,7 +1144,7 @@ main{
 .chips button{
   background:white;
   border-radius:14px;
-  padding:8px;
+  padding:9px;
   font-size:9px;
   white-space:nowrap;
 }
@@ -1081,7 +1154,7 @@ main{
   border-radius:12px;
   padding:15px;
   font-size:11px;
-  min-height:65px;
+  min-height:70px;
 }
 
 .inputRow{
@@ -1096,125 +1169,192 @@ main{
   border:0;
   outline:0;
   flex:1;
-  padding:8px;
+  padding:9px;
 }
 
 .inputRow button{
   background:${green};
   color:white;
   border-radius:9px;
-  width:42px;
+  width:45px;
 }
 
-.schemeIntro{
-  background:linear-gradient(135deg,#e5f7df,#fff);
+.fullInput{
+  width:100%;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:12px;
+  outline:none;
+  margin:5px 0 8px;
+}
+
+.savedBox{
+  background:white;
   border-radius:15px;
   padding:14px;
+  margin-top:9px;
   display:flex;
-  gap:10px;
   align-items:center;
-  margin-bottom:8px;
+  gap:12px;
 }
 
-.schemeBigIcon{
-  font-size:34px;
-}
-
-.schemeIntro h2{
-  margin:0 0 5px;
-  font-size:15px;
-}
-
-.schemeIntro p{
-  margin:0;
-  font-size:9px;
-  color:#777;
-}
-
-.schemeCard{
-  background:white;
-  border-radius:13px;
-  padding:11px;
-  margin:7px 0;
-  display:flex;
-  gap:10px;
-  align-items:flex-start;
-  box-shadow:0 2px 7px #00000008;
-}
-
-.schemeIcon{
-  background:#edf7e8;
-  width:42px;
-  height:42px;
-  border-radius:10px;
+.cropCircle{
+  width:50px;
+  height:50px;
+  background:#eaf7e4;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:22px;
+  font-size:25px;
 }
 
-.schemeInfo{
-  flex:1;
-}
-
-.schemeInfo>b{
-  display:block;
-  font-size:11px;
-}
-
-.schemeInfo>small{
-  display:block;
+.savedBox small{
   color:#777;
-  font-size:8px;
-  margin:4px 0 6px;
 }
 
-.officialBtn{
-  display:inline-block;
-  background:#e7f5e2;
-  color:#18732b;
-  border-radius:7px;
-  padding:5px 8px;
-  font-size:8px;
-  font-weight:bold;
+.savedBox h3{
+  margin:4px 0;
 }
 
-.schemeWarning{
-  background:#fff4c9;
-  padding:10px;
-  border-radius:10px;
-  font-size:8px;
-  color:#665b2a;
-  margin-top:9px;
-}
-
-.storeGrid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-
-.product{
+.profileCard{
   background:white;
-  border-radius:14px;
-  padding:8px;
+  border-radius:18px;
+  padding:20px;
+  text-align:center;
 }
 
-.productIcon{
+.profileIcon{
+  width:72px;
   height:72px;
-  background:#edf7e8;
-  border-radius:10px;
+  margin:auto;
+  background:#e8f5e4;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
   font-size:38px;
 }
 
+.profileCard h2{
+  margin:12px 0 18px;
+}
+
+.profileCard input{
+  width:100%;
+  padding:13px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  margin-bottom:10px;
+  outline:none;
+}
+
+.backText{
+  color:#777;
+  font-size:11px;
+  padding:8px;
+}
+
+.schemeIntro{
+  background:linear-gradient(135deg,#e5f8df,#fff);
+  border-radius:15px;
+  padding:14px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:9px;
+}
+
+.schemeIntro:first-letter{
+  font-size:25px;
+}
+
+.schemeIntro h3{
+  margin:0 0 5px;
+  font-size:14px;
+}
+
+.schemeIntro small{
+  font-size:9px;
+  color:#777;
+}
+
+.scheme{
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  background:white;
+  border-radius:13px;
+  padding:13px;
+  margin:7px 0;
+  box-shadow:0 1px 5px #00000006;
+}
+
+.schemeIcon{
+  width:39px;
+  height:39px;
+  background:#edf7e8;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+}
+
+.scheme div{
+  flex:1;
+}
+
+.scheme b{
+  display:block;
+  font-size:12px;
+}
+
+.scheme small{
+  display:block;
+  color:#777;
+  font-size:9px;
+  margin-top:3px;
+}
+
+.official{
+  display:inline-block;
+  background:#e8f6e3;
+  color:#2f7d32;
+  border-radius:7px;
+  padding:5px 7px;
+  margin-top:7px;
+  font-size:8px;
+  font-weight:bold;
+}
+
+.storeGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.product{
+  background:white;
+  border-radius:14px;
+  padding:9px;
+}
+
+.productIcon{
+  height:78px;
+  background:#edf7e8;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:40px;
+}
+
 .product b,
 .product strong{
   display:block;
   font-size:11px;
-  margin:5px 0;
+  margin:6px 0;
 }
 
 .product button{
@@ -1222,19 +1362,37 @@ main{
   background:${green};
   color:white;
   border-radius:8px;
-  padding:8px;
+  padding:9px;
   font-size:10px;
+}
+
+.cartBox{
+  background:white;
+  border-radius:13px;
+  padding:13px;
+  margin-top:10px;
+  font-size:11px;
+}
+
+.cartItems{
+  margin-top:8px;
+}
+
+.cartItems div{
+  border-top:1px solid #eee;
+  padding:7px 0;
 }
 
 .floating{
   position:fixed;
-  right:max(18px,calc((100vw - 520px)/2 + 18px));
-  bottom:70px;
+  right:max(18px,calc((100vw - 620px)/2 + 18px));
+  bottom:72px;
   background:${green};
   color:white;
   border-radius:25px;
-  padding:12px 15px;
+  padding:13px 16px;
   box-shadow:0 3px 10px #0003;
+  z-index:10;
 }
 
 nav{
@@ -1242,12 +1400,13 @@ nav{
   bottom:0;
   left:50%;
   transform:translateX(-50%);
-  width:min(520px,100%);
-  height:65px;
+  width:min(620px,100%);
+  height:68px;
   background:white;
   display:grid;
   grid-template-columns:repeat(4,1fr);
   box-shadow:0 -2px 10px #00000010;
+  z-index:20;
 }
 
 nav button{
@@ -1256,11 +1415,11 @@ nav button{
   align-items:center;
   justify-content:center;
   color:#777;
-  font-size:18px;
+  font-size:19px;
 }
 
 nav button small{
-  font-size:8px;
+  font-size:9px;
   margin-top:3px;
 }
 
@@ -1268,12 +1427,23 @@ nav .active{
   color:${green};
 }
 
+@media(max-width:380px){
+  .welcome h2{
+    font-size:18px;
+  }
+
+  .card{
+    padding:12px 8px;
+  }
+
+  .card b{
+    font-size:11px;
+  }
+}
 `;
 
 const style = document.createElement("style");
-
 style.innerHTML = css;
-
 document.head.appendChild(style);
 
 createRoot(
