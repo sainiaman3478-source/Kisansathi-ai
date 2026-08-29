@@ -450,26 +450,138 @@ function Home({
   );
 }
 
-/* ================= WEATHER ================= */
+/* ===/* ================= REAL WEATHER ================= */
 
 function Weather({
-  weather,
-  loading,
-  loadWeather,
   go,
 }: {
-  weather: any;
-  loading: boolean;
-  loadWeather: () => void;
+  weather?: any;
+  loading?: boolean;
+  loadWeather?: () => void;
   go: (page: PageName) => void;
 }) {
-  useEffect(() => {
-    if (!weather) {
-      loadWeather();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [locationName, setLocationName] = useState("आपका इलाका");
+  const [error, setError] = useState("");
+
+  const loadRealWeather = () => {
+    setLoading(true);
+    setError("");
+
+    if (!navigator.geolocation) {
+      setError("आपके फोन में Location सुविधा उपलब्ध नहीं है।");
+      setLoading(false);
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+
+          /* REAL LIVE WEATHER */
+          const weatherUrl =
+            `https://api.open-meteo.com/v1/forecast` +
+            `?latitude=${lat}` +
+            `&longitude=${lon}` +
+            `&current=temperature_2m,relative_humidity_2m,precipitation,rain,wind_speed_10m,weather_code` +
+            `&hourly=temperature_2m,precipitation_probability` +
+            `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code` +
+            `&timezone=auto` +
+            `&forecast_days=4`;
+
+          const response = await fetch(weatherUrl);
+
+          if (!response.ok) {
+            throw new Error("Weather API error");
+          }
+
+          const weather = await response.json();
+
+          setData(weather);
+
+          /* REAL LOCATION NAME */
+          try {
+            const geoResponse = await fetch(
+              `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=hi&format=json`
+            );
+
+            if (geoResponse.ok) {
+              const geo = await geoResponse.json();
+
+              const place =
+                geo?.results?.[0]?.name ||
+                geo?.results?.[0]?.admin2 ||
+                geo?.results?.[0]?.admin1;
+
+              if (place) {
+                setLocationName(place);
+              }
+            }
+          } catch {
+            setLocationName(
+              `${lat.toFixed(2)}, ${lon.toFixed(2)}`
+            );
+          }
+        } catch (e) {
+          setError(
+            "Live weather नहीं मिल पाया। Internet connection जांचें।"
+          );
+        }
+
+        setLoading(false);
+      },
+
+      () => {
+        setError(
+          "Location permission बंद है। Weather देखने के लिए Location ON करें।"
+        );
+        setLoading(false);
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000,
+      }
+    );
+  };
+
+  useEffect(() => {
+    loadRealWeather();
   }, []);
 
-  const current = weather?.current;
+  const current = data?.current;
+  const daily = data?.daily;
+
+  const weatherText = (code: number) => {
+    if (code === 0) return "साफ आसमान ☀️";
+    if ([1, 2, 3].includes(code))
+      return "बादल / आंशिक बादल ⛅";
+    if ([45, 48].includes(code))
+      return "कोहरा 🌫️";
+    if ([51, 53, 55, 56, 57].includes(code))
+      return "हल्की बूंदाबांदी 🌦️";
+    if ([61, 63, 65, 66, 67].includes(code))
+      return "बारिश 🌧️";
+    if ([71, 73, 75, 77].includes(code))
+      return "बर्फबारी ❄️";
+    if ([80, 81, 82].includes(code))
+      return "बारिश की बौछार 🌧️";
+    if ([95, 96, 99].includes(code))
+      return "आंधी / गरज ⛈️";
+
+    return "मौसम की जानकारी";
+  };
+
+  const dayName = (index: number) => {
+    if (index === 0) return "आज";
+    if (index === 1) return "कल";
+    if (index === 2) return "परसों";
+    return "दिन 4";
+  };
 
   return (
     <Page
@@ -477,108 +589,138 @@ function Weather({
       back={() => go("home")}
     >
       <div className="location">
-        📍 आपका इलाका
+        📍 {locationName}
 
-        <button onClick={loadWeather}>
+        <button onClick={loadRealWeather}>
           ↻
         </button>
       </div>
 
-      <div className="weatherMain">
-        <div className="bigWeather">
-          ☀️
-        </div>
-
-        <section>
-          <small>अभी का मौसम</small>
-
-          <strong>
-            {current?.temperature ?? "--"}°C
-          </strong>
-
-          <b>
-            {current
-              ? "मौसम की जानकारी"
-              : "जानकारी लोड हो रही है"}
-          </b>
-        </section>
-      </div>
-
-      <div className="grid">
-        <Info
-          icon="💧"
-          title="नमी"
-          value={
-            current
-              ? `${current.humidity}%`
-              : "--"
-          }
-        />
-
-        <Info
-          icon="🌧️"
-          title="बारिश की संभावना"
-          value={
-            current
-              ? `${current.rainProbability}%`
-              : "--"
-          }
-        />
-
-        <Info
-          icon="🌬️"
-          title="हवा"
-          value={
-            current
-              ? `${current.wind} km/h`
-              : "--"
-          }
-        />
-
-        <Info
-          icon="🌡️"
-          title="तापमान"
-          value={
-            current
-              ? `${current.temperature}°C`
-              : "--"
-          }
-        />
-      </div>
-
-      <div className="box">
-        <h3>📅 अगले 3 दिन</h3>
-
-        {weather?.forecast?.length ? (
-          weather.forecast.map((x: any) => (
-            <p key={x.day}>
-              {x.day}
-
-              <span>
-                🌦️ {x.temp}°C / बारिश{" "}
-                {x.rain}%
-              </span>
-            </p>
-          ))
-        ) : (
-          <p>
-            मौसम की जानकारी उपलब्ध नहीं है।
-          </p>
-        )}
-      </div>
-
-      {weather?.demo && (
-        <div className="tip">
-          ⚠️ अभी Weather API demo mode में है।
-          Live weather service जोड़ने पर वास्तविक
-          मौसम आएगा।
+      {loading && (
+        <div className="box">
+          <div className="loading">
+            📡 आपका Live Weather लोड हो रहा है...
+          </div>
         </div>
       )}
 
-      {loading && (
-        <div className="loading">
-          लोड हो रहा है...
+      {error && !loading && (
+        <div className="box">
+          <div className="tip">
+            ⚠️ {error}
+          </div>
+
+          <button
+            className="greenBtn"
+            onClick={loadRealWeather}
+          >
+            📍 Location से Weather दोबारा देखें
+          </button>
         </div>
+      )}
+
+      {current && !loading && (
+        <>
+          <div className="weatherMain">
+            <div className="bigWeather">
+              ☀️
+            </div>
+
+            <section>
+              <small>
+                अभी का Live Weather
+              </small>
+
+              <strong>
+                {Math.round(
+                  current.temperature_2m
+                )}
+                °C
+              </strong>
+
+              <b>
+                {weatherText(
+                  current.weather_code
+                )}
+              </b>
+            </section>
+          </div>
+
+          <div className="grid">
+            <Info
+              icon="💧"
+              title="नमी"
+              value={`${current.relative_humidity_2m}%`}
+            />
+
+            <Info
+              icon="🌧️"
+              title="बारिश"
+              value={`${current.precipitation} mm`}
+            />
+
+            <Info
+              icon="🌬️"
+              title="हवा"
+              value={`${Math.round(
+                current.wind_speed_10m
+              )} km/h`}
+            />
+
+            <Info
+              icon="🌡️"
+              title="तापमान"
+              value={`${Math.round(
+                current.temperature_2m
+              )}°C`}
+            />
+          </div>
+
+          <div className="box">
+            <h3>
+              📅 अगले 4 दिन का मौसम
+            </h3>
+
+            {daily?.time?.map(
+              (date: string, index: number) => (
+                <p key={date}>
+                  <b>
+                    {dayName(index)}
+                  </b>
+
+                  <span>
+                    {Math.round(
+                      daily.temperature_2m_min[index]
+                    )}
+                    °C -
+                    {Math.round(
+                      daily.temperature_2m_max[index]
+                    )}
+                    °C
+                    <br />
+                    🌧️ बारिश{" "}
+                    {
+                      daily
+                        .precipitation_probability_max[
+                        index
+                      ]
+                    }
+                    %
+                  </span>
+                </p>
+              )
+            )}
+          </div>
+
+          <div className="tip">
+            ✅ यह <b>Live Weather</b> है।
+            <br />
+            📍 Weather आपके फोन की current
+            location के हिसाब से दिखाया जा रहा है।
+            <br />
+            🔄 ऊपर ↻ दबाकर मौसम फिर से अपडेट कर सकते हैं।
+          </div>
+        </>
       )}
     </Page>
   );
