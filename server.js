@@ -19,7 +19,10 @@ const openai = OPENAI_API_KEY
 
 const RESOURCE = "9ef84268-d588-465a-a308-a864a43d0070";
 
-/* HEALTH CHECK */
+/* =========================
+   HEALTH CHECK
+========================= */
+
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
@@ -28,7 +31,10 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-/* AI CHAT */
+/* =========================
+   AI CHAT
+========================= */
+
 app.post("/api/chat", async (req, res) => {
   try {
     const message = String(req.body?.message || "").trim();
@@ -45,43 +51,56 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    const model = process.env.OPENAI_MODEL;
-
-    if (!model) {
-      return res.status(503).json({
-        error: "OPENAI_MODEL backend .env में सेट नहीं है।"
-      });
-    }
-
     const response = await openai.responses.create({
-      model,
-      instructions:
-        "You are KisanSaathi AI for Indian farmers. " +
-        "Reply in simple Hindi/Hinglish. Be practical and cautious. " +
-        "Never invent live weather or mandi prices. " +
-        "Ask for crop, crop age, location and symptoms when useful. " +
-        "For pesticides/fertilizers, do not give unsafe exact dosage " +
-        "without product label and necessary context. " +
-        "Encourage local agricultural expert confirmation for serious crop disease.",
+      model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+
+      instructions: `
+You are KisanSaathi AI for Indian farmers.
+
+Reply in simple Hindi/Hinglish.
+
+Be practical, clear and cautious.
+
+Never invent live weather information or live mandi prices.
+
+When useful, ask for:
+- crop
+- crop age
+- location
+- symptoms
+
+For pesticides and fertilizers:
+Do not give unsafe exact dosage without product label
+and necessary context.
+
+For serious crop disease, recommend confirmation
+from a local agriculture expert.
+
+Keep answers useful and easy for farmers to understand.
+`,
 
       input: message,
+
       max_output_tokens: 700
     });
 
-    res.json({
+    return res.json({
       reply: response.output_text || "AI से जवाब नहीं मिला।"
     });
 
   } catch (error) {
     console.error("AI ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: "AI service error. Backend logs देखें।"
     });
   }
 });
 
-/* CROP NAMES */
+/* =========================
+   CROP ALIASES
+========================= */
+
 const aliases = {
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
@@ -104,7 +123,10 @@ const aliases = {
   "उड़द": "Black Gram (Urd Beans)(Whole)"
 };
 
-/* MANDI API */
+/* =========================
+   MANDI API
+========================= */
+
 app.get("/api/mandi", async (req, res) => {
   try {
     if (!DATA_GOV_API_KEY) {
@@ -137,15 +159,16 @@ app.get("/api/mandi", async (req, res) => {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`data.gov.in ${response.status}`);
+      throw new Error(
+        `data.gov.in HTTP ${response.status}`
+      );
     }
 
     const body = await response.json();
 
-    const records =
-      Array.isArray(body.records)
-        ? body.records
-        : [];
+    const records = Array.isArray(body.records)
+      ? body.records
+      : [];
 
     const data = records
       .map((x) => ({
@@ -164,7 +187,7 @@ app.get("/api/mandi", async (req, res) => {
       }))
       .filter((x) => x.modal_price > 0);
 
-    res.json({
+    return res.json({
       data,
       count: data.length,
       source: "data.gov.in / AGMARKNET"
@@ -173,14 +196,33 @@ app.get("/api/mandi", async (req, res) => {
   } catch (error) {
     console.error("MANDI ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       error:
         "सरकारी मंडी डेटा नहीं मिल पाया। API key या data.gov.in connection जांचें।"
     });
   }
 });
 
-/* START SERVER */
+/* =========================
+   ROOT
+========================= */
+
+app.get("/", (req, res) => {
+  res.json({
+    name: "KisanSaathi AI Backend",
+    status: "running",
+    endpoints: [
+      "/api/health",
+      "/api/chat",
+      "/api/mandi"
+    ]
+  });
+});
+
+/* =========================
+   START SERVER
+========================= */
+
 app.listen(PORT, () => {
   console.log(
     `KisanSaathi backend running on port ${PORT}`
