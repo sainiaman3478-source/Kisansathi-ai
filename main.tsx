@@ -37,6 +37,8 @@ type ChatMsg = {
   text: string;
 };
 
+const API_BASE = "https://kisansathi-ai-q9b0.onrender.com";
+
 const products: Product[] = [
   {
     id: 1,
@@ -100,6 +102,7 @@ const schemes = [
 
 const css = `
 *{box-sizing:border-box}
+
 html,body,#root{
   margin:0;
   min-height:100%;
@@ -107,11 +110,14 @@ html,body,#root{
   background:#f3f7f1;
   color:#243024
 }
+
 button,input{font:inherit}
+
 button{
   cursor:pointer;
   -webkit-tap-highlight-color:transparent
 }
+
 .app{
   min-height:100vh;
   max-width:700px;
@@ -119,6 +125,7 @@ button{
   background:#f3f7f1;
   padding-bottom:86px
 }
+
 header{
   position:sticky;
   top:0;
@@ -130,6 +137,7 @@ header{
   justify-content:space-between;
   box-shadow:0 1px 8px #00000012
 }
+
 .brand{
   display:flex;
   align-items:center;
@@ -138,6 +146,7 @@ header{
   font-weight:800;
   font-size:17px
 }
+
 .logo{
   width:38px;
   height:38px;
@@ -147,12 +156,14 @@ header{
   place-items:center;
   font-size:22px
 }
+
 header small{
   display:block;
   color:#7b817b;
   font-size:10px;
   margin-top:2px
 }
+
 .profileIcon{
   width:38px;
   height:38px;
@@ -163,7 +174,9 @@ header small{
   display:grid;
   place-items:center
 }
+
 main{padding:12px}
+
 .hero{
   background:linear-gradient(135deg,#e3f7dc,#f9fff6);
   border-radius:20px;
@@ -171,15 +184,18 @@ main{padding:12px}
   margin-bottom:12px;
   border:1px solid #e2efdf
 }
+
 .hero h1{
   font-size:21px;
   margin:0 0 6px
 }
+
 .hero p{
   margin:0 0 12px;
   color:#667066;
   font-size:13px
 }
+
 .weatherButton{
   width:100%;
   border:0;
@@ -192,16 +208,20 @@ main{padding:12px}
   text-align:left;
   box-shadow:0 2px 8px #00000008
 }
+
 .weatherButton strong{font-size:15px}
+
 .weatherButton span{
   font-size:11px;
   color:#777
 }
+
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:9px
 }
+
 .card{
   border:0;
   background:#fff;
@@ -214,48 +234,59 @@ main{padding:12px}
   text-align:left;
   box-shadow:0 2px 8px #0000000d
 }
+
 .card:active{transform:scale(.985)}
+
 .cardIcon{
   font-size:23px;
   width:30px;
   text-align:center
 }
+
 .cardTitle{
   font-weight:800;
   font-size:13px
 }
+
 .cardSub{
   color:#777;
   font-size:10px;
   margin-top:4px
 }
+
 .advice,.section,.chatBox{
   background:#fff;
   border-radius:16px;
   padding:14px;
   box-shadow:0 2px 8px #0000000b
 }
+
 .advice{
   margin-top:11px;
   background:#fff8df;
   font-size:12px;
   line-height:1.6
 }
+
 .section{margin-bottom:11px}
+
 .pageTitle{
   display:flex;
   align-items:center;
   gap:9px;
   margin:2px 0 12px
 }
+
 .pageTitle h2{
   margin:0;
   font-size:18px
 }
+
 .pageTitle small{
   color:#777;
   font-size:11px
 }
+
 .back{
   border:0;
   background:#fff;
@@ -266,6 +297,7 @@ main{padding:12px}
   place-items:center;
   box-shadow:0 1px 5px #0000000c
 }
+
 .primary,.addBtn,.sendBtn{
   background:#2e7d32;
   color:#fff;
@@ -274,8 +306,11 @@ main{padding:12px}
   padding:10px 13px;
   font-weight:700
 }
+
 .primary{width:100%}
+
 .addBtn{font-size:12px}
+
 .search{
   width:100%;
   border:1px solid #ddd;
@@ -284,7 +319,9 @@ main{padding:12px}
   outline:none;
   margin-bottom:10px
 }
+
 .search:focus{border-color:#2e7d32}
+
 .mandiCard{
   background:#fff;
   border-radius:15px;
@@ -294,17 +331,21 @@ main{padding:12px}
   justify-content:space-between;
   box-shadow:0 2px 8px #0000000a
 }
+
 .mandiCrop{font-weight:800}
+
 .muted{
   font-size:11px;
   color:#777;
   margin-top:3px
 }
+
 .price{
   color:#28752e;
   font-weight:800;
   text-align:right
 }
+
 .weatherBig{
   background:linear-gradient(135deg,#e4f7dd,#fff);
   border-radius:20px;
@@ -312,29 +353,34 @@ main{padding:12px}
   text-align:center;
   margin-bottom:11px
 }
+
 .temperature{
   font-size:48px;
   font-weight:800;
   color:#28752e;
   margin:4px 0
 }
+
 .weatherInfoGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:9px;
   margin-top:11px
 }
+
 .weatherInfo{
   background:#fff;
   border-radius:13px;
   padding:11px;
   font-size:12px
 }
+
 .forecast{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:8px
 }
+
 .forecastCard{
   background:#f7faf6;
   border-radius:13px;
@@ -342,10 +388,12 @@ main{padding:12px}
   text-align:center;
   font-size:11px
 }
+
 .forecastIcon{
   font-size:25px;
   margin:7px
 }
+
 .locationRow{
   display:flex;
   gap:7px;
@@ -356,11 +404,13 @@ main{padding:12px}
   margin-bottom:10px;
   font-size:12px
 }
+
 .chatBox{
   min-height:330px;
   max-height:55vh;
   overflow:auto
 }
+
 .bubble{
   max-width:88%;
   padding:10px 12px;
@@ -370,18 +420,22 @@ main{padding:12px}
   line-height:1.5;
   white-space:pre-wrap
 }
+
 .aiBubble{background:#edf7ea}
+
 .userBubble{
   background:#2e7d32;
   color:#fff;
   margin-left:auto
 }
+
 .quick{
   display:flex;
   gap:6px;
   overflow:auto;
   margin:8px 0
 }
+
 .quick button{
   white-space:nowrap;
   border:1px solid #dce7d9;
@@ -390,11 +444,13 @@ main{padding:12px}
   padding:7px 10px;
   font-size:10px
 }
+
 .inputRow{
   display:flex;
   gap:7px;
   margin-top:9px
 }
+
 .inputRow input{
   flex:1;
   min-width:0;
@@ -403,7 +459,9 @@ main{padding:12px}
   padding:11px;
   outline:none
 }
+
 .sendBtn{padding:0 15px}
+
 .cropRow,.product,.cartRow{
   display:flex;
   align-items:center;
@@ -412,17 +470,21 @@ main{padding:12px}
   padding:12px 0;
   border-bottom:1px solid #eee
 }
+
 .cropRow:last-child,
 .product:last-child,
 .cartRow:last-child{
   border-bottom:0
 }
+
 .cropName,.productName{font-weight:800}
+
 .quantity{
   display:flex;
   align-items:center;
   gap:8px
 }
+
 .quantity button{
   width:29px;
   height:29px;
@@ -433,6 +495,7 @@ main{padding:12px}
   display:grid;
   place-items:center
 }
+
 .upload{
   border:2px dashed #cfe3cb;
   border-radius:15px;
@@ -440,12 +503,14 @@ main{padding:12px}
   text-align:center;
   background:#f8fcf7
 }
+
 .preview{
   max-width:100%;
   max-height:220px;
   border-radius:12px;
   margin-top:10px
 }
+
 .result{
   background:#edf7ea;
   border-radius:13px;
@@ -454,7 +519,9 @@ main{padding:12px}
   font-size:12px;
   line-height:1.6
 }
+
 .profileCard{text-align:center}
+
 .bigProfile{
   width:72px;
   height:72px;
@@ -465,6 +532,7 @@ main{padding:12px}
   display:grid;
   place-items:center
 }
+
 .scheme{
   display:flex;
   gap:10px;
@@ -472,18 +540,23 @@ main{padding:12px}
   padding:12px 0;
   border-bottom:1px solid #eee
 }
+
 .scheme:last-child{border-bottom:0}
+
 .schemeIcon{font-size:23px}
+
 .scheme a{
   font-size:11px;
   color:#28752e;
   text-decoration:none
 }
+
 .empty{
   text-align:center;
   padding:38px 10px;
   color:#777
 }
+
 .total{
   display:flex;
   justify-content:space-between;
@@ -491,6 +564,7 @@ main{padding:12px}
   font-weight:800;
   padding:13px 0
 }
+
 .bottomNav{
   position:fixed;
   bottom:0;
@@ -504,6 +578,7 @@ main{padding:12px}
   box-shadow:0 -2px 12px #00000014;
   z-index:20
 }
+
 .navBtn{
   border:0;
   background:transparent;
@@ -515,10 +590,12 @@ main{padding:12px}
   align-items:center;
   gap:2px
 }
+
 .navBtn.active{
   color:#28752e;
   font-weight:800
 }
+
 .fab{
   position:fixed;
   right:max(18px,calc((100vw - 700px)/2 + 18px));
@@ -534,6 +611,7 @@ main{padding:12px}
   display:grid;
   place-items:center
 }
+
 @media(max-width:420px){
   main{padding:10px}
   .hero{padding:15px}
@@ -658,15 +736,18 @@ function App() {
     setQ("");
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message: t
-        })
-      });
+      const response = await fetch(
+        `${API_BASE}/api/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: t
+          })
+        }
+      );
 
       const data = await response.json().catch(() => ({}));
 
