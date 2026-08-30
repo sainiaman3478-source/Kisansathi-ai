@@ -9,6 +9,7 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: "1mb" }));
 
 const PORT = process.env.PORT || 3001;
+
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
@@ -18,6 +19,7 @@ const openai = OPENAI_API_KEY
 
 const RESOURCE = "9ef84268-d588-465a-a308-a864a43d0070";
 
+// Health check
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
@@ -26,6 +28,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// AI CHAT
 app.post("/api/chat", async (req, res) => {
   try {
     const message = String(req.body?.message || "").trim();
@@ -44,8 +47,17 @@ app.post("/api/chat", async (req, res) => {
 
     const r = await openai.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+
       instructions:
-        "You are KisanSaathi AI for Indian farmers. Reply in simple Hindi/Hinglish. Be practical and cautious. Never invent live weather or mandi prices. Ask for crop, crop age, location and symptoms when useful. For pesticides/fertilizers, do not give unsafe exact dosage without product label and necessary context. Encourage local agricultural expert confirmation for serious crop disease.",
+        "You are KisanSaathi AI for Indian farmers. " +
+        "Reply in simple Hindi/Hinglish. " +
+        "Be practical and cautious. " +
+        "Never invent live weather or mandi prices. " +
+        "Ask for crop, crop age, location and symptoms when useful. " +
+        "For pesticides/fertilizers, do not give unsafe exact dosage " +
+        "without product label and necessary context. " +
+        "Encourage local agricultural expert confirmation for serious crop disease.",
+
       input: message,
       max_output_tokens: 700
     });
@@ -63,6 +75,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// CROP NAMES
 const aliases = {
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
@@ -85,6 +98,7 @@ const aliases = {
   "उड़द": "Black Gram (Urd Beans)(Whole)"
 };
 
+// MANDI
 app.get("/api/mandi", async (req, res) => {
   try {
     if (!DATA_GOV_API_KEY) {
@@ -94,7 +108,9 @@ app.get("/api/mandi", async (req, res) => {
     }
 
     const raw = String(req.query.crop || "").trim();
-    const crop = aliases[raw.toLowerCase()] || raw;
+
+    const crop =
+      aliases[raw.toLowerCase()] || raw;
 
     const p = new URLSearchParams({
       "api-key": DATA_GOV_API_KEY,
@@ -154,6 +170,9 @@ app.get("/api/mandi", async (req, res) => {
   }
 });
 
+// START SERVER
 app.listen(PORT, () => {
-  console.log(`KisanSaathi backend running on port ${PORT}`);
+  console.log(
+    `KisanSaathi backend running on port ${PORT}`
+  );
 });
