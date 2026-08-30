@@ -17,22 +17,23 @@ const PORT = process.env.PORT || 10000;
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-const GEMINI_MODEL =
-  process.env.GEMINI_MODEL || "gemini-3.7-flash";
-
-const GEMINI_FALLBACK_MODELS = [
-  GEMINI_MODEL,
+/*
+  Gemini models:
+  पहले 3.7
+  busy होने पर 3.6
+  फिर 2.5 Flash
+*/
+const GEMINI_MODELS = [
+  process.env.GEMINI_MODEL || "gemini-3.7-flash",
   "gemini-3.6-flash",
   "gemini-2.5-flash"
-].filter(
-  (model, index, arr) =>
-    arr.indexOf(model) === index
-);
+];
 
 const KISAN_SYSTEM_INSTRUCTION = `
 You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
 
 Reply in simple Hindi or easy Hinglish.
+
 Be practical, clear and concise.
 
 For crop problems, ask for:
@@ -43,20 +44,30 @@ For crop problems, ask for:
 
 when needed.
 
-For fertilizer or pesticide advice, do not invent unsafe exact doses.
-Follow the product label and local agriculture expert when exact dosage
-depends on product, crop or region.
+For fertilizer or pesticide advice:
+Do not invent unsafe exact doses.
+If exact dosage depends on crop, product or region,
+tell the farmer to follow the product label or contact
+a local agriculture expert.
 
-Never invent live mandi prices or live weather.
+Never invent live mandi prices.
+Never invent live weather information.
 
-If the user asks for live mandi/weather, tell them to use the app's
-live mandi/weather sections.
+If the user asks for live mandi prices or weather,
+tell them to use the app's live mandi/weather section.
 
-Do not claim you saw a crop photo unless an image was actually provided
-to the API.
+Do not claim that you saw a crop photo unless an image
+was actually provided to the API.
+
+Answer the farmer directly and helpfully.
 `;
 
-async function callGeminiModel(message, model) {
+
+/* =========================
+   GEMINI AI
+========================= */
+
+async function callGemini(model, message) {
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
@@ -93,6 +104,7 @@ async function callGeminiModel(message, model) {
       ],
 
       generationConfig: {
+        temperature: 0.4,
         maxOutputTokens: 700
       }
 
@@ -102,52 +114,24 @@ async function callGeminiModel(message, model) {
   const body =
     await response.json().catch(() => ({}));
 
-  if (!response.ok) {
-
-    const error = new Error(
-      body?.error?.message ||
-      `Gemini API HTTP ${response.status}`
-    );
-
-    error.status = response.status;
-
-    throw error;
-  }
-
-  const reply =
-    body?.candidates?.[0]?.content?.parts
-      ?.map(part => part?.text || "")
-      .join("")
-      .trim();
-
-  if (!reply) {
-
-    const error = new Error(
-      "Gemini ने कोई जवाब नहीं दिया।"
-    );
-
-    error.status = 502;
-
-    throw error;
-  }
-
-  return reply;
+  return {
+    response,
+    body
+  };
 }
 
 
 async function geminiReply(message) {
 
   if (!GEMINI_API_KEY) {
-
     throw new Error(
       "GEMINI_API_KEY Render Environment में सेट नहीं है।"
     );
-
   }
 
   let lastError = null;
 
-  for (const model of GEMINI_FALLBACK_MODELS) {
+  for (const model of GEMINI_MODELS) {
 
     try {
 
@@ -155,38 +139,102 @@ async function geminiReply(message) {
         `Trying Gemini model: ${model}`
       );
 
-      const reply =
-        await callGeminiModel(
-          message,
-          model
-        );
+      const { response, body } =
+        await callGemini(model, message);
 
-      console.log(
-        `Gemini success: ${model}`
+
+      if (response.ok) {
+
+        const reply =
+          body?.candidates?.[0]?.content?.parts
+            ?.map(part => part?.text || "")
+            .join("")
+            .trim();
+
+
+        if (reply) {
+
+          console.log(
+            `Gemini success: ${model}`
+          );
+
+          return {
+            reply,
+            model
+          };
+
+        }
+
+        lastError =
+          new Error(
+            `${model}: Gemini ने कोई जवाब नहीं दिया।`
+          );
+
+        continue;
+      }
+
+
+      const errorMessage =
+        body?.error?.message ||
+        `Gemini HTTP ${response.status}`;
+
+
+      console.error(
+        `Gemini ${model} error:`,
+        response.status,
+        errorMessage
       );
 
-      return {
-        reply,
-        model
-      };
+
+      lastError =
+        new Error(errorMessage);
+
+
+      /*
+        429 = too many requests
+        500/502/503/504 = temporary server problem
+
+        इन cases में अगला model try करेंगे.
+      */
+
+      if (
+        response.status === 429 ||
+        response.status === 500 ||
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504
+      ) {
+
+        continue;
+
+      }
+
+
+      /*
+        बाकी errors में सीधे stop.
+      */
+
+      break;
 
     } catch (error) {
 
-      lastError = error;
-
       console.error(
-        `Gemini model failed: ${model}`,
-        error?.status || "",
-        error?.message || error
+        `Gemini ${model} request failed:`,
+        error
       );
+
+      lastError = error;
 
       continue;
     }
   }
 
+
   throw (
     lastError ||
-    new Error("Gemini AI से जवाब नहीं मिला।")
+    new Error(
+      "Gemini AI से जवाब नहीं मिला।"
+    )
   );
 }
 
@@ -208,10 +256,8 @@ app.get("/api/health", (req, res) => {
         ? "gemini"
         : "not-configured",
 
-    geminiModel: GEMINI_MODEL,
-
-    fallbackModels:
-      GEMINI_FALLBACK_MODELS,
+    geminiModels:
+      GEMINI_MODELS,
 
     mandi:
       Boolean(DATA_GOV_API_KEY),
@@ -241,10 +287,7 @@ app.post("/api/chat", async (req, res) => {
     if (!message) {
 
       return res.status(400).json({
-
-        error:
-          "सवाल खाली है।"
-
+        error: "सवाल खाली है।"
       });
 
     }
@@ -268,14 +311,11 @@ app.post("/api/chat", async (req, res) => {
 
     return res.json({
 
-      reply:
-        result.reply,
+      reply: result.reply,
 
-      mode:
-        "gemini",
+      mode: "gemini",
 
-      model:
-        result.model
+      model: result.model
 
     });
 
@@ -288,12 +328,15 @@ app.post("/api/chat", async (req, res) => {
     );
 
 
-    return res.status(500).json({
+    return res.status(503).json({
 
       error:
+        "Gemini AI अभी व्यस्त है। कुछ सेकंड बाद दोबारा कोशिश करें।",
+
+      detail:
         error instanceof Error
-          ? `Gemini AI error: ${error.message}`
-          : "Gemini AI से जवाब नहीं मिला।"
+          ? error.message
+          : "Unknown Gemini error"
 
     });
 
@@ -313,23 +356,19 @@ const RESOURCE =
 const aliases = {
 
   "गेहूं": "Wheat",
-
   "गेंहू": "Wheat",
 
   "धान": "Rice",
-
   "चावल": "Rice",
 
   "सरसों": "Mustard",
 
   "मक्का": "Maize",
-
   "मकई": "Maize",
 
   "कपास": "Cotton",
 
   "सोयाबीन": "Soyabean",
-
   "सोया": "Soyabean",
 
   "प्याज": "Onion",
@@ -340,19 +379,15 @@ const aliases = {
 
   "चना": "Gram",
 
-  "अरहर":
-    "Arhar (Tur/Red Gram)",
+  "अरहर": "Arhar (Tur/Red Gram)",
 
-  "बाजरा":
-    "Bajra (Pearl Millet/Cumbu)",
+  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
 
   "जौ": "Barley",
 
-  "मूंग":
-    "Green Gram (Moong)(Whole)",
+  "मूंग": "Green Gram (Moong)(Whole)",
 
-  "उड़द":
-    "Black Gram (Urd Beans)(Whole)"
+  "उड़द": "Black Gram (Urd Beans)(Whole)"
 
 };
 
@@ -379,10 +414,12 @@ app.get("/api/mandi", async (req, res) => {
       ).trim();
 
 
+    const lowerRaw =
+      raw.toLowerCase();
+
+
     const crop =
-      aliases[
-        raw.toLowerCase()
-      ] || raw;
+      aliases[lowerRaw] || raw;
 
 
     const params =
@@ -542,14 +579,11 @@ app.get("/", (req, res) => {
         ? "gemini"
         : "not-configured",
 
+    models:
+      GEMINI_MODELS,
+
     mandi:
-      Boolean(DATA_GOV_API_KEY),
-
-    geminiModel:
-      GEMINI_MODEL,
-
-    fallbackModels:
-      GEMINI_FALLBACK_MODELS
+      Boolean(DATA_GOV_API_KEY)
 
   });
 
@@ -566,11 +600,15 @@ app.listen(
   () => {
 
     console.log(
+      `KisanSaathi AI backend running on port ${PORT}`
+    );
 
-      `KisanSaathi AI backend running on port ${PORT} | ` +
-      `Gemini: ${Boolean(GEMINI_API_KEY)} | ` +
-      `Models: ${GEMINI_FALLBACK_MODELS.join(", ")}`
+    console.log(
+      `Gemini enabled: ${Boolean(GEMINI_API_KEY)}`
+    );
 
+    console.log(
+      `Gemini models: ${GEMINI_MODELS.join(", ")}`
     );
 
   }
