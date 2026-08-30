@@ -1,15 +1,16 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import OpenAI from "openai";
 
 const app = express();
 
-app.use(cors({
-  origin: true,
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(
+  cors({
+    origin: true,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
 
 app.use(express.json({ limit: "1mb" }));
 
@@ -18,11 +19,8 @@ const PORT = process.env.PORT || 10000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 
-const openai = OPENAI_API_KEY
-  ? new OpenAI({
-      apiKey: OPENAI_API_KEY
-    })
-  : null;
+const OPENAI_MODEL =
+  process.env.OPENAI_MODEL || "gpt-5.6-luna";
 
 /* =========================
    HEALTH CHECK
@@ -31,8 +29,9 @@ const openai = OPENAI_API_KEY
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
-    ai: Boolean(openai),
+    ai: Boolean(OPENAI_API_KEY),
     mandi: Boolean(DATA_GOV_API_KEY),
+    model: OPENAI_MODEL,
     message: "KisanSaathi backend running"
   });
 });
@@ -43,7 +42,9 @@ app.get("/api/health", (req, res) => {
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const message = String(req.body?.message || "").trim();
+    const message = String(
+      req.body?.message || ""
+    ).trim();
 
     if (!message) {
       return res.status(400).json({
@@ -51,63 +52,153 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    if (!openai) {
+    if (!OPENAI_API_KEY) {
       return res.status(503).json({
-        error: "OPENAI_API_KEY backend में सेट नहीं है।"
+        error:
+          "OPENAI_API_KEY Render में सेट नहीं है।"
       });
     }
 
-    const response = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+    console.log(
+      "AI QUESTION:",
+      message
+    );
 
-      instructions: `
+    const openaiResponse = await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:
+            `Bearer ${OPENAI_API_KEY}`
+        },
+
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+
+          instructions: `
 आप KisanSaathi AI हैं — भारतीय किसानों के डिजिटल साथी।
 
 हमेशा सरल हिंदी या Hinglish में जवाब दें।
 
-किसान के सवाल का सीधा और उपयोगी जवाब दें।
+किसान के सवाल का सीधा, छोटा और practical जवाब दें।
 
 अगर फसल की बीमारी या समस्या पूछी जाए तो:
 - फसल का नाम पूछें
 - फसल की उम्र पूछें
-- किसान का राज्य/जिला पूछें
+- राज्य और जिला पूछें
 - लक्षण पूछें
 - जरूरत हो तो फोटो भेजने को कहें
 
 दवा या कीटनाशक के मामले में:
-- बिना पर्याप्त जानकारी के गलत या खतरनाक मात्रा न बताएं
-- हमेशा product label और स्थानीय कृषि विशेषज्ञ की सलाह का ध्यान रखने को कहें
+- बिना पर्याप्त जानकारी के खतरनाक या गलत मात्रा न बताएं
+- product label और स्थानीय कृषि विशेषज्ञ की सलाह का ध्यान रखने को कहें
 
 मंडी भाव के मामले में:
-- खुद से आज का भाव न बनाएं
-- केवल उपलब्ध सरकारी मंडी डेटा का उपयोग करें
+- खुद से live मंडी भाव न बनाएं
+- उपलब्ध सरकारी मंडी डेटा के बिना आज का भाव निश्चित न बताएं
 
 मौसम के मामले में:
-- live weather उपलब्ध न हो तो अनुमान लगाकर मौसम न बताएं
+- live weather data उपलब्ध न हो तो अनुमान लगाकर मौसम न बताएं
 
-जवाब किसान के लिए आसान, छोटा और practical रखें।
+किसान को आसान भाषा में उपयोगी जवाब दें।
 `,
 
-      input: message,
+          input: message,
 
-      max_output_tokens: 700
-    });
+          max_output_tokens: 700
+        })
+      }
+    );
 
-    const reply =
-      response.output_text?.trim() ||
-      "माफ कीजिए, अभी AI से जवाब नहीं मिल पाया।";
+    const responseText =
+      await openaiResponse.text();
+
+    if (!openaiResponse.ok) {
+      console.error(
+        "OPENAI HTTP ERROR:",
+        openaiResponse.status,
+        responseText
+      );
+
+      let errorMessage =
+        "AI service error.";
+
+      try {
+        const errorJson =
+          JSON.parse(responseText);
+
+        errorMessage =
+          errorJson?.error?.message ||
+          errorMessage;
+      } catch {}
+
+      return res.status(
+        openaiResponse.status
+      ).json({
+        error: errorMessage
+      });
+    }
+
+    const data =
+      JSON.parse(responseText);
+
+    let reply = "";
+
+    if (
+      typeof data.output_text ===
+      "string"
+    ) {
+      reply =
+        data.output_text.trim();
+    }
+
+    if (!reply && Array.isArray(data.output)) {
+      for (const item of data.output) {
+        if (
+          Array.isArray(item.content)
+        ) {
+          for (const content of item.content) {
+            if (
+              content.type ===
+              "output_text" &&
+              typeof content.text ===
+              "string"
+            ) {
+              reply += content.text;
+            }
+          }
+        }
+      }
+    }
+
+    reply = reply.trim();
+
+    if (!reply) {
+      reply =
+        "माफ कीजिए, अभी AI से जवाब नहीं मिल पाया।";
+    }
+
+    console.log(
+      "AI RESPONSE SUCCESS"
+    );
 
     return res.json({
       reply
     });
 
   } catch (error) {
-
-    console.error("OPENAI ERROR:", error);
+    console.error(
+      "AI SERVER ERROR:",
+      error
+    );
 
     return res.status(500).json({
-      error: "AI से जवाब लेने में समस्या हुई।",
-      details: error?.message || "Unknown error"
+      error:
+        error?.message ||
+        "AI से जवाब लेने में समस्या हुई।"
     });
   }
 });
@@ -116,7 +207,8 @@ app.post("/api/chat", async (req, res) => {
    MANDI DATA
 ========================= */
 
-const RESOURCE = "9ef84268-d588-465a-a308-a864a43d0070";
+const RESOURCE =
+  "9ef84268-d588-465a-a308-a864a43d0070";
 
 const aliases = {
   "गेहूं": "Wheat",
@@ -136,30 +228,36 @@ const aliases = {
   "अरहर": "Arhar (Tur/Red Gram)",
   "बाजरा": "Bajra (Pearl Millet/Cumbu)",
   "जौ": "Barley",
-  "मूंग": "Green Gram (Moong)(Whole)",
-  "उड़द": "Black Gram (Urd Beans)(Whole)"
+  "मूंग":
+    "Green Gram (Moong)(Whole)",
+  "उड़द":
+    "Black Gram (Urd Beans)(Whole)"
 };
 
 app.get("/api/mandi", async (req, res) => {
   try {
-
     if (!DATA_GOV_API_KEY) {
       return res.status(503).json({
-        error: "DATA_GOV_API_KEY backend में सेट नहीं है।"
+        error:
+          "DATA_GOV_API_KEY Render में सेट नहीं है।"
       });
     }
 
-    const raw = String(req.query.crop || "").trim();
+    const raw = String(
+      req.query.crop || ""
+    ).trim();
 
     const crop =
-      aliases[raw.toLowerCase()] || raw;
+      aliases[raw.toLowerCase()] ||
+      raw;
 
-    const params = new URLSearchParams({
-      "api-key": DATA_GOV_API_KEY,
-      format: "json",
-      limit: "100",
-      offset: "0"
-    });
+    const params =
+      new URLSearchParams({
+        "api-key": DATA_GOV_API_KEY,
+        format: "json",
+        limit: "100",
+        offset: "0"
+      });
 
     if (crop) {
       params.set(
@@ -183,7 +281,8 @@ app.get("/api/mandi", async (req, res) => {
       );
     }
 
-    const body = await response.json();
+    const body =
+      await response.json();
 
     const records =
       Array.isArray(body.records)
@@ -191,13 +290,16 @@ app.get("/api/mandi", async (req, res) => {
         : [];
 
     const data = records
-      .map(item => ({
+      .map((item) => ({
         state: item.state || "",
         district: item.district || "",
         market: item.market || "",
-        commodity: item.commodity || "",
-        variety: item.variety || "",
-        grade: item.grade || "",
+        commodity:
+          item.commodity || "",
+        variety:
+          item.variety || "",
+        grade:
+          item.grade || "",
 
         min_price:
           Number(item.min_price) || 0,
@@ -211,18 +313,19 @@ app.get("/api/mandi", async (req, res) => {
         arrival_date:
           item.arrival_date || ""
       }))
-      .filter(item =>
-        item.modal_price > 0
+      .filter(
+        (item) =>
+          item.modal_price > 0
       );
 
     return res.json({
       data,
       count: data.length,
-      source: "data.gov.in / AGMARKNET"
+      source:
+        "data.gov.in / AGMARKNET"
     });
 
   } catch (error) {
-
     console.error(
       "MANDI ERROR:",
       error
@@ -243,17 +346,38 @@ app.get("/", (req, res) => {
   res.json({
     app: "KisanSaathi AI",
     status: "online",
-    ai: Boolean(openai),
-    mandi: Boolean(DATA_GOV_API_KEY)
+    ai: Boolean(OPENAI_API_KEY),
+    mandi: Boolean(DATA_GOV_API_KEY),
+    model: OPENAI_MODEL
   });
 });
 
 /* =========================
-   START
+   START SERVER
 ========================= */
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `KisanSaathi backend running on port ${PORT}`
-  );
-});
+app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `KisanSaathi backend running on port ${PORT}`
+    );
+
+    console.log(
+      `AI enabled: ${Boolean(
+        OPENAI_API_KEY
+      )}`
+    );
+
+    console.log(
+      `Mandi enabled: ${Boolean(
+        DATA_GOV_API_KEY
+      )}`
+    );
+
+    console.log(
+      `AI model: ${OPENAI_MODEL}`
+    );
+  }
+);
