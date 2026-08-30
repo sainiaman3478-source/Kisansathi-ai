@@ -5,13 +5,13 @@ import OpenAI from "openai";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "1mb" }));
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3001;
 
@@ -25,7 +25,7 @@ const openai = OPENAI_API_KEY
 const RESOURCE = "9ef84268-d588-465a-a308-a864a43d0070";
 
 /* =========================
-   HEALTH CHECK
+   API HEALTH
 ========================= */
 
 app.get("/api/health", (req, res) => {
@@ -57,7 +57,7 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const r = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-5",
+      model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
       instructions:
         "You are KisanSaathi AI for Indian farmers. Reply in simple Hindi/Hinglish. Be practical and cautious. Never invent live weather or mandi prices. Ask for crop, crop age, location and symptoms when useful. For pesticides/fertilizers, do not give unsafe exact dosage without product label and necessary context.",
       input: message,
@@ -69,7 +69,7 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (e) {
-    console.error("AI ERROR:", e);
+    console.error(e);
 
     res.status(500).json({
       error: "AI service error."
@@ -78,7 +78,7 @@ app.post("/api/chat", async (req, res) => {
 });
 
 /* =========================
-   MANDI DATA
+   MANDI
 ========================= */
 
 const aliases = {
@@ -112,9 +112,7 @@ app.get("/api/mandi", async (req, res) => {
     }
 
     const raw = String(req.query.crop || "").trim();
-
-    const crop =
-      aliases[raw.toLowerCase()] || raw;
+    const crop = aliases[raw.toLowerCase()] || raw;
 
     const p = new URLSearchParams({
       "api-key": DATA_GOV_API_KEY,
@@ -144,7 +142,7 @@ app.get("/api/mandi", async (req, res) => {
       : [];
 
     const data = records
-      .map((x) => ({
+      .map(x => ({
         state: x.state || "",
         district: x.district || "",
         market: x.market || "",
@@ -156,7 +154,7 @@ app.get("/api/mandi", async (req, res) => {
         modal_price: Number(x.modal_price) || 0,
         arrival_date: x.arrival_date || ""
       }))
-      .filter((x) => x.modal_price > 0);
+      .filter(x => x.modal_price > 0);
 
     res.json({
       data,
@@ -165,7 +163,7 @@ app.get("/api/mandi", async (req, res) => {
     });
 
   } catch (e) {
-    console.error("MANDI ERROR:", e);
+    console.error(e);
 
     res.status(500).json({
       error: "सरकारी मंडी डेटा नहीं मिल पाया।"
@@ -174,18 +172,14 @@ app.get("/api/mandi", async (req, res) => {
 });
 
 /* =========================
-   FRONTEND
+   REACT FRONTEND
 ========================= */
 
 const distPath = path.join(__dirname, "dist");
 
 app.use(express.static(distPath));
 
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api/")) {
-    return next();
-  }
-
+app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
@@ -194,5 +188,5 @@ app.get("*", (req, res, next) => {
 ========================= */
 
 app.listen(PORT, () => {
-  console.log(`KisanSaathi running on port ${PORT}`);
+  console.log(`KisanSaathi backend running on port ${PORT}`);
 });
