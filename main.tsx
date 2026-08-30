@@ -2,20 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Home, Leaf, Camera, MessageCircle, CloudSun, ShoppingCart,
-  Sprout, ArrowLeft, User, Stethoscope, RefreshCw, Send, Plus,
-  Minus, ExternalLink, MapPin, X
+  Landmark, IndianRupee, Sprout, ArrowLeft, User, Stethoscope,
+  Sun, Cloud, RefreshCw, Send, Plus, Minus, ExternalLink, MapPin,
+  CheckCircle2, X
 } from "lucide-react";
 
 type Tab =
-  | "home"
-  | "mandi"
-  | "weather"
-  | "crops"
-  | "doctor"
-  | "store"
-  | "profile"
-  | "cart"
-  | "chat";
+  | "home" | "mandi" | "weather" | "crops"
+  | "doctor" | "store" | "profile" | "cart" | "chat";
 
 type Product = {
   id: number;
@@ -37,38 +31,26 @@ type ChatMsg = {
   text: string;
 };
 
+/* =========================
+   RENDER BACKEND
+========================= */
+
 const API_BASE = "https://kisansathi-ai-q9b0.onrender.com";
 
+/* =========================
+   PRODUCTS
+========================= */
+
 const products: Product[] = [
-  {
-    id: 1,
-    name: "नीम ऑयल",
-    price: 299,
-    unit: "1 लीटर",
-    emoji: "🌿"
-  },
-  {
-    id: 2,
-    name: "जैविक खाद",
-    price: 499,
-    unit: "25 kg",
-    emoji: "🌱"
-  },
-  {
-    id: 3,
-    name: "फसल सुरक्षा किट",
-    price: 699,
-    unit: "1 किट",
-    emoji: "🧴"
-  },
-  {
-    id: 4,
-    name: "बीज उपचार किट",
-    price: 399,
-    unit: "1 किट",
-    emoji: "🌾"
-  }
+  { id: 1, name: "नीम ऑयल", price: 299, unit: "1 लीटर", emoji: "🌿" },
+  { id: 2, name: "जैविक खाद", price: 499, unit: "25 kg", emoji: "🌱" },
+  { id: 3, name: "फसल सुरक्षा किट", price: 699, unit: "1 किट", emoji: "🧴" },
+  { id: 4, name: "बीज उपचार किट", price: 399, unit: "1 किट", emoji: "🌾" }
 ];
+
+/* =========================
+   SAMPLE MANDI
+========================= */
 
 const mandiData = [
   { crop: "गेहूं", mandi: "दिल्ली", price: 2450 },
@@ -78,6 +60,10 @@ const mandiData = [
   { crop: "चना", mandi: "जयपुर", price: 6200 },
   { crop: "मक्का", mandi: "इंदौर", price: 2250 }
 ];
+
+/* =========================
+   GOVERNMENT SCHEMES
+========================= */
 
 const schemes = [
   {
@@ -99,6 +85,10 @@ const schemes = [
     url: "https://pmfby.gov.in/"
   }
 ];
+
+/* =========================
+   CSS
+========================= */
 
 const css = `
 *{box-sizing:border-box}
@@ -417,8 +407,7 @@ main{padding:12px}
   border-radius:13px;
   margin-bottom:8px;
   font-size:13px;
-  line-height:1.5;
-  white-space:pre-wrap
+  line-height:1.5
 }
 
 .aiBubble{background:#edf7ea}
@@ -620,6 +609,10 @@ main{padding:12px}
 }
 `;
 
+/* =========================
+   PAGE TITLE
+========================= */
+
 function PageTitle({
   setTab,
   title,
@@ -643,33 +636,25 @@ function PageTitle({
   );
 }
 
+/* =========================
+   APP
+========================= */
+
 function App() {
   const [tab, setTab] = useState<Tab>("home");
   const [name] = useState("किसान भाई");
 
-  const [cart, setCart] = useState<Record<number, number>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ks_cart") || "{}");
-    } catch {
-      return {};
-    }
-  });
+  const [cart, setCart] = useState<Record<number, number>>(
+    () => JSON.parse(localStorage.getItem("ks_cart") || "{}")
+  );
 
-  const [crops, setCrops] = useState<Crop[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ks_crops") || "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [crops, setCrops] = useState<Crop[]>(
+    () => JSON.parse(localStorage.getItem("ks_crops") || "[]")
+  );
 
-  const [chat, setChat] = useState<ChatMsg[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ks_chat") || "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [chat, setChat] = useState<ChatMsg[]>(
+    () => JSON.parse(localStorage.getItem("ks_chat") || "[]")
+  );
 
   const [q, setQ] = useState("");
 
@@ -713,7 +698,7 @@ function App() {
     });
 
   /* =========================
-     REAL AI KISAN
+     REAL AI CHAT
   ========================= */
 
   const send = async (text = q) => {
@@ -723,74 +708,61 @@ function App() {
 
     setChat(c => [
       ...c,
-      {
-        from: "user",
-        text: t
-      },
-      {
-        from: "ai",
-        text: "🤖 AI Kisan सोच रहा है..."
-      }
+      { from: "user", text: t },
+      { from: "ai", text: "AI Kisan सोच रहा है..." }
     ]);
 
     setQ("");
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: t
-          })
-        }
-      );
+      const r = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: t
+        })
+      });
 
-      const data = await response.json().catch(() => ({}));
+      const data = await r.json().catch(() => ({}));
 
-      if (!response.ok) {
-        throw new Error(
-          data.error || "AI service error"
-        );
+      if (!r.ok) {
+        throw new Error(data.error || "AI service error");
       }
 
       setChat(c => {
         const copy = [...c];
 
-        for (let i = copy.length - 1; i >= 0; i--) {
-          if (copy[i].from === "ai") {
-            copy[i] = {
-              from: "ai",
-              text:
-                data.reply ||
-                "AI से जवाब नहीं मिला।"
-            };
+        const i = copy.map(x => x.from).lastIndexOf("ai");
 
-            break;
-          }
+        if (i >= 0) {
+          copy[i] = {
+            from: "ai",
+            text: data.reply || "AI से जवाब नहीं मिला।"
+          };
         }
 
         return copy;
       });
-    } catch (error) {
-      console.error("AI error:", error);
+
+    } catch (e) {
+
+      const msg =
+        e instanceof Error
+          ? e.message
+          : "AI सेवा से कनेक्शन नहीं हो पाया।";
 
       setChat(c => {
         const copy = [...c];
 
-        for (let i = copy.length - 1; i >= 0; i--) {
-          if (copy[i].from === "ai") {
-            copy[i] = {
-              from: "ai",
-              text:
-                "❌ AI से कनेक्शन नहीं हो पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।"
-            };
+        const i = copy.map(x => x.from).lastIndexOf("ai");
 
-            break;
-          }
+        if (i >= 0) {
+          copy[i] = {
+            from: "ai",
+            text: "❌ " + msg
+          };
         }
 
         return copy;
@@ -829,68 +801,58 @@ function App() {
       </header>
 
       <main>
-        {tab === "home" && (
-          <HomePage
-            setTab={setTab}
-            name={name}
-          />
-        )}
 
-        {tab === "mandi" && (
-          <MandiPage setTab={setTab} />
-        )}
+        {tab === "home" &&
+          <HomePage setTab={setTab} name={name} />}
 
-        {tab === "weather" && (
-          <WeatherPage setTab={setTab} />
-        )}
+        {tab === "mandi" &&
+          <MandiPage setTab={setTab} />}
 
-        {tab === "crops" && (
+        {tab === "weather" &&
+          <WeatherPage setTab={setTab} />}
+
+        {tab === "crops" &&
           <CropsPage
             setTab={setTab}
             crops={crops}
             setCrops={setCrops}
-          />
-        )}
+          />}
 
-        {tab === "doctor" && (
-          <DoctorPage setTab={setTab} />
-        )}
+        {tab === "doctor" &&
+          <DoctorPage setTab={setTab} />}
 
-        {tab === "store" && (
+        {tab === "store" &&
           <StorePage
             setTab={setTab}
             cart={cart}
             add={add}
-          />
-        )}
+          />}
 
-        {tab === "cart" && (
+        {tab === "cart" &&
           <CartPage
             setTab={setTab}
             cart={cart}
             add={add}
             remove={remove}
             total={total}
-          />
-        )}
+          />}
 
-        {tab === "chat" && (
+        {tab === "chat" &&
           <ChatPage
             setTab={setTab}
             chat={chat}
             q={q}
             setQ={setQ}
             send={send}
-          />
-        )}
+          />}
 
-        {tab === "profile" && (
+        {tab === "profile" &&
           <ProfilePage
             setTab={setTab}
             name={name}
             crops={crops}
-          />
-        )}
+          />}
+
       </main>
 
       <button
@@ -902,6 +864,7 @@ function App() {
       </button>
 
       <nav className="bottomNav">
+
         <Nav
           active={tab === "home"}
           on={() => setTab("home")}
@@ -929,10 +892,15 @@ function App() {
           icon={<User size={19} />}
           text="Profile"
         />
+
       </nav>
     </div>
   );
 }
+
+/* =========================
+   NAV
+========================= */
 
 function Nav({
   active,
@@ -956,6 +924,10 @@ function Nav({
   );
 }
 
+/* =========================
+   HOME
+========================= */
+
 function HomePage({
   setTab,
   name
@@ -963,6 +935,7 @@ function HomePage({
   setTab: (t: Tab) => void;
   name: string;
 }) {
+
   const cards: [string, string, string, Tab][] = [
     ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
     ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
@@ -976,6 +949,7 @@ function HomePage({
   return (
     <>
       <section className="hero">
+
         <h1>नमस्ते {name} 👋</h1>
 
         <p>
@@ -1004,9 +978,11 @@ function HomePage({
             }}
           />
         </button>
+
       </section>
 
       <div className="grid">
+
         {cards.map(c => (
           <button
             className="card"
@@ -1016,16 +992,12 @@ function HomePage({
             <div className="cardIcon">{c[0]}</div>
 
             <div>
-              <div className="cardTitle">
-                {c[1]}
-              </div>
-
-              <div className="cardSub">
-                {c[2]}
-              </div>
+              <div className="cardTitle">{c[1]}</div>
+              <div className="cardSub">{c[2]}</div>
             </div>
           </button>
         ))}
+
       </div>
 
       <div className="advice">
@@ -1038,19 +1010,22 @@ function HomePage({
   );
 }
 
+/* =========================
+   MANDI
+========================= */
+
 function MandiPage({
   setTab
 }: {
   setTab: (t: Tab) => void;
 }) {
+
   const [search, setSearch] = useState("");
 
   const list = useMemo(
     () =>
       mandiData.filter(x =>
-        `${x.crop} ${x.mandi}`
-          .toLowerCase()
-          .includes(search.trim().toLowerCase())
+        `${x.crop} ${x.mandi}`.includes(search.trim())
       ),
     [search]
   );
@@ -1064,6 +1039,7 @@ function MandiPage({
       />
 
       <div className="section">
+
         <input
           className="search"
           value={search}
@@ -1073,19 +1049,15 @@ function MandiPage({
 
         <div className="muted">
           ⚠️ अभी इस static app में भाव demo/sample हैं।
-          असली बिक्री से पहले स्थानीय मंडी/आधिकारिक
-          स्रोत से आज का भाव verify करें।
+          असली बिक्री से पहले स्थानीय मंडी/आधिकारिक स्रोत
+          से आज का भाव verify करें।
         </div>
-      </div>
 
-      {list.length === 0 && (
-        <div className="section empty">
-          कोई मंडी भाव नहीं मिला।
-        </div>
-      )}
+      </div>
 
       {list.map((x, i) => (
         <div className="mandiCard" key={i}>
+
           <div>
             <div className="mandiCrop">
               🌾 {x.crop}
@@ -1103,27 +1075,33 @@ function MandiPage({
               / क्विंटल
             </div>
           </div>
+
         </div>
       ))}
+
     </>
   );
 }
+
+/* =========================
+   WEATHER
+========================= */
 
 function WeatherPage({
   setTab
 }: {
   setTab: (t: Tab) => void;
 }) {
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [w, setW] = useState<any>(null);
   const [loc, setLoc] = useState("");
 
   const load = () => {
+
     if (!navigator.geolocation) {
-      setError(
-        "इस फोन में Location उपलब्ध नहीं है।"
-      );
+      setError("इस फोन में Location उपलब्ध नहीं है।");
       return;
     }
 
@@ -1132,25 +1110,23 @@ function WeatherPage({
 
     navigator.geolocation.getCurrentPosition(
       async p => {
+
         try {
+
           const {
             latitude,
             longitude
           } = p.coords;
 
           const url =
-            `https://api.open-meteo.com/v1/forecast?` +
-            `latitude=${latitude}` +
-            `&longitude=${longitude}` +
+            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
             `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
             `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
             `&timezone=auto&forecast_days=3`;
 
           const r = await fetch(url);
 
-          if (!r.ok) {
-            throw new Error();
-          }
+          if (!r.ok) throw Error();
 
           const d = await r.json();
 
@@ -1159,21 +1135,28 @@ function WeatherPage({
           setLoc(
             `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`
           );
+
         } catch {
+
           setError(
             "मौसम नहीं मिल पाया। इंटरनेट और Location जांचें।"
           );
+
         } finally {
           setLoading(false);
         }
+
       },
+
       () => {
+
         setError(
           "Location की अनुमति दें, तभी आपके इलाके का live मौसम दिखेगा।"
         );
 
         setLoading(false);
       },
+
       {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -1219,6 +1202,7 @@ function WeatherPage({
       />
 
       <div className="locationRow">
+
         <MapPin size={17} />
 
         <span>
@@ -1235,9 +1219,11 @@ function WeatherPage({
         >
           <RefreshCw size={17} />
         </button>
+
       </div>
 
       {!w ? (
+
         <div
           className="section"
           style={{
@@ -1245,6 +1231,7 @@ function WeatherPage({
             padding: 30
           }}
         >
+
           <CloudSun size={52} />
 
           <h3>
@@ -1274,19 +1261,20 @@ function WeatherPage({
               {error}
             </p>
           )}
+
         </div>
+
       ) : (
+
         <>
           <div className="weatherBig">
+
             <div style={{ fontSize: 48 }}>
               {emo(w.current.weather_code)}
             </div>
 
             <div className="temperature">
-              {Math.round(
-                w.current.temperature_2m
-              )}
-              °C
+              {Math.round(w.current.temperature_2m)}°C
             </div>
 
             <h3>
@@ -1294,22 +1282,18 @@ function WeatherPage({
             </h3>
 
             <div className="weatherInfoGrid">
+
               <div className="weatherInfo">
                 💧 नमी
                 <br />
-                <b>
-                  {w.current.relative_humidity_2m}%
-                </b>
+                <b>{w.current.relative_humidity_2m}%</b>
               </div>
 
               <div className="weatherInfo">
                 💨 हवा
                 <br />
                 <b>
-                  {Math.round(
-                    w.current.wind_speed_10m
-                  )}{" "}
-                  km/h
+                  {Math.round(w.current.wind_speed_10m)} km/h
                 </b>
               </div>
 
@@ -1317,33 +1301,34 @@ function WeatherPage({
                 🌡️ महसूस
                 <br />
                 <b>
-                  {Math.round(
-                    w.current.apparent_temperature
-                  )}
-                  °C
+                  {Math.round(w.current.apparent_temperature)}°C
                 </b>
               </div>
 
               <div className="weatherInfo">
                 🌧️ बारिश
                 <br />
-                <b>
-                  {w.current.precipitation} mm
-                </b>
+                <b>{w.current.precipitation} mm</b>
               </div>
+
             </div>
+
           </div>
 
           <div className="section">
+
             <h3>📅 अगले 3 दिन</h3>
 
             <div className="forecast">
+
               {w.daily.time.map(
                 (d: string, i: number) => (
+
                   <div
                     className="forecastCard"
                     key={d}
                   >
+
                     <b>
                       {i === 0
                         ? "आज"
@@ -1353,20 +1338,17 @@ function WeatherPage({
                     </b>
 
                     <div className="forecastIcon">
-                      {emo(
-                        w.daily.weather_code[i]
-                      )}
+                      {emo(w.daily.weather_code[i])}
                     </div>
 
                     <b>
                       {Math.round(
                         w.daily.temperature_2m_max[i]
-                      )}
-                      ° /{" "}
+                      )}°
+                      /
                       {Math.round(
                         w.daily.temperature_2m_min[i]
-                      )}
-                      °
+                      )}°
                     </b>
 
                     <div className="muted">
@@ -1374,25 +1356,33 @@ function WeatherPage({
                       {
                         w.daily
                           .precipitation_probability_max[i]
-                      }
-                      %
+                      }%
                     </div>
+
                   </div>
+
                 )
               )}
+
             </div>
+
           </div>
 
           <div className="advice">
-            🌾 <b>किसान सलाह:</b> बारिश की संभावना
-            अधिक हो तो सिंचाई, स्प्रे और खेत में काम
-            का समय बदलने पर विचार करें।
+            🌾 <b>किसान सलाह:</b> बारिश की संभावना अधिक हो
+            तो सिंचाई, स्प्रे और खेत में काम का समय बदलने
+            पर विचार करें।
           </div>
         </>
       )}
+
     </>
   );
 }
+
+/* =========================
+   CROPS
+========================= */
 
 function CropsPage({
   setTab,
@@ -1401,14 +1391,14 @@ function CropsPage({
 }: {
   setTab: (t: Tab) => void;
   crops: Crop[];
-  setCrops: React.Dispatch<
-    React.SetStateAction<Crop[]>
-  >;
+  setCrops: React.Dispatch<React.SetStateAction<Crop[]>>;
 }) {
+
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
 
   const save = () => {
+
     if (!name.trim()) return;
 
     setCrops(c => [
@@ -1434,6 +1424,7 @@ function CropsPage({
       />
 
       <div className="section">
+
         <h3>🌱 नई फसल जोड़ें</h3>
 
         <input
@@ -1456,10 +1447,13 @@ function CropsPage({
         >
           <Plus size={16} /> फसल सेव करें
         </button>
+
       </div>
 
       {crops.length === 0 ? (
+
         <div className="section empty">
+
           <Sprout size={45} />
 
           <h3>
@@ -1469,31 +1463,36 @@ function CropsPage({
           <p>
             ऊपर से अपनी फसल जोड़ें।
           </p>
+
         </div>
+
       ) : (
+
         <div className="section">
+
           {crops.map(c => (
+
             <div
               className="cropRow"
               key={c.id}
             >
+
               <div>
+
                 <div className="cropName">
                   🌾 {c.name}
                 </div>
 
                 <div className="muted">
-                  {c.area || "क्षेत्र नहीं दिया"} ·{" "}
-                  {c.note}
+                  {c.area || "क्षेत्र नहीं दिया"} · {c.note}
                 </div>
+
               </div>
 
               <button
                 onClick={() =>
                   setCrops(x =>
-                    x.filter(
-                      y => y.id !== c.id
-                    )
+                    x.filter(y => y.id !== c.id)
                   )
                 }
                 style={{
@@ -1504,26 +1503,34 @@ function CropsPage({
               >
                 <X size={18} />
               </button>
+
             </div>
+
           ))}
+
         </div>
       )}
+
     </>
   );
 }
+
+/* =========================
+   CROP DOCTOR
+========================= */
 
 function DoctorPage({
   setTab
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [file, setFile] =
-    useState<File | null>(null);
 
+  const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
   const [result, setResult] = useState("");
 
   const choose = (f: File | null) => {
+
     setFile(f);
     setResult("");
 
@@ -1533,10 +1540,11 @@ function DoctorPage({
   };
 
   const analyze = () => {
+
     if (!file) return;
 
     setResult(
-      "फोटो देखी गई है। इस version में automatic disease diagnosis उपलब्ध नहीं है। पत्तियों के दाग, कीड़े, पीला पड़ना और मिट्टी की स्थिति देखकर पहले समस्या का प्रकार नोट करें। दवा छिड़कने से पहले कृषि विशेषज्ञ से पुष्टि करें।"
+      "फोटो देखी गई है। इस static version में automatic disease diagnosis उपलब्ध नहीं है। पत्तियों के दाग, कीड़े, पीला पड़ना और मिट्टी की स्थिति देखकर पहले समस्या का प्रकार नोट करें। दवा छिड़कने से पहले कृषि विशेषज्ञ से पुष्टि करें।"
     );
   };
 
@@ -1549,7 +1557,9 @@ function DoctorPage({
       />
 
       <div className="section">
+
         <div className="upload">
+
           <Camera size={48} />
 
           <h3>
@@ -1557,8 +1567,7 @@ function DoctorPage({
           </h3>
 
           <p className="muted">
-            अच्छी रोशनी में पत्ती/फल की
-            नज़दीकी फोटो लें।
+            अच्छी रोशनी में पत्ती/फल की नज़दीकी फोटो लें।
           </p>
 
           <input
@@ -1566,9 +1575,7 @@ function DoctorPage({
             accept="image/*"
             capture="environment"
             onChange={e =>
-              choose(
-                e.target.files?.[0] || null
-              )
+              choose(e.target.files?.[0] || null)
             }
           />
 
@@ -1579,6 +1586,7 @@ function DoctorPage({
               alt="फसल preview"
             />
           )}
+
         </div>
 
         {file && (
@@ -1598,22 +1606,28 @@ function DoctorPage({
             {result}
           </div>
         )}
+
       </div>
 
       <div className="section">
+
         <Stethoscope size={28} />
 
         <h3>ध्यान रखें</h3>
 
         <p className="muted">
-          सिर्फ फोटो के आधार पर दवा तय करना
-          सुरक्षित नहीं है। फसल, उम्र, खेत,
-          मौसम और लक्षण भी जरूरी हैं।
+          सिर्फ फोटो के आधार पर दवा तय करना सुरक्षित नहीं है।
+          फसल, उम्र, खेत, मौसम और लक्षण भी जरूरी हैं।
         </p>
+
       </div>
     </>
   );
 }
+
+/* =========================
+   STORE
+========================= */
 
 function StorePage({
   setTab,
@@ -1624,10 +1638,12 @@ function StorePage({
   cart: Record<number, number>;
   add: (id: number) => void;
 }) {
-  const count = Object.values(cart).reduce(
-    (a, b) => a + b,
-    0
-  );
+
+  const count =
+    Object.values(cart).reduce(
+      (a, b) => a + b,
+      0
+    );
 
   return (
     <>
@@ -1638,11 +1654,14 @@ function StorePage({
       />
 
       <div className="section">
+
         {products.map(p => (
+
           <div
             className="product"
             key={p.id}
           >
+
             <div
               style={{
                 display: "flex",
@@ -1650,11 +1669,13 @@ function StorePage({
                 alignItems: "center"
               }}
             >
+
               <span style={{ fontSize: 28 }}>
                 {p.emoji}
               </span>
 
               <div>
+
                 <div className="productName">
                   {p.name}
                 </div>
@@ -1662,7 +1683,9 @@ function StorePage({
                 <div className="muted">
                   ₹{p.price} · {p.unit}
                 </div>
+
               </div>
+
             </div>
 
             <button
@@ -1671,7 +1694,9 @@ function StorePage({
             >
               कार्ट में डालें
             </button>
+
           </div>
+
         ))}
 
         <button
@@ -1682,10 +1707,21 @@ function StorePage({
           🛒 कार्ट देखें{" "}
           {count ? `(${count})` : ""}
         </button>
+
+      </div>
+
+      <div className="advice">
+        ℹ️ ये अभी app के sample products हैं।
+        वास्तविक खरीद के लिए payment, delivery और
+        verified seller backend जोड़ना होगा।
       </div>
     </>
   );
 }
+
+/* =========================
+   CART
+========================= */
 
 function CartPage({
   setTab,
@@ -1700,108 +1736,114 @@ function CartPage({
   remove: (id: number) => void;
   total: number;
 }) {
-  const items = Object.entries(cart);
+
+  const ids = Object.keys(cart).map(Number);
 
   return (
     <>
       <PageTitle
         setTab={setTab}
-        title="कार्ट"
-        sub="आपके चुने हुए सामान"
+        title="आपका Cart"
       />
 
-      <div className="section">
-        {items.length === 0 ? (
-          <div className="empty">
-            <ShoppingCart size={45} />
+      {!ids.length ? (
 
-            <h3>
-              कार्ट खाली है
-            </h3>
+        <div className="section empty">
 
-            <p>
-              Store से सामान जोड़ें।
-            </p>
+          <ShoppingCart size={50} />
 
-            <button
-              className="primary"
-              onClick={() => setTab("store")}
-            >
-              Kisan Store खोलें
-            </button>
-          </div>
-        ) : (
-          <>
-            {items.map(([id, quantity]) => {
-              const product = products.find(
-                p => p.id === +id
-              );
+          <h3>
+            Cart खाली है
+          </h3>
 
-              if (!product) return null;
+          <button
+            className="addBtn"
+            onClick={() => setTab("store")}
+          >
+            Store देखें
+          </button>
 
-              return (
-                <div
-                  className="cartRow"
-                  key={id}
-                >
-                  <div>
-                    <div className="productName">
-                      {product.emoji}{" "}
-                      {product.name}
-                    </div>
+        </div>
 
-                    <div className="muted">
-                      ₹{product.price} ·{" "}
-                      {product.unit}
-                    </div>
+      ) : (
+
+        <div className="section">
+
+          {ids.map(id => {
+
+            const p =
+              products.find(x => x.id === id)!;
+
+            return (
+              <div
+                className="cartRow"
+                key={id}
+              >
+
+                <div>
+
+                  <b>{p.name}</b>
+
+                  <div className="muted">
+                    ₹{p.price} × {cart[id]}
                   </div>
 
-                  <div className="quantity">
-                    <button
-                      onClick={() =>
-                        remove(product.id)
-                      }
-                    >
-                      <Minus size={15} />
-                    </button>
-
-                    <b>{quantity}</b>
-
-                    <button
-                      onClick={() =>
-                        add(product.id)
-                      }
-                    >
-                      <Plus size={15} />
-                    </button>
-                  </div>
                 </div>
-              );
-            })}
 
-            <div className="total">
-              <span>कुल</span>
-              <span>
-                ₹{total.toLocaleString("en-IN")}
-              </span>
-            </div>
+                <div className="quantity">
 
-            <button
-              className="primary"
-              onClick={() =>
-                alert(
-                  "Order system अभी demo mode में है।"
-                )
-              }
-            >
-              ऑर्डर जारी रखें
-            </button>
-          </>
-        )}
-      </div>
+                  <button
+                    onClick={() => remove(id)}
+                  >
+                    <Minus size={15} />
+                  </button>
+
+                  <b>{cart[id]}</b>
+
+                  <button
+                    onClick={() => add(id)}
+                  >
+                    <Plus size={15} />
+                  </button>
+
+                </div>
+
+              </div>
+            );
+          })}
+
+          <div className="total">
+
+            <span>
+              कुल राशि
+            </span>
+
+            <span>
+              ₹{total.toLocaleString("en-IN")}
+            </span>
+
+          </div>
+
+          <button
+            className="primary"
+            onClick={() =>
+              alert(
+                "Demo order: अभी payment/delivery backend जोड़ना बाकी है।"
+              )
+            }
+          >
+            ऑर्डर करें
+          </button>
+
+        </div>
+      )}
     </>
   );
 }
+
+/* =========================
+   AI CHAT
+========================= */
 
 function ChatPage({
   setTab,
@@ -1813,16 +1855,15 @@ function ChatPage({
   setTab: (t: Tab) => void;
   chat: ChatMsg[];
   q: string;
-  setQ: React.Dispatch<
-    React.SetStateAction<string>
-  >;
-  send: (text?: string) => void;
+  setQ: (s: string) => void;
+  send: (s?: string) => void;
 }) {
+
   const quick = [
-    "गेहूं की पत्ती पीली पड़ रही है, क्या करूं?",
-    "सरसों में कीड़े लग गए हैं",
-    "धान में पानी कितना देना चाहिए?",
-    "मौसम खेती को कैसे प्रभावित करेगा?"
+    "गेहूं में खाद कब डालें?",
+    "धान में पत्तियां पीली हैं",
+    "आज बारिश होगी?",
+    "सरसों में कीड़ा लग गया"
   ];
 
   return (
@@ -1830,12 +1871,15 @@ function ChatPage({
       <PageTitle
         setTab={setTab}
         title="AI Kisan"
-        sub="अपना खेती का सवाल पूछें"
+        sub="खेती से जुड़े सवाल पूछें"
       />
 
       <div className="chatBox">
-        {chat.length === 0 ? (
+
+        {!chat.length ? (
+
           <div className="empty">
+
             <MessageCircle size={48} />
 
             <h3>
@@ -1843,61 +1887,84 @@ function ChatPage({
             </h3>
 
             <p>
-              फसल, कीट, रोग, खेती या सामान्य
-              कृषि जानकारी के बारे में पूछें।
+              फसल, मौसम, मंडी या खेती के बारे में पूछें।
             </p>
+
           </div>
+
         ) : (
+
           chat.map((m, i) => (
+
             <div
-              key={i}
               className={
                 "bubble " +
                 (m.from === "user"
                   ? "userBubble"
                   : "aiBubble")
               }
+              key={i}
             >
+
+              <b>
+                {m.from === "user"
+                  ? "आप"
+                  : "🤖 AI Kisan"}
+              </b>
+
+              <br />
+
               {m.text}
+
             </div>
+
           ))
+
         )}
+
       </div>
 
       <div className="quick">
+
         {quick.map(x => (
+
           <button
             key={x}
             onClick={() => send(x)}
           >
             {x}
           </button>
+
         ))}
+
       </div>
 
       <div className="inputRow">
+
         <input
           value={q}
           onChange={e => setQ(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === "Enter") {
-              send();
-            }
-          }}
+          onKeyDown={e =>
+            e.key === "Enter" && send()
+          }
           placeholder="अपना सवाल लिखें..."
         />
 
         <button
           className="sendBtn"
           onClick={() => send()}
-          aria-label="सवाल भेजें"
         >
           <Send size={18} />
         </button>
+
       </div>
     </>
   );
 }
+
+/* =========================
+   PROFILE
+========================= */
 
 function ProfilePage({
   setTab,
@@ -1908,55 +1975,47 @@ function ProfilePage({
   name: string;
   crops: Crop[];
 }) {
+
   return (
     <>
       <PageTitle
         setTab={setTab}
-        title="Profile"
-        sub="किसान प्रोफाइल"
+        title="प्रोफाइल"
       />
 
       <div className="section profileCard">
+
         <div className="bigProfile">
-          <User size={35} />
+          <User size={36} />
         </div>
 
         <h2>{name}</h2>
 
         <p className="muted">
-          KisanSaathi AI किसान सहायता
+          {crops.length} फसल सेव हैं
         </p>
+
       </div>
 
       <div className="section">
-        <h3>🌱 मेरी फसल</h3>
 
-        <p className="muted">
-          आपकी सेव की गई फसलें:{" "}
-          <b>{crops.length}</b>
-        </p>
-
-        <button
-          className="primary"
-          onClick={() => setTab("crops")}
-        >
-          मेरी फसल देखें
-        </button>
-      </div>
-
-      <div className="section">
-        <h3>🏛️ सरकारी योजनाएं</h3>
+        <h3>
+          🏛️ सरकारी योजनाएं
+        </h3>
 
         {schemes.map(s => (
+
           <div
             className="scheme"
             key={s.title}
           >
+
             <div className="schemeIcon">
               {s.icon}
             </div>
 
             <div style={{ flex: 1 }}>
+
               <b>{s.title}</b>
 
               <div className="muted">
@@ -1968,29 +2027,46 @@ function ProfilePage({
                 target="_blank"
                 rel="noreferrer"
               >
-                आधिकारिक वेबसाइट खोलें{" "}
+                आधिकारिक वेबसाइट{" "}
                 <ExternalLink size={11} />
               </a>
+
             </div>
+
           </div>
+
         ))}
+
       </div>
 
-      <div className="advice">
-        🌾 <b>KisanSaathi AI</b>
-        <br />
-        AI की सलाह को स्थानीय कृषि विशेषज्ञ,
-        मौसम और सरकारी/आधिकारिक जानकारी के साथ
-        verify करके इस्तेमाल करें।
+      <div className="section">
+
+        <h3>
+          ℹ️ ऐप की स्थिति
+        </h3>
+
+        <p className="muted">
+          Weather live है। AI Kisan backend से connected है।
+          Crop Doctor अभी safe demo/local guidance mode में है।
+          Mandi और Store को production बनाने के लिए verified
+          backend/API और payment/delivery integration चाहिए।
+        </p>
+
       </div>
     </>
   );
 }
 
-createRoot(
-  document.getElementById("root")!
-).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+/* =========================
+   START
+========================= */
+
+const root = document.getElementById("root");
+
+if (root) {
+  createRoot(root).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}
