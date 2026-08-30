@@ -1,15 +1,21 @@
 {
-  "name": "kisansathi-backend",
+  "name": "kisansathi-ai",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
   "scripts": {
+    "build": "vite build",
     "start": "node server.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^5.1.0",
-    "openai": "^5.12.2"
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "openai": "^5.12.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^7.1.3"
   }
 }
