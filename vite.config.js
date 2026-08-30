@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "/Kisansathi-ai/",
+  base: process.env.GITHUB_ACTIONS ? "/Kisansathi-ai/" : "/",
   plugins: [react()],
   server: {
     proxy: {
