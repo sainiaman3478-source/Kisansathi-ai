@@ -19,7 +19,7 @@ const openai = OPENAI_API_KEY
 
 const RESOURCE = "9ef84268-d588-465a-a308-a864a43d0070";
 
-// Health check
+/* HEALTH CHECK */
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
@@ -28,7 +28,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// AI CHAT
+/* AI CHAT */
 app.post("/api/chat", async (req, res) => {
   try {
     const message = String(req.body?.message || "").trim();
@@ -41,17 +41,23 @@ app.post("/api/chat", async (req, res) => {
 
     if (!openai) {
       return res.status(503).json({
-        error: "OPENAI_API_KEY backend में सेट नहीं है।"
+        error: "OPENAI_API_KEY backend .env में सेट नहीं है।"
       });
     }
 
-    const r = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+    const model = process.env.OPENAI_MODEL;
 
+    if (!model) {
+      return res.status(503).json({
+        error: "OPENAI_MODEL backend .env में सेट नहीं है।"
+      });
+    }
+
+    const response = await openai.responses.create({
+      model,
       instructions:
         "You are KisanSaathi AI for Indian farmers. " +
-        "Reply in simple Hindi/Hinglish. " +
-        "Be practical and cautious. " +
+        "Reply in simple Hindi/Hinglish. Be practical and cautious. " +
         "Never invent live weather or mandi prices. " +
         "Ask for crop, crop age, location and symptoms when useful. " +
         "For pesticides/fertilizers, do not give unsafe exact dosage " +
@@ -63,11 +69,11 @@ app.post("/api/chat", async (req, res) => {
     });
 
     res.json({
-      reply: r.output_text || "AI से जवाब नहीं मिला।"
+      reply: response.output_text || "AI से जवाब नहीं मिला।"
     });
 
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error("AI ERROR:", error);
 
     res.status(500).json({
       error: "AI service error. Backend logs देखें।"
@@ -75,7 +81,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// CROP NAMES
+/* CROP NAMES */
 const aliases = {
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
@@ -98,12 +104,12 @@ const aliases = {
   "उड़द": "Black Gram (Urd Beans)(Whole)"
 };
 
-// MANDI
+/* MANDI API */
 app.get("/api/mandi", async (req, res) => {
   try {
     if (!DATA_GOV_API_KEY) {
       return res.status(503).json({
-        error: "DATA_GOV_API_KEY backend में सेट नहीं है।"
+        error: "DATA_GOV_API_KEY backend .env में सेट नहीं है।"
       });
     }
 
@@ -112,7 +118,7 @@ app.get("/api/mandi", async (req, res) => {
     const crop =
       aliases[raw.toLowerCase()] || raw;
 
-    const p = new URLSearchParams({
+    const params = new URLSearchParams({
       "api-key": DATA_GOV_API_KEY,
       format: "json",
       limit: "100",
@@ -120,24 +126,26 @@ app.get("/api/mandi", async (req, res) => {
     });
 
     if (crop) {
-      p.set("filters[commodity]", crop);
+      params.set("filters[commodity]", crop);
     }
 
-    p.set("sort[arrival_date]", "desc");
+    params.set("sort[arrival_date]", "desc");
 
-    const r = await fetch(
-      `https://api.data.gov.in/resource/${RESOURCE}?${p.toString()}`
-    );
+    const url =
+      `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`;
 
-    if (!r.ok) {
-      throw new Error(`data.gov.in ${r.status}`);
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`data.gov.in ${response.status}`);
     }
 
-    const body = await r.json();
+    const body = await response.json();
 
-    const records = Array.isArray(body.records)
-      ? body.records
-      : [];
+    const records =
+      Array.isArray(body.records)
+        ? body.records
+        : [];
 
     const data = records
       .map((x) => ({
@@ -147,9 +155,11 @@ app.get("/api/mandi", async (req, res) => {
         commodity: x.commodity || "",
         variety: x.variety || "",
         grade: x.grade || "",
+
         min_price: Number(x.min_price) || 0,
         max_price: Number(x.max_price) || 0,
         modal_price: Number(x.modal_price) || 0,
+
         arrival_date: x.arrival_date || ""
       }))
       .filter((x) => x.modal_price > 0);
@@ -160,8 +170,8 @@ app.get("/api/mandi", async (req, res) => {
       source: "data.gov.in / AGMARKNET"
     });
 
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error("MANDI ERROR:", error);
 
     res.status(500).json({
       error:
@@ -170,7 +180,7 @@ app.get("/api/mandi", async (req, res) => {
   }
 });
 
-// START SERVER
+/* START SERVER */
 app.listen(PORT, () => {
   console.log(
     `KisanSaathi backend running on port ${PORT}`
