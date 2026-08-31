@@ -16,33 +16,37 @@ app.use(express.json({ limit: "1mb" }));
 
 const PORT = process.env.PORT || 10000;
 
+/* =========================================================
+   ENVIRONMENT
+========================================================= */
+
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 /*
-=========================================================
-GEMINI MODELS
-=========================================================
-
-Primary:
-gemini-2.5-flash
-
-Fallback:
-gemini-3.6-flash
-gemini-3.5-flash
-
-Agar ek model busy/high demand ho gaya,
-to next model automatically try hoga.
+  Primary model.
+  Render Environment में GEMINI_MODEL डाल सकते हैं,
+  लेकिन नहीं डालेंगे तो यही चलेगा.
 */
+const GEMINI_MODEL =
+  process.env.GEMINI_MODEL || "gemini-3.7-flash";
 
-const GEMINI_MODELS = [
-  process.env.GEMINI_MODEL || "gemini-2.5-flash",
+/*
+  अगर primary model busy/high-demand हो,
+  तो इन models पर retry करेंगे.
+*/
+const GEMINI_FALLBACK_MODELS = [
+  GEMINI_MODEL,
+  "gemini-3.5-flash-lite",
   "gemini-3.6-flash",
-  "gemini-3.5-flash",
 ].filter(
   (model, index, array) =>
     model && array.indexOf(model) === index
 );
+
+/* =========================================================
+   DATA.GOV RESOURCE
+========================================================= */
 
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
@@ -56,7 +60,7 @@ You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
 
 Reply in simple Hindi or easy Hinglish.
 
-Be practical, clear and concise.
+Be practical, useful, clear and concise.
 
 For crop problems, ask for:
 - crop name
@@ -68,54 +72,58 @@ when needed.
 
 For fertilizer or pesticide advice:
 - Do not invent unsafe exact doses.
-- Follow the product label.
-- If exact dosage depends on product, crop or region, advise the farmer to confirm with a local agriculture expert.
+- If exact dosage depends on product, crop or region, tell the farmer to follow the product label and consult a local agriculture expert.
+- Give practical general guidance where possible.
 
 Never invent live mandi prices.
 
 Never invent live weather.
 
-If the user asks for live mandi prices,
-tell them to use the app's Live Mandi section.
+If the user asks for live mandi prices, tell them to use the app's Real Mandi Bhav section.
 
-If the user asks about weather,
-tell them to use the app's weather section.
+If the user asks for live weather, tell them to use the app's weather section.
 
-Do not claim you saw a crop photo unless an image was actually provided to the API.
+Do not claim that you saw a crop photo unless an image was actually provided to the API.
 
-Give useful farming guidance instead of asking unnecessary questions.
+Answer the farmer's actual question directly.
 
-If the farmer asks a simple farming question,
-answer directly in simple Hindi.
+Do not repeatedly ask unnecessary questions.
 
-Do not mention internal APIs, API keys, servers or programming
-unless the user specifically asks about the technical system.
+If the question is simple, give a simple answer.
 `;
 
 /* =========================================================
-   WAIT / DELAY
+   SMALL DELAY
 ========================================================= */
 
 function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+  return new Promise((resolve) =>
+    setTimeout(resolve, ms)
+  );
 }
 
 /* =========================================================
    GEMINI SINGLE REQUEST
 ========================================================= */
 
-async function callGeminiModel(model, message) {
+async function callGeminiModel(
+  model,
+  message
+) {
   if (!GEMINI_API_KEY) {
     throw new Error(
-      "GEMINI_API_KEY backend में सेट नहीं है।"
+      "GEMINI_API_KEY Render Environment में सेट नहीं है।"
     );
   }
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/` +
     `${encodeURIComponent(model)}:generateContent`;
+
+  console.log(
+    "GEMINI REQUEST MODEL:",
+    model
+  );
 
   const controller =
     new AbortController();
@@ -126,62 +134,71 @@ async function callGeminiModel(model, message) {
     }, 30000);
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
+    const response =
+      await fetch(url, {
+        method: "POST",
 
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
-
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: KISAN_SYSTEM_INSTRUCTION,
-            },
-          ],
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": GEMINI_API_KEY,
         },
 
-        contents: [
-          {
-            role: "user",
+        signal: controller.signal,
 
+        body: JSON.stringify({
+          systemInstruction: {
             parts: [
               {
-                text: message,
+                text:
+                  KISAN_SYSTEM_INSTRUCTION,
               },
             ],
           },
-        ],
 
-        generationConfig: {
-          maxOutputTokens: 700,
-          temperature: 0.5,
-        },
-      }),
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: message,
+                },
+              ],
+            },
+          ],
 
-      signal: controller.signal,
-    });
+          generationConfig: {
+            maxOutputTokens: 700,
+          },
+        }),
+      });
 
     const body =
-      await response.json().catch(() => ({}));
+      await response
+        .json()
+        .catch(() => ({}));
 
     if (!response.ok) {
       const errorMessage =
         body?.error?.message ||
-        `Gemini API HTTP ${response.status}`;
+        `Gemini HTTP ${response.status}`;
 
-      const error = new Error(errorMessage);
+      const error =
+        new Error(errorMessage);
 
-      error.status = response.status;
+      error.status =
+        response.status;
+
+      error.body = body;
 
       throw error;
     }
 
     const reply =
       body?.candidates?.[0]?.content?.parts
-        ?.map((part) => part?.text || "")
+        ?.map(
+          (part) =>
+            part?.text || ""
+        )
         .join("")
         .trim();
 
@@ -198,61 +215,112 @@ async function callGeminiModel(model, message) {
 }
 
 /* =========================================================
-   GEMINI WITH AUTOMATIC FALLBACK
+   GEMINI SMART RETRY
 ========================================================= */
 
 async function geminiReply(message) {
   if (!GEMINI_API_KEY) {
     throw new Error(
-      "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+      "GEMINI_API_KEY backend में सेट नहीं है।"
     );
   }
 
   let lastError = null;
 
   for (
-    let i = 0;
-    i < GEMINI_MODELS.length;
-    i++
+    let modelIndex = 0;
+    modelIndex <
+    GEMINI_FALLBACK_MODELS.length;
+    modelIndex++
   ) {
-    const model = GEMINI_MODELS[i];
+    const model =
+      GEMINI_FALLBACK_MODELS[
+        modelIndex
+      ];
 
-    console.log(
-      `GEMINI TRY ${i + 1}/${GEMINI_MODELS.length}: ${model}`
-    );
+    /*
+      Primary model को एक extra retry देंगे.
+    */
 
-    try {
-      const reply =
-        await callGeminiModel(
-          model,
-          message
+    const attempts =
+      modelIndex === 0 ? 2 : 1;
+
+    for (
+      let attempt = 1;
+      attempt <= attempts;
+      attempt++
+    ) {
+      try {
+        console.log(
+          `GEMINI TRY: model=${model}, attempt=${attempt}`
         );
 
-      console.log(
-        `GEMINI SUCCESS: ${model}`
-      );
+        const reply =
+          await callGeminiModel(
+            model,
+            message
+          );
 
-      return {
-        reply,
-        model,
-      };
-    } catch (error) {
-      lastError = error;
+        console.log(
+          "GEMINI SUCCESS:",
+          model
+        );
 
-      console.error(
-        `GEMINI MODEL FAILED: ${model}`,
-        error?.message || error
-      );
+        return {
+          reply,
+          model,
+        };
+      } catch (error) {
+        lastError = error;
 
-      /*
-       थोड़ा wait करके अगला model try करेंगे।
-      */
+        console.error(
+          `GEMINI ERROR: model=${model}, attempt=${attempt}`,
+          error?.message
+        );
 
-      if (
-        i <
-        GEMINI_MODELS.length - 1
-      ) {
-        await sleep(700);
+        /*
+          अगर temporary error है,
+          थोड़ी देर बाद retry.
+        */
+
+        const status =
+          Number(
+            error?.status || 0
+          );
+
+        const text =
+          String(
+            error?.message || ""
+          ).toLowerCase();
+
+        const temporary =
+          status === 429 ||
+          status === 500 ||
+          status === 502 ||
+          status === 503 ||
+          status === 504 ||
+          text.includes(
+            "high demand"
+          ) ||
+          text.includes(
+            "temporarily"
+          ) ||
+          text.includes(
+            "try again later"
+          ) ||
+          text.includes(
+            "overloaded"
+          );
+
+        if (
+          temporary &&
+          attempt < attempts
+        ) {
+          await sleep(1500);
+          continue;
+        }
+
+        break;
       }
     }
   }
@@ -285,8 +353,11 @@ app.get(
           ? "gemini"
           : "not-configured",
 
-      geminiModels:
-        GEMINI_MODELS,
+      geminiModel:
+        GEMINI_MODEL,
+
+      fallbackModels:
+        GEMINI_FALLBACK_MODELS,
 
       mandi:
         Boolean(
@@ -335,8 +406,7 @@ app.post(
         reply:
           result.reply,
 
-        mode:
-          "gemini",
+        mode: "gemini",
 
         model:
           result.model,
@@ -347,18 +417,21 @@ app.post(
         error
       );
 
-      return res.status(500).json({
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Gemini AI से जवाब नहीं मिला।";
+
+      return res.status(503).json({
         error:
-          error instanceof Error
-            ? `Gemini AI error: ${error.message}`
-            : "Gemini AI से जवाब नहीं मिला।",
+          `AI अभी व्यस्त है। थोड़ी देर बाद फिर कोशिश करें। (${message})`,
       });
     }
   }
 );
 
 /* =========================================================
-   ALIASES
+   CROP ALIASES
 ========================================================= */
 
 const aliases = {
@@ -431,8 +504,14 @@ function cleanText(value) {
 
 function normalizeSearch(value) {
   return cleanText(value)
-    .replace(/[(),./_-]/g, " ")
-    .replace(/\s+/g, " ")
+    .replace(
+      /[(),./_-]/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
     .trim();
 }
 
@@ -471,7 +550,7 @@ function textMatches(
 }
 
 /* =========================================================
-   GOVERNMENT API REQUEST
+   GOVERNMENT MANDI API REQUEST
 ========================================================= */
 
 async function fetchMandiPage({
@@ -481,6 +560,12 @@ async function fetchMandiPage({
   offset = 0,
   limit = 1000,
 }) {
+  if (!DATA_GOV_API_KEY) {
+    throw new Error(
+      "DATA_GOV_API_KEY backend में सेट नहीं है।"
+    );
+  }
+
   const params =
     new URLSearchParams();
 
@@ -600,21 +685,30 @@ function normalizeRecord(item) {
       Number(
         String(
           item?.min_price ?? ""
-        ).replace(/,/g, "")
+        ).replace(
+          /,/g,
+          ""
+        )
       ) || 0,
 
     maxPrice:
       Number(
         String(
           item?.max_price ?? ""
-        ).replace(/,/g, "")
+        ).replace(
+          /,/g,
+          ""
+        )
       ) || 0,
 
     modalPrice:
       Number(
         String(
           item?.modal_price ?? ""
-        ).replace(/,/g, "")
+        ).replace(
+          /,/g,
+          ""
+        )
       ) || 0,
   };
 }
@@ -680,7 +774,7 @@ function filterRecords(
 }
 
 /* =========================================================
-   FETCH WITH FALLBACKS
+   SEARCH MANDI WITH FALLBACKS
 ========================================================= */
 
 async function searchMandi({
@@ -688,12 +782,10 @@ async function searchMandi({
   commodity,
   market,
 }) {
-  /*
-  =========================================================
-  ATTEMPT 1
-  State + Commodity + Market
-  =========================================================
-  */
+  /* -------------------------------------------------------
+     ATTEMPT 1
+     State + Commodity + Market
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 1:",
@@ -741,12 +833,10 @@ async function searchMandi({
     );
   }
 
-  /*
-  =========================================================
-  ATTEMPT 2
-  State + Commodity
-  =========================================================
-  */
+  /* -------------------------------------------------------
+     ATTEMPT 2
+     State + Commodity
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 2: state + commodity"
@@ -789,12 +879,10 @@ async function searchMandi({
     );
   }
 
-  /*
-  =========================================================
-  ATTEMPT 3
-  State only
-  =========================================================
-  */
+  /* -------------------------------------------------------
+     ATTEMPT 3
+     State only
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 3: state only"
@@ -837,12 +925,10 @@ async function searchMandi({
     );
   }
 
-  /*
-  =========================================================
-  ATTEMPT 4
-  NO FILTERS
-  =========================================================
-  */
+  /* -------------------------------------------------------
+     ATTEMPT 4
+     No API filters
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 4: no API filters"
@@ -864,8 +950,10 @@ async function searchMandi({
           commodity: "",
           market: "",
           offset:
-            page * PAGE_SIZE,
-          limit: PAGE_SIZE,
+            page *
+            PAGE_SIZE,
+          limit:
+            PAGE_SIZE,
         });
 
       const records =
@@ -877,16 +965,6 @@ async function searchMandi({
         allRecords.concat(
           records
         );
-
-      if (
-        !Array.isArray(
-          body.records
-        ) ||
-        body.records.length <
-          PAGE_SIZE
-      ) {
-        break;
-      }
 
       const found =
         filterRecords(
@@ -902,6 +980,16 @@ async function searchMandi({
         found.length > 0
       ) {
         return found;
+      }
+
+      if (
+        !Array.isArray(
+          body.records
+        ) ||
+        body.records.length <
+          PAGE_SIZE
+      ) {
+        break;
       }
     }
 
@@ -1019,9 +1107,14 @@ app.get(
           mandi.length,
 
         search: {
-          state: rawState,
-          commodity,
-          market: rawMarket,
+          state:
+            rawState,
+
+          commodity:
+            commodity,
+
+          market:
+            rawMarket,
         },
 
         mandi,
@@ -1068,13 +1161,16 @@ app.get(
           ? "gemini"
           : "not-configured",
 
-      geminiModels:
-        GEMINI_MODELS,
-
       mandi:
         Boolean(
           DATA_GOV_API_KEY
         ),
+
+      geminiModel:
+        GEMINI_MODEL,
+
+      fallbackModels:
+        GEMINI_FALLBACK_MODELS,
 
       mandiResource:
         RESOURCE,
@@ -1101,7 +1197,11 @@ app.listen(
     );
 
     console.log(
-      `Gemini models: ${GEMINI_MODELS.join(
+      `Gemini primary model: ${GEMINI_MODEL}`
+    );
+
+    console.log(
+      `Gemini fallback models: ${GEMINI_FALLBACK_MODELS.join(
         ", "
       )}`
     );
