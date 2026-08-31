@@ -208,7 +208,7 @@ const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
 /* =========================================================
-   HINDI / COMMON CROP NAMES
+   HINDI / ENGLISH COMMODITY ALIASES
 ========================================================= */
 
 const aliases = {
@@ -232,8 +232,8 @@ const aliases = {
 
   "सोयाबीन": "Soyabean",
   "सोया": "Soyabean",
-  "soybean": "Soyabean",
   "soyabean": "Soyabean",
+  "soybean": "Soyabean",
 
   "प्याज": "Onion",
   "onion": "Onion",
@@ -247,284 +247,190 @@ const aliases = {
   "चना": "Gram",
   "gram": "Gram",
 
-  "अरहर": "Arhar (Tur/Red Gram)",
-  "तूर": "Arhar (Tur/Red Gram)",
-  "arhar": "Arhar (Tur/Red Gram)",
+  "अरहर":
+    "Arhar (Tur/Red Gram)",
 
-  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
-  "bajra": "Bajra (Pearl Millet/Cumbu)",
+  "बाजरा":
+    "Bajra (Pearl Millet/Cumbu)",
 
   "जौ": "Barley",
   "barley": "Barley",
 
-  "मूंग": "Green Gram (Moong)(Whole)",
-  "moong": "Green Gram (Moong)(Whole)",
+  "मूंग":
+    "Green Gram (Moong)(Whole)",
 
-  "उड़द": "Black Gram (Urd Beans)(Whole)",
-  "urad": "Black Gram (Urd Beans)(Whole)",
+  "उड़द":
+    "Black Gram (Urd Beans)(Whole)",
 };
 
 /* =========================================================
    NORMALIZE TEXT
 ========================================================= */
 
-function normalizeText(value) {
+function cleanText(value) {
   return String(value || "")
-    .toLowerCase()
     .trim()
-    .replace(/\s+/g, " ");
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 }
 
 /* =========================================================
-   FLEXIBLE MATCH
+   GET GOVERNMENT DATA
 ========================================================= */
 
-function flexibleMatch(actual, wanted) {
-  const a = normalizeText(actual);
-  const w = normalizeText(wanted);
+async function fetchMandiData({
+  state = "",
+  commodity = "",
+  market = "",
+}) {
+  const params = new URLSearchParams();
 
-  if (!w) return true;
-  if (!a) return false;
-
-  if (a === w) return true;
-
-  if (a.includes(w)) return true;
-
-  if (w.includes(a)) return true;
-
-  return false;
-}
-
-/* =========================================================
-   STATE MATCH
-========================================================= */
-
-function stateMatches(actualState, requestedState) {
-  const actual = normalizeText(actualState);
-  const requested = normalizeText(requestedState);
-
-  if (!requested) {
-    return true;
-  }
-
-  /* Delhi variations */
-
-  if (
-    requested === "delhi" ||
-    requested === "new delhi" ||
-    requested === "nct delhi" ||
-    requested === "nct of delhi"
-  ) {
-    return (
-      actual.includes("delhi") ||
-      actual.includes("nct")
-    );
-  }
-
-  return flexibleMatch(
-    actual,
-    requested
+  params.set(
+    "api-key",
+    DATA_GOV_API_KEY
   );
-}
 
-/* =========================================================
-   MARKET MATCH
-========================================================= */
-
-function marketMatches(actualMarket, requestedMarket) {
-  const actual = normalizeText(actualMarket);
-  const requested = normalizeText(requestedMarket);
-
-  if (!requested) {
-    return true;
-  }
-
-  if (
-    requested === "azadpur" ||
-    requested === "azadpur mandi"
-  ) {
-    return actual.includes("azadpur");
-  }
-
-  return flexibleMatch(
-    actual,
-    requested
+  params.set(
+    "format",
+    "json"
   );
-}
 
-/* =========================================================
-   COMMODITY MATCH
-========================================================= */
+  params.set(
+    "limit",
+    "1000"
+  );
 
-function commodityMatches(
-  actualCommodity,
-  requestedCommodity
-) {
-  const actual =
-    normalizeText(actualCommodity);
+  params.set(
+    "offset",
+    "0"
+  );
 
-  const requested =
-    normalizeText(requestedCommodity);
-
-  if (!requested) {
-    return true;
-  }
-
-  if (actual === requested) {
-    return true;
-  }
-
-  if (actual.includes(requested)) {
-    return true;
-  }
-
-  if (requested.includes(actual)) {
-    return true;
-  }
-
-  return false;
-}
-
-/* =========================================================
-   FETCH GOVERNMENT RECORDS
-========================================================= */
-
-/*
+  /*
    IMPORTANT FIX:
+   Government API में state filter
+   filters[state.keyword] होना चाहिए।
+  */
 
-   पहले वाला code state + market को Government API में exact
-   filters के रूप में भेज रहा था।
-
-   अब:
-   - commodity filter Government API को देंगे
-   - state/market को बाद में flexible तरीके से filter करेंगे
-
-   इससे:
-   Delhi vs NCT of Delhi
-   Azadpur vs Azadpur APMC
-   जैसे नामों की वजह से data गायब नहीं होगा।
-*/
-
-async function fetchMandiRecords(commodity) {
-  const allRecords = [];
-
-  const MAX_PAGES = 30;
-  const PAGE_SIZE = 100;
-
-  for (
-    let page = 0;
-    page < MAX_PAGES;
-    page++
-  ) {
-    const offset =
-      page * PAGE_SIZE;
-
-    const params =
-      new URLSearchParams();
-
+  if (state) {
     params.set(
-      "api-key",
-      DATA_GOV_API_KEY
+      "filters[state.keyword]",
+      state
     );
-
-    params.set(
-      "format",
-      "json"
-    );
-
-    params.set(
-      "limit",
-      String(PAGE_SIZE)
-    );
-
-    params.set(
-      "offset",
-      String(offset)
-    );
-
-    /*
-       केवल commodity Government API को देंगे।
-    */
-
-    if (commodity) {
-      params.set(
-        "filters[commodity]",
-        commodity
-      );
-    }
-
-    params.set(
-      "sort[arrival_date]",
-      "desc"
-    );
-
-    const url =
-      `https://api.data.gov.in/resource/${RESOURCE}?` +
-      params.toString();
-
-    console.log(
-      "MANDI PAGE:",
-      page + 1,
-      "OFFSET:",
-      offset,
-      "COMMODITY:",
-      commodity || "ALL"
-    );
-
-    const response =
-      await fetch(url, {
-        method: "GET",
-
-        headers: {
-          Accept:
-            "application/json",
-        },
-      });
-
-    const body =
-      await response
-        .json()
-        .catch(() => ({}));
-
-    if (!response.ok) {
-      console.error(
-        "DATA.GOV ERROR:",
-        response.status,
-        body
-      );
-
-      throw new Error(
-        body?.error?.message ||
-          `data.gov.in HTTP ${response.status}`
-      );
-    }
-
-    const records =
-      Array.isArray(body.records)
-        ? body.records
-        : [];
-
-    allRecords.push(
-      ...records
-    );
-
-    /*
-       अगर इस page पर 100 से कम records आए,
-       तो आगे page नहीं है।
-    */
-
-    if (
-      records.length < PAGE_SIZE
-    ) {
-      break;
-    }
   }
 
-  return allRecords;
+  if (commodity) {
+    params.set(
+      "filters[commodity]",
+      commodity
+    );
+  }
+
+  /*
+   Market को Government API में exact filter
+   नहीं भेज रहे हैं।
+
+   क्योंकि Azadpur जैसे market names में
+   spelling / suffix / formatting अलग हो सकती है।
+
+   Market को नीचे local filtering से खोजेंगे।
+  */
+
+  const url =
+    `https://api.data.gov.in/resource/${RESOURCE}?` +
+    params.toString();
+
+  console.log(
+    "MANDI REQUEST:",
+    url.replace(
+      DATA_GOV_API_KEY,
+      "HIDDEN_KEY"
+    )
+  );
+
+  const response = await fetch(
+    url,
+    {
+      method: "GET",
+      headers: {
+        Accept:
+          "application/json",
+      },
+    }
+  );
+
+  const body =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if (!response.ok) {
+    console.error(
+      "DATA.GOV ERROR:",
+      response.status,
+      body
+    );
+
+    throw new Error(
+      body?.error ||
+        body?.message ||
+        `data.gov.in HTTP ${response.status}`
+    );
+  }
+
+  return body;
 }
 
 /* =========================================================
-   MANDI API
+   NORMALIZE GOVERNMENT RECORDS
+========================================================= */
+
+function normalizeRecords(records) {
+  return records
+    .map((item) => ({
+      state:
+        item.state || "",
+
+      district:
+        item.district || "",
+
+      market:
+        item.market || "",
+
+      commodity:
+        item.commodity || "",
+
+      variety:
+        item.variety || "",
+
+      grade:
+        item.grade || "",
+
+      arrivalDate:
+        item.arrival_date || "",
+
+      minPrice:
+        Number(
+          item.min_price
+        ) || 0,
+
+      maxPrice:
+        Number(
+          item.max_price
+        ) || 0,
+
+      modalPrice:
+        Number(
+          item.modal_price
+        ) || 0,
+    }))
+    .filter(
+      (item) =>
+        item.modalPrice > 0
+    );
+}
+
+/* =========================================================
+   REAL GOVERNMENT MANDI API
 ========================================================= */
 
 app.get("/api/mandi", async (req, res) => {
@@ -542,25 +448,23 @@ app.get("/api/mandi", async (req, res) => {
        FRONTEND INPUT
     ------------------------------------------------------- */
 
-    const rawState =
-      String(
-        req.query.state || ""
-      ).trim();
+    const rawState = String(
+      req.query.state || ""
+    ).trim();
 
-    const rawCommodity =
-      String(
-        req.query.commodity ||
-          req.query.crop ||
-          ""
-      ).trim();
+    const rawCommodity = String(
+      req.query.commodity ||
+        req.query.crop ||
+        ""
+    ).trim();
 
-    const rawMarket =
-      String(
-        req.query.market || ""
-      ).trim();
+    const rawMarket = String(
+      req.query.market || ""
+    ).trim();
 
     /*
-       Hindi/common name को Government name में बदलना
+     Hindi commodity को Government
+     commodity name में बदलना
     */
 
     const commodity =
@@ -569,116 +473,73 @@ app.get("/api/mandi", async (req, res) => {
       ] || rawCommodity;
 
     console.log(
-      "================================================"
-    );
-
-    console.log(
-      "MANDI SEARCH"
-    );
-
-    console.log(
-      "State:",
-      rawState || "ALL"
-    );
-
-    console.log(
-      "Commodity:",
-      commodity || "ALL"
-    );
-
-    console.log(
-      "Market:",
-      rawMarket || "ALL"
-    );
-
-    console.log(
-      "================================================"
+      "MANDI SEARCH:",
+      {
+        state: rawState,
+        commodity,
+        market: rawMarket,
+      }
     );
 
     /* -------------------------------------------------------
-       GOVERNMENT DATA FETCH
+       FIRST REQUEST
+       State + Commodity
     ------------------------------------------------------- */
 
-    const records =
-      await fetchMandiRecords(
-        commodity
-      );
+    let body =
+      await fetchMandiData({
+        state: rawState,
+        commodity,
+      });
 
-    console.log(
-      "TOTAL GOV RECORDS:",
-      records.length
-    );
+    let records =
+      Array.isArray(body.records)
+        ? body.records
+        : [];
+
+    let data =
+      normalizeRecords(records);
 
     /* -------------------------------------------------------
-       NORMALIZE
+       LOCAL FILTER
     ------------------------------------------------------- */
 
-    const data =
-      records
-        .map((item) => ({
-          state:
-            item.state || "",
+    const stateSearch =
+      cleanText(rawState);
 
-          district:
-            item.district || "",
+    const marketSearch =
+      cleanText(rawMarket);
 
-          market:
-            item.market || "",
+    const commoditySearch =
+      cleanText(commodity);
 
-          commodity:
-            item.commodity || "",
-
-          variety:
-            item.variety || "",
-
-          grade:
-            item.grade || "",
-
-          arrivalDate:
-            item.arrival_date || "",
-
-          minPrice:
-            Number(
-              item.min_price
-            ) || 0,
-
-          maxPrice:
-            Number(
-              item.max_price
-            ) || 0,
-
-          modalPrice:
-            Number(
-              item.modal_price
-            ) || 0,
-        }))
-        .filter(
-          (item) =>
-            item.modalPrice > 0
-        );
-
-    /* -------------------------------------------------------
-       FLEXIBLE LOCAL FILTER
-    ------------------------------------------------------- */
-
-    const filteredData =
+    let filteredData =
       data.filter((item) => {
+        const stateText =
+          cleanText(item.state);
+
+        const marketText =
+          cleanText(item.market);
+
+        const commodityText =
+          cleanText(item.commodity);
+
         const stateOK =
-          stateMatches(
-            item.state,
-            rawState
+          !stateSearch ||
+          stateText.includes(
+            stateSearch
           );
 
         const marketOK =
-          marketMatches(
-            item.market,
-            rawMarket
+          !marketSearch ||
+          marketText.includes(
+            marketSearch
           );
 
         const commodityOK =
-          commodityMatches(
-            item.commodity,
-            commodity
+          !commoditySearch ||
+          commodityText.includes(
+            commoditySearch
           );
 
         return (
@@ -689,27 +550,81 @@ app.get("/api/mandi", async (req, res) => {
       });
 
     /* -------------------------------------------------------
+       FALLBACK SEARCH
+
+       अगर State + Commodity से result नहीं मिला,
+       तो State के records लेकर local search करेंगे।
+    ------------------------------------------------------- */
+
+    if (
+      filteredData.length === 0 &&
+      rawMarket
+    ) {
+      console.log(
+        "MANDI FALLBACK: state + market"
+      );
+
+      body =
+        await fetchMandiData({
+          state: rawState,
+          commodity: "",
+        });
+
+      records =
+        Array.isArray(body.records)
+          ? body.records
+          : [];
+
+      data =
+        normalizeRecords(records);
+
+      filteredData =
+        data.filter((item) => {
+          const stateText =
+            cleanText(item.state);
+
+          const marketText =
+            cleanText(item.market);
+
+          const commodityText =
+            cleanText(item.commodity);
+
+          const stateOK =
+            !stateSearch ||
+            stateText.includes(
+              stateSearch
+            );
+
+          const marketOK =
+            marketText.includes(
+              marketSearch
+            );
+
+          const commodityOK =
+            !commoditySearch ||
+            commodityText.includes(
+              commoditySearch
+            );
+
+          return (
+            stateOK &&
+            marketOK &&
+            commodityOK
+          );
+        });
+    }
+
+    /* -------------------------------------------------------
        SORT
        Latest arrival date first
     ------------------------------------------------------- */
 
-    filteredData.sort((a, b) => {
-      const dateA =
-        new Date(
-          a.arrivalDate
-        ).getTime() || 0;
-
-      const dateB =
-        new Date(
-          b.arrivalDate
-        ).getTime() || 0;
-
-      return dateB - dateA;
-    });
-
-    console.log(
-      "FILTERED RECORDS:",
-      filteredData.length
+    filteredData.sort(
+      (a, b) =>
+        String(b.arrivalDate)
+          .localeCompare(
+            String(a.arrivalDate)
+          )
     );
 
     /* -------------------------------------------------------
@@ -725,20 +640,10 @@ app.get("/api/mandi", async (req, res) => {
       count:
         filteredData.length,
 
-      search: {
-        state:
-          rawState,
-
-        commodity:
-          commodity,
-
-        market:
-          rawMarket,
-      },
-
       mandi:
         filteredData,
     });
+
   } catch (error) {
     console.error(
       "MANDI ERROR:",
