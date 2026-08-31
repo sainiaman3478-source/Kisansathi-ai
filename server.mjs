@@ -9,6 +9,13 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// Government of India Data.gov.in API key
+const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
+
+// Current Daily Price of Various Commodities from Various Markets
+const MANDI_RESOURCE_ID =
+  "9ef84268-d588-465a-a308-a864a43d0070";
+
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
@@ -32,7 +39,153 @@ app.get("/health", (req, res) => {
 });
 
 /* =========================
+   REAL MANDI BHAV
+   GOVERNMENT DATA.GOV.IN
+========================= */
+
+app.get("/api/mandi", async (req, res) => {
+  try {
+    if (!DATA_GOV_API_KEY) {
+      return res.status(500).json({
+        ok: false,
+        error:
+          "DATA_GOV_API_KEY server में सेट नहीं है।"
+      });
+    }
+
+    const state =
+      typeof req.query.state === "string"
+        ? req.query.state.trim()
+        : "";
+
+    const commodity =
+      typeof req.query.commodity === "string"
+        ? req.query.commodity.trim()
+        : "";
+
+    const market =
+      typeof req.query.market === "string"
+        ? req.query.market.trim()
+        : "";
+
+    const limitRaw = Number(req.query.limit || 50);
+
+    const limit =
+      Number.isFinite(limitRaw)
+        ? Math.min(Math.max(Math.floor(limitRaw), 1), 100)
+        : 50;
+
+    const params = new URLSearchParams();
+
+    params.set("api-key", DATA_GOV_API_KEY);
+    params.set("format", "json");
+    params.set("limit", String(limit));
+
+    /*
+      Optional filters.
+
+      Data.gov.in supports filters using
+      field=value format.
+    */
+
+    if (state) {
+      params.set("filters[State]", state);
+    }
+
+    if (commodity) {
+      params.set("filters[Commodity]", commodity);
+    }
+
+    if (market) {
+      params.set("filters[Market]", market);
+    }
+
+    const url =
+      `https://api.data.gov.in/resource/${MANDI_RESOURCE_ID}?${params.toString()}`;
+
+    console.log(
+      "🌾 Mandi API request:",
+      {
+        state,
+        commodity,
+        market,
+        limit
+      }
+    );
+
+    const response = await fetch(url);
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error(
+        "Data.gov.in Mandi API Error:",
+        data
+      );
+
+      return res.status(response.status).json({
+        ok: false,
+        error:
+          data?.error ||
+          data?.message ||
+          "Government Mandi API से data नहीं मिला।"
+      });
+    }
+
+    const records =
+      Array.isArray(data.records)
+        ? data.records
+        : [];
+
+    /*
+      Frontend के लिए साफ और आसान format
+    */
+
+    const mandi = records.map((item) => ({
+      state: item.State || "",
+      district: item.District || "",
+      market: item.Market || "",
+      commodity: item.Commodity || "",
+      variety: item.Variety || "",
+      grade: item.Grade || "",
+      arrivalDate:
+        item.Arrival_Date ||
+        item["Arrival Date"] ||
+        "",
+      minPrice: Number(
+        item.Min_Price || 0
+      ),
+      maxPrice: Number(
+        item.Max_Price || 0
+      ),
+      modalPrice: Number(
+        item.Modal_Price || 0
+      )
+    }));
+
+    return res.json({
+      ok: true,
+      source: "Government of India - Data.gov.in / AGMARKNET",
+      count: mandi.length,
+      mandi
+    });
+  } catch (error) {
+    console.error(
+      "Real Mandi server error:",
+      error
+    );
+
+    return res.status(500).json({
+      ok: false,
+      error:
+        "Real Mandi Bhav service से connection नहीं हो पाया।"
+    });
+  }
+});
+
+/* =========================
    AI CHAT
+   इसे जानबूझकर नहीं बदला गया
 ========================= */
 
 app.post("/api/chat", async (req, res) => {
