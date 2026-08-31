@@ -20,6 +20,11 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL =
   process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
+
+/* =========================
+   KISANSAATHI AI
+========================= */
+
 const KISAN_SYSTEM_INSTRUCTION = `
 You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
 
@@ -47,9 +52,13 @@ Do not claim you saw a crop photo unless an image was actually provided
 to the API.
 `;
 
+
 async function geminiReply(message) {
+
   if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY backend में सेट नहीं है।");
+    throw new Error(
+      "GEMINI_API_KEY backend में सेट नहीं है।"
+    );
   }
 
   const url =
@@ -59,30 +68,48 @@ async function geminiReply(message) {
 
   const response = await fetch(url, {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": GEMINI_API_KEY
     },
+
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: KISAN_SYSTEM_INSTRUCTION }]
+        parts: [
+          {
+            text: KISAN_SYSTEM_INSTRUCTION
+          }
+        ]
       },
+
       contents: [
         {
           role: "user",
-          parts: [{ text: message }]
+          parts: [
+            {
+              text: message
+            }
+          ]
         }
       ],
+
       generationConfig: {
         maxOutputTokens: 700
       }
     })
   });
 
-  const body = await response.json().catch(() => ({}));
+  const body =
+    await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    console.error("GEMINI API ERROR:", response.status, body);
+
+    console.error(
+      "GEMINI API ERROR:",
+      response.status,
+      body
+    );
 
     throw new Error(
       body?.error?.message ||
@@ -97,7 +124,9 @@ async function geminiReply(message) {
       .trim();
 
   if (!reply) {
-    throw new Error("Gemini ने कोई जवाब नहीं दिया।");
+    throw new Error(
+      "Gemini ने कोई जवाब नहीं दिया।"
+    );
   }
 
   return reply;
@@ -109,13 +138,24 @@ async function geminiReply(message) {
 ========================= */
 
 app.get("/api/health", (req, res) => {
+
   res.json({
     ok: true,
+
     ai: Boolean(GEMINI_API_KEY),
-    aiMode: GEMINI_API_KEY ? "gemini" : "not-configured",
+
+    aiMode:
+      GEMINI_API_KEY
+        ? "gemini"
+        : "not-configured",
+
     geminiModel: GEMINI_MODEL,
-    mandi: Boolean(DATA_GOV_API_KEY),
-    message: "KisanSaathi AI backend running"
+
+    mandi:
+      Boolean(DATA_GOV_API_KEY),
+
+    message:
+      "KisanSaathi AI backend running"
   });
 });
 
@@ -125,23 +165,31 @@ app.get("/api/health", (req, res) => {
 ========================= */
 
 app.post("/api/chat", async (req, res) => {
+
   try {
-    const message = String(req.body?.message || "").trim();
+
+    const message =
+      String(
+        req.body?.message || ""
+      ).trim();
 
     if (!message) {
+
       return res.status(400).json({
         error: "सवाल खाली है।"
       });
     }
 
     if (!GEMINI_API_KEY) {
+
       return res.status(503).json({
         error:
           "GEMINI_API_KEY Render Environment में सेट नहीं है।"
       });
     }
 
-    const reply = await geminiReply(message);
+    const reply =
+      await geminiReply(message);
 
     return res.json({
       reply,
@@ -149,7 +197,11 @@ app.post("/api/chat", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("CHAT ERROR:", error);
+
+    console.error(
+      "CHAT ERROR:",
+      error
+    );
 
     return res.status(500).json({
       error:
@@ -168,7 +220,13 @@ app.post("/api/chat", async (req, res) => {
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
+
+/* =========================
+   CROP ALIASES
+========================= */
+
 const aliases = {
+
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
   "wheat": "Wheat",
@@ -204,24 +262,29 @@ const aliases = {
   "चना": "Gram",
   "gram": "Gram",
 
-  "अरहर": "Arhar (Tur/Red Gram)",
+  "अरहर":
+    "Arhar (Tur/Red Gram)",
 
-  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
+  "बाजरा":
+    "Bajra (Pearl Millet/Cumbu)",
 
   "जौ": "Barley",
   "barley": "Barley",
 
-  "मूंग": "Green Gram (Moong)(Whole)",
+  "मूंग":
+    "Green Gram (Moong)(Whole)",
 
-  "उड़द": "Black Gram (Urd Beans)(Whole)"
+  "उड़द":
+    "Black Gram (Urd Beans)(Whole)"
 };
 
 
 /* =========================
-   NORMALIZE TEXT
+   TEXT NORMALIZER
 ========================= */
 
 function normalizeText(value) {
+
   return String(value || "")
     .toLowerCase()
     .trim()
@@ -230,230 +293,638 @@ function normalizeText(value) {
 
 
 /* =========================
-   FETCH MANDI RECORDS
+   GOVERNMENT API REQUEST
 ========================= */
 
-async function fetchMandiPage({
-  crop = "",
-  limit = 1000,
-  offset = 0,
-  useFilter = true
-}) {
-  const params = new URLSearchParams({
-    "api-key": DATA_GOV_API_KEY,
-    format: "json",
-    limit: String(limit),
-    offset: String(offset)
-  });
-
-  if (useFilter && crop) {
-    params.set("filters[commodity]", crop);
-  }
-
-  params.set("sort[arrival_date]", "desc");
+async function requestDataGov(params) {
 
   const url =
     `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`;
 
-  console.log("MANDI REQUEST:", url.replace(DATA_GOV_API_KEY, "***"));
+  console.log(
+    "========================================"
+  );
 
-  const response = await fetch(url);
+  console.log(
+    "MANDI REQUEST:",
+    url.replace(
+      DATA_GOV_API_KEY || "",
+      "***"
+    )
+  );
+
+  const response =
+    await fetch(url, {
+      headers: {
+        "Accept": "application/json"
+      }
+    });
+
+  console.log(
+    "MANDI HTTP STATUS:",
+    response.status
+  );
+
+  const text =
+    await response.text();
+
+  console.log(
+    "MANDI RAW RESPONSE LENGTH:",
+    text.length
+  );
+
+  let body = {};
+
+  try {
+
+    body = JSON.parse(text);
+
+  } catch (error) {
+
+    console.error(
+      "MANDI JSON PARSE ERROR:",
+      error.message
+    );
+
+    console.error(
+      "MANDI RAW RESPONSE:",
+      text.slice(0, 2000)
+    );
+
+    throw new Error(
+      "data.gov.in ने valid JSON नहीं दिया।"
+    );
+  }
+
+
+  /*
+     IMPORTANT DEBUG INFORMATION
+  */
+
+  console.log(
+    "MANDI RESPONSE KEYS:",
+    Object.keys(body)
+  );
+
+  console.log(
+    "MANDI TOTAL:",
+    body?.total
+  );
+
+  console.log(
+    "MANDI COUNT:",
+    body?.count
+  );
+
+  console.log(
+    "MANDI RECORDS:",
+    Array.isArray(body?.records)
+      ? body.records.length
+      : "NOT_ARRAY"
+  );
+
+
+  if (
+    body?.error ||
+    body?.errorDetails
+  ) {
+
+    console.error(
+      "MANDI GOVERNMENT ERROR:",
+      body.error ||
+      body.errorDetails
+    );
+  }
+
 
   if (!response.ok) {
+
     throw new Error(
+      body?.error ||
+      body?.message ||
       `data.gov.in HTTP ${response.status}`
     );
   }
 
-  const body = await response.json();
-
-  return Array.isArray(body.records)
-    ? body.records
-    : [];
+  return body;
 }
 
 
 /* =========================
-   FORMAT RECORDS
+   FETCH MANDI RECORDS
+========================= */
+
+async function fetchMandiRecords({
+  crop = "",
+  limit = 100,
+  offset = 0,
+  filterCommodity = false
+}) {
+
+  const params =
+    new URLSearchParams();
+
+  params.set(
+    "api-key",
+    DATA_GOV_API_KEY
+  );
+
+  params.set(
+    "format",
+    "json"
+  );
+
+  params.set(
+    "limit",
+    String(limit)
+  );
+
+  params.set(
+    "offset",
+    String(offset)
+  );
+
+
+  /*
+     Do NOT send sort initially.
+     Some versions of the government API
+     behave differently when sort is included.
+  */
+
+  if (
+    filterCommodity &&
+    crop
+  ) {
+
+    params.set(
+      "filters[commodity]",
+      crop
+    );
+  }
+
+
+  const body =
+    await requestDataGov(params);
+
+  return {
+    body,
+
+    records:
+      Array.isArray(body?.records)
+        ? body.records
+        : []
+  };
+}
+
+
+/* =========================
+   FORMAT MANDI DATA
 ========================= */
 
 function formatMandiRecords(records) {
+
   return records
-    .map(item => ({
-      state: item.state || "",
-      district: item.district || "",
-      market: item.market || "",
-      commodity: item.commodity || "",
-      variety: item.variety || "",
-      grade: item.grade || "",
+    .map(item => {
 
-      min_price: Number(item.min_price) || 0,
-      max_price: Number(item.max_price) || 0,
-      modal_price: Number(item.modal_price) || 0,
+      const minPrice =
+        Number(item.min_price) || 0;
 
-      arrival_date: item.arrival_date || ""
-    }))
-    .filter(item => item.modal_price > 0);
+      const maxPrice =
+        Number(item.max_price) || 0;
+
+      const modalPrice =
+        Number(item.modal_price) || 0;
+
+      return {
+
+        state:
+          item.state || "",
+
+        district:
+          item.district || "",
+
+        market:
+          item.market || "",
+
+        commodity:
+          item.commodity || "",
+
+        variety:
+          item.variety || "",
+
+        grade:
+          item.grade || "",
+
+        min_price:
+          minPrice,
+
+        max_price:
+          maxPrice,
+
+        modal_price:
+          modalPrice,
+
+        arrival_date:
+          item.arrival_date || "",
+
+        /*
+          Frontend-friendly names
+        */
+
+        minPrice:
+          minPrice,
+
+        maxPrice:
+          maxPrice,
+
+        modalPrice:
+          modalPrice,
+
+        arrivalDate:
+          item.arrival_date || ""
+      };
+
+    })
+    .filter(item => {
+
+      /*
+        Keep records even if modal price is missing
+        during diagnosis, but prefer records with
+        at least one valid price.
+      */
+
+      return (
+        item.min_price > 0 ||
+        item.max_price > 0 ||
+        item.modal_price > 0
+      );
+    });
 }
 
 
 /* =========================
-   MANDI API
+   LOCAL COMMODITY MATCH
+========================= */
+
+function commodityMatches(
+  recordCommodity,
+  wantedCrop,
+  rawCrop
+) {
+
+  const commodity =
+    normalizeText(
+      recordCommodity
+    );
+
+  const wanted =
+    normalizeText(
+      wantedCrop
+    );
+
+  const raw =
+    normalizeText(
+      rawCrop
+    );
+
+
+  if (!commodity) {
+    return false;
+  }
+
+
+  /*
+    Exact match
+  */
+
+  if (commodity === wanted) {
+    return true;
+  }
+
+
+  /*
+    Partial match
+  */
+
+  if (
+    commodity.includes(wanted) ||
+    wanted.includes(commodity)
+  ) {
+    return true;
+  }
+
+
+  /*
+    Raw user crop match
+  */
+
+  if (
+    raw &&
+    (
+      commodity.includes(raw) ||
+      raw.includes(commodity)
+    )
+  ) {
+    return true;
+  }
+
+
+  return false;
+}
+
+
+/* =========================
+   MANDI ENDPOINT
 ========================= */
 
 app.get("/api/mandi", async (req, res) => {
+
   try {
 
     if (!DATA_GOV_API_KEY) {
+
       return res.status(503).json({
+
         error:
           "DATA_GOV_API_KEY backend में सेट नहीं है।"
+
       });
     }
 
-    const raw = String(
-      req.query.crop || ""
-    ).trim();
+
+    const rawCrop =
+      String(
+        req.query.crop || ""
+      ).trim();
+
 
     const crop =
-      aliases[normalizeText(raw)] || raw;
+      aliases[
+        normalizeText(rawCrop)
+      ] ||
+      rawCrop;
 
-    console.log("MANDI RAW CROP:", raw);
-    console.log("MANDI NORMALIZED CROP:", crop);
-
-
-    /*
-      STEP 1
-      Exact government API filter
-    */
-
-    let exactRecords = [];
-
-    if (crop) {
-      exactRecords = await fetchMandiPage({
-        crop,
-        limit: 1000,
-        offset: 0,
-        useFilter: true
-      });
-    }
 
     console.log(
-      "MANDI EXACT RESULTS:",
-      exactRecords.length
+      "========================================"
+    );
+
+    console.log(
+      "MANDI RAW CROP:",
+      rawCrop
+    );
+
+    console.log(
+      "MANDI NORMALIZED CROP:",
+      crop
     );
 
 
     /*
-      STEP 2
-      If exact result is zero,
-      fetch without commodity filter.
+      ---------------------------------------
+      STEP 1
+      Exact commodity filter
+      ---------------------------------------
     */
 
-    let finalRecords = exactRecords;
+    let exact = {
+      body: {},
+      records: []
+    };
 
-    if (
-      crop &&
-      exactRecords.length === 0
-    ) {
 
-      console.log(
-        "MANDI FALLBACK: exact commodity returned 0"
-      );
+    if (crop) {
 
-      const fallbackRecords =
-        await fetchMandiPage({
-          crop: "",
-          limit: 1000,
+      exact =
+        await fetchMandiRecords({
+
+          crop,
+
+          limit: 100,
+
           offset: 0,
-          useFilter: false
+
+          filterCommodity: true
+
         });
 
       console.log(
-        "MANDI FALLBACK RECORDS:",
+        "MANDI EXACT RESULTS:",
+        exact.records.length
+      );
+    }
+
+
+    /*
+      ---------------------------------------
+      STEP 2
+      If exact search returned nothing,
+      ask government API without commodity
+      filter.
+      ---------------------------------------
+    */
+
+    let fallbackRecords = [];
+
+
+    if (
+      crop &&
+      exact.records.length === 0
+    ) {
+
+      console.log(
+        "MANDI FALLBACK STARTED"
+      );
+
+
+      /*
+        Fetch several pages instead of only
+        first 1000 records.
+      */
+
+      const pageSize = 100;
+
+      const maxPages = 20;
+
+
+      for (
+        let page = 0;
+        page < maxPages;
+        page++
+      ) {
+
+        const offset =
+          page * pageSize;
+
+
+        const result =
+          await fetchMandiRecords({
+
+            crop: "",
+
+            limit: pageSize,
+
+            offset,
+
+            filterCommodity: false
+
+          });
+
+
+        const records =
+          result.records;
+
+
+        console.log(
+          `MANDI FALLBACK PAGE ${page + 1}:`,
+          records.length
+        );
+
+
+        if (
+          records.length === 0
+        ) {
+          break;
+        }
+
+
+        fallbackRecords.push(
+          ...records
+        );
+
+
+        if (
+          records.length < pageSize
+        ) {
+          break;
+        }
+      }
+
+
+      console.log(
+        "MANDI FALLBACK TOTAL:",
         fallbackRecords.length
       );
 
 
       /*
-        STEP 3
-        Local fuzzy commodity matching
+        Local commodity matching
       */
 
-      const wanted = normalizeText(crop);
-
-      finalRecords =
-        fallbackRecords.filter(item => {
-
-          const commodity =
-            normalizeText(item.commodity);
-
-          return (
-            commodity === wanted ||
-            commodity.includes(wanted) ||
-            wanted.includes(commodity)
-          );
-
-        });
-
-
-      /*
-        Some government commodity names
-        can be different from our alias.
-      */
-
-      if (finalRecords.length === 0) {
-
-        const rawWanted =
-          normalizeText(raw);
-
-        finalRecords =
-          fallbackRecords.filter(item => {
-
-            const commodity =
-              normalizeText(item.commodity);
-
-            return (
-              commodity.includes(rawWanted) ||
-              rawWanted.includes(commodity)
-            );
-
-          });
-      }
+      const localMatches =
+        fallbackRecords.filter(
+          item =>
+            commodityMatches(
+              item.commodity,
+              crop,
+              rawCrop
+            )
+        );
 
 
       console.log(
         "MANDI LOCAL MATCH RESULTS:",
-        finalRecords.length
+        localMatches.length
       );
+
+
+      if (
+        localMatches.length > 0
+      ) {
+
+        exact.records =
+          localMatches;
+      }
+
     }
 
 
     /*
-      STEP 4
-      If no crop was selected,
-      return all current records.
+      ---------------------------------------
+      STEP 3
+      No crop selected
+      ---------------------------------------
     */
 
     if (!crop) {
 
-      finalRecords =
-        await fetchMandiPage({
-          crop: "",
-          limit: 1000,
-          offset: 0,
-          useFilter: false
-        });
+      const pageSize = 100;
 
-      console.log(
-        "MANDI ALL RECORDS:",
-        finalRecords.length
-      );
+      const maxPages = 20;
+
+      let allRecords = [];
+
+
+      for (
+        let page = 0;
+        page < maxPages;
+        page++
+      ) {
+
+        const offset =
+          page * pageSize;
+
+
+        const result =
+          await fetchMandiRecords({
+
+            crop: "",
+
+            limit: pageSize,
+
+            offset,
+
+            filterCommodity: false
+
+          });
+
+
+        const records =
+          result.records;
+
+
+        console.log(
+          `MANDI ALL PAGE ${page + 1}:`,
+          records.length
+        );
+
+
+        if (
+          records.length === 0
+        ) {
+          break;
+        }
+
+
+        allRecords.push(
+          ...records
+        );
+
+
+        if (
+          records.length < pageSize
+        ) {
+          break;
+        }
+      }
+
+
+      exact.records =
+        allRecords;
     }
 
 
+    /*
+      ---------------------------------------
+      STEP 4
+      Format final records
+      ---------------------------------------
+    */
+
     const data =
-      formatMandiRecords(finalRecords);
+      formatMandiRecords(
+        exact.records
+      );
 
 
     console.log(
@@ -462,23 +933,65 @@ app.get("/api/mandi", async (req, res) => {
     );
 
 
+    console.log(
+      "========================================"
+    );
+
+
+    /*
+      Return useful diagnostic information
+      too, so we can immediately see what
+      government API is actually doing.
+    */
+
     return res.json({
+
       data,
-      count: data.length,
-      crop: crop || null,
-      source: "data.gov.in / AGMARKNET"
+
+      count:
+        data.length,
+
+      crop:
+        crop || null,
+
+      source:
+        "data.gov.in / AGMARKNET",
+
+      status:
+        "ok",
+
+      governmentRecordsReceived:
+        exact.records.length
+
     });
 
+
   } catch (error) {
+
+    console.error(
+      "========================================"
+    );
 
     console.error(
       "MANDI ERROR:",
       error
     );
 
+    console.error(
+      "========================================"
+    );
+
+
     return res.status(500).json({
+
       error:
-        "सरकारी मंडी डेटा नहीं मिल पाया।"
+        "सरकारी मंडी डेटा नहीं मिल पाया।",
+
+      details:
+        error instanceof Error
+          ? error.message
+          : String(error)
+
     });
   }
 });
@@ -489,15 +1002,29 @@ app.get("/api/mandi", async (req, res) => {
 ========================= */
 
 app.get("/", (req, res) => {
+
   res.json({
-    app: "KisanSaathi AI",
-    status: "online",
-    ai: Boolean(GEMINI_API_KEY),
-    aiMode: GEMINI_API_KEY
-      ? "gemini"
-      : "not-configured",
-    mandi: Boolean(DATA_GOV_API_KEY),
-    geminiModel: GEMINI_MODEL
+
+    app:
+      "KisanSaathi AI",
+
+    status:
+      "online",
+
+    ai:
+      Boolean(GEMINI_API_KEY),
+
+    aiMode:
+      GEMINI_API_KEY
+        ? "gemini"
+        : "not-configured",
+
+    mandi:
+      Boolean(DATA_GOV_API_KEY),
+
+    geminiModel:
+      GEMINI_MODEL
+
   });
 });
 
@@ -506,12 +1033,16 @@ app.get("/", (req, res) => {
    START SERVER
 ========================= */
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
 
-  console.log(
-    `KisanSaathi AI backend running on port ${PORT} | Gemini: ${Boolean(
-      GEMINI_API_KEY
-    )} | Model: ${GEMINI_MODEL}`
-  );
+    console.log(
+      `KisanSaathi AI backend running on port ${PORT} | Gemini: ${Boolean(
+        GEMINI_API_KEY
+      )} | Model: ${GEMINI_MODEL}`
+    );
 
-});
+  }
+);
