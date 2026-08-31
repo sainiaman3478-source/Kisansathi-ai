@@ -1,615 +1,196 @@
-import "dotenv/config";
 import express from "express";
 import cors from "cors";
 
 const app = express();
 
-app.use(cors({
-  origin: true,
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-app.use(express.json({ limit: "1mb" }));
-
 const PORT = process.env.PORT || 10000;
 
-const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-/*
-  Gemini models:
-  पहले 3.7
-  busy होने पर 3.6
-  फिर 2.5 Flash
-*/
-const GEMINI_MODELS = [
-  process.env.GEMINI_MODEL || "gemini-3.7-flash",
-  "gemini-3.6-flash",
-  "gemini-2.5-flash"
-];
-
-const KISAN_SYSTEM_INSTRUCTION = `
-You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
-
-Reply in simple Hindi or easy Hinglish.
-
-Be practical, clear and concise.
-
-For crop problems, ask for:
-- crop name
-- crop age
-- state/district
-- symptoms
-
-when needed.
-
-For fertilizer or pesticide advice:
-Do not invent unsafe exact doses.
-If exact dosage depends on crop, product or region,
-tell the farmer to follow the product label or contact
-a local agriculture expert.
-
-Never invent live mandi prices.
-Never invent live weather information.
-
-If the user asks for live mandi prices or weather,
-tell them to use the app's live mandi/weather section.
-
-Do not claim that you saw a crop photo unless an image
-was actually provided to the API.
-
-Answer the farmer directly and helpfully.
-`;
-
-
-/* =========================
-   GEMINI AI
-========================= */
-
-async function callGemini(model, message) {
-
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
-      model
-    )}:generateContent`;
-
-  const response = await fetch(url, {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY
-    },
-
-    body: JSON.stringify({
-
-      systemInstruction: {
-        parts: [
-          {
-            text: KISAN_SYSTEM_INSTRUCTION
-          }
-        ]
-      },
-
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: message
-            }
-          ]
-        }
-      ],
-
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 700
-      }
-
-    })
-  });
-
-  const body =
-    await response.json().catch(() => ({}));
-
-  return {
-    response,
-    body
-  };
-}
-
-
-async function geminiReply(message) {
-
-  if (!GEMINI_API_KEY) {
-    throw new Error(
-      "GEMINI_API_KEY Render Environment में सेट नहीं है।"
-    );
-  }
-
-  let lastError = null;
-
-  for (const model of GEMINI_MODELS) {
-
-    try {
-
-      console.log(
-        `Trying Gemini model: ${model}`
-      );
-
-      const { response, body } =
-        await callGemini(model, message);
-
-
-      if (response.ok) {
-
-        const reply =
-          body?.candidates?.[0]?.content?.parts
-            ?.map(part => part?.text || "")
-            .join("")
-            .trim();
-
-
-        if (reply) {
-
-          console.log(
-            `Gemini success: ${model}`
-          );
-
-          return {
-            reply,
-            model
-          };
-
-        }
-
-        lastError =
-          new Error(
-            `${model}: Gemini ने कोई जवाब नहीं दिया।`
-          );
-
-        continue;
-      }
-
-
-      const errorMessage =
-        body?.error?.message ||
-        `Gemini HTTP ${response.status}`;
-
-
-      console.error(
-        `Gemini ${model} error:`,
-        response.status,
-        errorMessage
-      );
-
-
-      lastError =
-        new Error(errorMessage);
-
-
-      /*
-        429 = too many requests
-        500/502/503/504 = temporary server problem
-
-        इन cases में अगला model try करेंगे.
-      */
-
-      if (
-        response.status === 429 ||
-        response.status === 500 ||
-        response.status === 502 ||
-        response.status === 503 ||
-        response.status === 504
-      ) {
-
-        continue;
-
-      }
-
-
-      /*
-        बाकी errors में सीधे stop.
-      */
-
-      break;
-
-    } catch (error) {
-
-      console.error(
-        `Gemini ${model} request failed:`,
-        error
-      );
-
-      lastError = error;
-
-      continue;
-    }
-  }
-
-
-  throw (
-    lastError ||
-    new Error(
-      "Gemini AI से जवाब नहीं मिला।"
-    )
-  );
-}
-
+app.use(cors());
+app.use(express.json());
 
 /* =========================
    HEALTH CHECK
 ========================= */
 
-app.get("/api/health", (req, res) => {
-
+app.get("/", (req, res) => {
   res.json({
-
     ok: true,
-
-    ai: Boolean(GEMINI_API_KEY),
-
-    aiMode:
-      GEMINI_API_KEY
-        ? "gemini"
-        : "not-configured",
-
-    geminiModels:
-      GEMINI_MODELS,
-
-    mandi:
-      Boolean(DATA_GOV_API_KEY),
-
-    message:
-      "KisanSaathi AI backend running"
-
+    message: "KisanSaathi AI backend is running 🌾"
   });
-
 });
 
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "KisanSaathi AI",
+    status: "online"
+  });
+});
 
 /* =========================
    AI CHAT
 ========================= */
 
 app.post("/api/chat", async (req, res) => {
-
   try {
-
-    const message =
-      String(
-        req.body?.message || ""
-      ).trim();
-
+    const message = String(
+      req.body?.message || ""
+    ).trim();
 
     if (!message) {
-
       return res.status(400).json({
-        error: "सवाल खाली है।"
+        error: "सवाल खाली नहीं हो सकता।"
       });
-
     }
 
+    /*
+      OpenAI API key Render Environment
+      Variable से आएगी।
+    */
 
-    if (!GEMINI_API_KEY) {
+    const apiKey = process.env.OPENAI_API_KEY;
 
-      return res.status(503).json({
-
+    if (!apiKey) {
+      return res.status(500).json({
         error:
-          "GEMINI_API_KEY Render Environment में सेट नहीं है।"
-
+          "OPENAI_API_KEY Render में सेट नहीं है।"
       });
-
     }
 
+    const response = await fetch(
+      "https://api.openai.com/v1/responses",
+      {
+        method: "POST",
 
-    const result =
-      await geminiReply(message);
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
 
+        body: JSON.stringify({
+          model:
+            process.env.OPENAI_MODEL ||
+            "gpt-5-mini",
 
-    return res.json({
+          instructions: `
+आप KisanSaathi AI हैं — भारत के किसानों के लिए
+एक सरल और भरोसेमंद AI कृषि सहायक।
 
-      reply: result.reply,
+हमेशा हिंदी में सरल भाषा में जवाब दें।
+जरूरत हो तो किसान की भाषा में छोटे और स्पष्ट
+points में जवाब दें।
 
-      mode: "gemini",
+आप इन विषयों में मदद कर सकते हैं:
+- खेती
+- फसल
+- खाद
+- सिंचाई
+- कीट और रोग
+- मौसम
+- मंडी
+- सरकारी कृषि योजनाएं
+- खेती की सामान्य जानकारी
 
-      model: result.model
+दवा या pesticide की सलाह देते समय बिना पर्याप्त
+जानकारी के निश्चित diagnosis न करें।
+जरूरत पड़ने पर किसान को कृषि विशेषज्ञ/स्थानीय
+कृषि अधिकारी से पुष्टि करने की सलाह दें।
 
-    });
+अगर सवाल मौसम या आज के मंडी भाव का है और
+live data उपलब्ध नहीं है, तो साफ बताएं कि
+live जानकारी verify करनी चाहिए।
 
+किसान को डराने वाली या झूठी जानकारी न दें।
+संक्षिप्त लेकिन उपयोगी जवाब दें।
+          `,
 
-  } catch (error) {
-
-    console.error(
-      "CHAT ERROR:",
-      error
+          input: message
+        })
+      }
     );
 
-
-    return res.status(503).json({
-
-      error:
-        "Gemini AI अभी व्यस्त है। कुछ सेकंड बाद दोबारा कोशिश करें।",
-
-      detail:
-        error instanceof Error
-          ? error.message
-          : "Unknown Gemini error"
-
-    });
-
-  }
-
-});
-
-
-/* =========================
-   MANDI DATA
-========================= */
-
-const RESOURCE =
-  "9ef84268-d588-465a-a308-a864a43d0070";
-
-
-const aliases = {
-
-  "गेहूं": "Wheat",
-  "गेंहू": "Wheat",
-
-  "धान": "Rice",
-  "चावल": "Rice",
-
-  "सरसों": "Mustard",
-
-  "मक्का": "Maize",
-  "मकई": "Maize",
-
-  "कपास": "Cotton",
-
-  "सोयाबीन": "Soyabean",
-  "सोया": "Soyabean",
-
-  "प्याज": "Onion",
-
-  "टमाटर": "Tomato",
-
-  "आलू": "Potato",
-
-  "चना": "Gram",
-
-  "अरहर": "Arhar (Tur/Red Gram)",
-
-  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
-
-  "जौ": "Barley",
-
-  "मूंग": "Green Gram (Moong)(Whole)",
-
-  "उड़द": "Black Gram (Urd Beans)(Whole)"
-
-};
-
-
-app.get("/api/mandi", async (req, res) => {
-
-  try {
-
-    if (!DATA_GOV_API_KEY) {
-
-      return res.status(503).json({
-
-        error:
-          "DATA_GOV_API_KEY backend में सेट नहीं है।"
-
-      });
-
-    }
-
-
-    const raw =
-      String(
-        req.query.crop || ""
-      ).trim();
-
-
-    const lowerRaw =
-      raw.toLowerCase();
-
-
-    const crop =
-      aliases[lowerRaw] || raw;
-
-
-    const params =
-      new URLSearchParams({
-
-        "api-key":
-          DATA_GOV_API_KEY,
-
-        format:
-          "json",
-
-        limit:
-          "100",
-
-        offset:
-          "0"
-
-      });
-
-
-    if (crop) {
-
-      params.set(
-        "filters[commodity]",
-        crop
-      );
-
-    }
-
-
-    params.set(
-      "sort[arrival_date]",
-      "desc"
-    );
-
-
-    const response =
-      await fetch(
-        `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`
-      );
-
+    const data = await response.json();
 
     if (!response.ok) {
-
-      throw new Error(
-        `data.gov.in HTTP ${response.status}`
+      console.error(
+        "OpenAI API error:",
+        data
       );
 
+      return res.status(
+        response.status || 500
+      ).json({
+        error:
+          data?.error?.message ||
+          "AI service से जवाब नहीं मिला।"
+      });
     }
 
+    /*
+      Responses API का text निकालना
+    */
 
-    const body =
-      await response.json();
+    let reply = "";
 
+    if (
+      typeof data.output_text ===
+      "string"
+    ) {
+      reply = data.output_text;
+    }
 
-    const records =
-      Array.isArray(body.records)
-        ? body.records
-        : [];
+    /*
+      Fallback extraction
+    */
 
+    if (!reply && Array.isArray(data.output)) {
+      for (const item of data.output) {
+        if (
+          Array.isArray(item.content)
+        ) {
+          for (const content of item.content) {
+            if (
+              content.type ===
+                "output_text" &&
+              typeof content.text ===
+                "string"
+            ) {
+              reply += content.text;
+            }
+          }
+        }
+      }
+    }
 
-    const data =
-      records
-
-        .map(item => ({
-
-          state:
-            item.state || "",
-
-          district:
-            item.district || "",
-
-          market:
-            item.market || "",
-
-          commodity:
-            item.commodity || "",
-
-          variety:
-            item.variety || "",
-
-          grade:
-            item.grade || "",
-
-          min_price:
-            Number(item.min_price) || 0,
-
-          max_price:
-            Number(item.max_price) || 0,
-
-          modal_price:
-            Number(item.modal_price) || 0,
-
-          arrival_date:
-            item.arrival_date || ""
-
-        }))
-
-        .filter(
-          item =>
-            item.modal_price > 0
-        );
-
+    if (!reply) {
+      reply =
+        "माफ कीजिए, अभी AI से जवाब नहीं मिल पाया। कृपया दोबारा कोशिश करें।";
+    }
 
     return res.json({
-
-      data,
-
-      count:
-        data.length,
-
-      source:
-        "data.gov.in / AGMARKNET"
-
+      ok: true,
+      reply
     });
 
-
   } catch (error) {
-
     console.error(
-      "MANDI ERROR:",
+      "Server error:",
       error
     );
 
-
     return res.status(500).json({
-
       error:
-        "सरकारी मंडी डेटा नहीं मिल पाया।"
-
+        "AI सेवा से कनेक्शन नहीं हो पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।"
     });
-
   }
-
 });
-
-
-/* =========================
-   ROOT
-========================= */
-
-app.get("/", (req, res) => {
-
-  res.json({
-
-    app:
-      "KisanSaathi AI",
-
-    status:
-      "online",
-
-    ai:
-      Boolean(GEMINI_API_KEY),
-
-    aiMode:
-      GEMINI_API_KEY
-        ? "gemini"
-        : "not-configured",
-
-    models:
-      GEMINI_MODELS,
-
-    mandi:
-      Boolean(DATA_GOV_API_KEY)
-
-  });
-
-});
-
 
 /* =========================
    START SERVER
 ========================= */
 
-app.listen(
-  PORT,
-  "0.0.0.0",
-  () => {
-
-    console.log(
-      `KisanSaathi AI backend running on port ${PORT}`
-    );
-
-    console.log(
-      `Gemini enabled: ${Boolean(GEMINI_API_KEY)}`
-    );
-
-    console.log(
-      `Gemini models: ${GEMINI_MODELS.join(", ")}`
-    );
-
-  }
-);
+app.listen(PORT, () => {
+  console.log(
+    `🌾 KisanSaathi AI server running on port ${PORT}`
+  );
+});
