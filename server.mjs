@@ -19,93 +19,94 @@ const PORT = process.env.PORT || 10000;
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-const GEMINI_MODEL =
-  process.env.GEMINI_MODEL || "gemini-3.6-flash";
+/*
+=========================================================
+GEMINI MODELS
+=========================================================
+
+Primary:
+gemini-2.5-flash
+
+Fallback:
+gemini-3.6-flash
+gemini-3.5-flash
+
+Agar ek model busy/high demand ho gaya,
+to next model automatically try hoga.
+*/
+
+const GEMINI_MODELS = [
+  process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+].filter(
+  (model, index, array) =>
+    model && array.indexOf(model) === index
+);
 
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
 /* =========================================================
-   KISANSAATHI AI - FARMING SYSTEM
+   KISANSAATHI AI SYSTEM INSTRUCTION
 ========================================================= */
 
 const KISAN_SYSTEM_INSTRUCTION = `
-तुम KisanSaathi AI हो — भारतीय किसानों के लिए आसान और भरोसेमंद खेती सहायक।
+You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
 
-भाषा:
-- किसान जिस भाषा में पूछे उसी भाषा में जवाब दो।
-- Hindi में पूछे तो सरल Hindi/Hinglish में जवाब दो।
-- बहुत कठिन कृषि शब्दों से बचो।
-- जवाब छोटा लेकिन उपयोगी रखो।
+Reply in simple Hindi or easy Hinglish.
 
-तुम्हारा काम:
-1. फसल की देखभाल
-2. खाद और पोषण
-3. सिंचाई
-4. कीट और रोग की सामान्य जानकारी
-5. बुवाई और फसल प्रबंधन
-6. कटाई का सामान्य समय
-7. मिट्टी और खेती से जुड़ी सामान्य सलाह
+Be practical, clear and concise.
 
-CROP PROBLEM:
-अगर किसान फसल की बीमारी/समस्या पूछता है तो जरूरत के अनुसार पूछो:
-- कौन सी फसल?
-- फसल कितने दिन की है?
-- राज्य और जिला?
-- समस्या कब से है?
-- पत्तियों/तने/फल में क्या लक्षण हैं?
-- खेत में पानी या नमी की स्थिति कैसी है?
+For crop problems, ask for:
+- crop name
+- crop age
+- state/district
+- symptoms
 
-अगर फोटो उपलब्ध नहीं है तो फोटो देखने का दावा बिल्कुल मत करो।
+when needed.
 
-FERTILIZER:
-अगर किसान पूछता है "खाद कब डालें", "कौन सी खाद डालें" आदि:
-- पहले फसल और फसल की उम्र/बुवाई के दिन समझो।
-- सामान्य कृषि जानकारी दो।
-- बहुत ज्यादा या गलत निश्चित मात्रा खुद से मत गढ़ो।
-- जहाँ मात्रा मिट्टी, फसल, किस्म या उत्पाद पर निर्भर करती है वहाँ मिट्टी परीक्षण/स्थानीय कृषि विशेषज्ञ और उत्पाद के label की सलाह दो।
-- Urea, DAP, NPK या किसी दूसरे fertilizer की exact मात्रा तभी बताओ जब संदर्भ पर्याप्त हो और सलाह सुरक्षित/सामान्य हो।
+For fertilizer or pesticide advice:
+- Do not invent unsafe exact doses.
+- Follow the product label.
+- If exact dosage depends on product, crop or region, advise the farmer to confirm with a local agriculture expert.
 
-PESTICIDE:
-- बिना पर्याप्त जानकारी के खतरनाक pesticide dose मत गढ़ो।
-- दवा का label और स्थानीय कृषि विभाग/कृषि विशेषज्ञ की सलाह लेने को कहो।
-- एक ही समस्या के लिए कई दवाओं का अनावश्यक मिश्रण मत सुझाओ।
-- किसान को safety precautions बताओ।
+Never invent live mandi prices.
 
-LIVE DATA:
-- Live mandi price खुद से कभी मत बनाओ।
-- Live weather खुद से कभी मत बनाओ।
-- किसान live mandi भाव पूछे तो app के मंडी भाव section का उपयोग करने को कहो।
-- किसान live weather पूछे तो app के weather section का उपयोग करने को कहो।
-- अगर live data API से उपलब्ध नहीं है तो साफ-साफ बताओ।
+Never invent live weather.
 
-RESPONSE STYLE:
-जवाब इस तरह दो:
+If the user asks for live mandi prices,
+tell them to use the app's Live Mandi section.
 
-"राम-राम किसान भाई 🌾
+If the user asks about weather,
+tell them to use the app's weather section.
 
-[सीधा जवाब]
+Do not claim you saw a crop photo unless an image was actually provided to the API.
 
-अगर जरूरत हो:
-1. ...
-2. ...
-3. ...
+Give useful farming guidance instead of asking unnecessary questions.
 
-अगर आप अपनी फसल की उम्र और जिला बता दें तो मैं सलाह और बेहतर कर सकता हूँ।"
+If the farmer asks a simple farming question,
+answer directly in simple Hindi.
 
-जरूरी:
-- झूठी जानकारी मत बनाओ।
-- किसान को डराओ मत।
-- जरूरत से ज्यादा लंबा जवाब मत दो।
-- अगर सवाल स्पष्ट है तो सीधे जवाब दो।
-- अगर जानकारी कम है तो 1-2 जरूरी सवाल पूछो।
+Do not mention internal APIs, API keys, servers or programming
+unless the user specifically asks about the technical system.
 `;
 
 /* =========================================================
-   GEMINI AI
+   WAIT / DELAY
 ========================================================= */
 
-async function geminiReply(message) {
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/* =========================================================
+   GEMINI SINGLE REQUEST
+========================================================= */
+
+async function callGeminiModel(model, message) {
   if (!GEMINI_API_KEY) {
     throw new Error(
       "GEMINI_API_KEY backend में सेट नहीं है।"
@@ -114,157 +115,250 @@ async function geminiReply(message) {
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/` +
-    `${encodeURIComponent(GEMINI_MODEL)}:generateContent`;
+    `${encodeURIComponent(model)}:generateContent`;
 
-  const response = await fetch(url, {
-    method: "POST",
+  const controller =
+    new AbortController();
 
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY,
-    },
+  const timeout =
+    setTimeout(() => {
+      controller.abort();
+    }, 30000);
 
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [
-          {
-            text: KISAN_SYSTEM_INSTRUCTION,
-          },
-        ],
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
       },
 
-      contents: [
-        {
-          role: "user",
-
+      body: JSON.stringify({
+        systemInstruction: {
           parts: [
             {
-              text: message,
+              text: KISAN_SYSTEM_INSTRUCTION,
             },
           ],
         },
-      ],
 
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 900,
-      },
-    }),
-  });
+        contents: [
+          {
+            role: "user",
 
-  const body =
-    await response.json().catch(() => ({}));
+            parts: [
+              {
+                text: message,
+              },
+            ],
+          },
+        ],
 
-  if (!response.ok) {
-    console.error(
-      "GEMINI API ERROR:",
-      response.status,
-      body
-    );
+        generationConfig: {
+          maxOutputTokens: 700,
+          temperature: 0.5,
+        },
+      }),
 
-    throw new Error(
-      body?.error?.message ||
-        `Gemini API HTTP ${response.status}`
-    );
+      signal: controller.signal,
+    });
+
+    const body =
+      await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const errorMessage =
+        body?.error?.message ||
+        `Gemini API HTTP ${response.status}`;
+
+      const error = new Error(errorMessage);
+
+      error.status = response.status;
+
+      throw error;
+    }
+
+    const reply =
+      body?.candidates?.[0]?.content?.parts
+        ?.map((part) => part?.text || "")
+        .join("")
+        .trim();
+
+    if (!reply) {
+      throw new Error(
+        "Gemini ने कोई जवाब नहीं दिया।"
+      );
+    }
+
+    return reply;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const reply =
-    body?.candidates?.[0]?.content?.parts
-      ?.map((part) => part?.text || "")
-      .join("")
-      .trim();
-
-  if (!reply) {
-    throw new Error(
-      "Gemini ने कोई जवाब नहीं दिया।"
-    );
-  }
-
-  return reply;
 }
 
 /* =========================================================
-   HEALTH CHECK
+   GEMINI WITH AUTOMATIC FALLBACK
 ========================================================= */
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
+async function geminiReply(message) {
+  if (!GEMINI_API_KEY) {
+    throw new Error(
+      "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+    );
+  }
 
-    ai: Boolean(GEMINI_API_KEY),
+  let lastError = null;
 
-    aiMode: GEMINI_API_KEY
-      ? "gemini"
-      : "not-configured",
+  for (
+    let i = 0;
+    i < GEMINI_MODELS.length;
+    i++
+  ) {
+    const model = GEMINI_MODELS[i];
 
-    geminiModel: GEMINI_MODEL,
+    console.log(
+      `GEMINI TRY ${i + 1}/${GEMINI_MODELS.length}: ${model}`
+    );
 
-    mandi: Boolean(DATA_GOV_API_KEY),
+    try {
+      const reply =
+        await callGeminiModel(
+          model,
+          message
+        );
 
-    message:
-      "KisanSaathi AI backend running",
-  });
-});
+      console.log(
+        `GEMINI SUCCESS: ${model}`
+      );
+
+      return {
+        reply,
+        model,
+      };
+    } catch (error) {
+      lastError = error;
+
+      console.error(
+        `GEMINI MODEL FAILED: ${model}`,
+        error?.message || error
+      );
+
+      /*
+       थोड़ा wait करके अगला model try करेंगे।
+      */
+
+      if (
+        i <
+        GEMINI_MODELS.length - 1
+      ) {
+        await sleep(700);
+      }
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(
+      "Gemini AI से जवाब नहीं मिला।"
+    )
+  );
+}
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+app.get(
+  "/api/health",
+  (req, res) => {
+    res.json({
+      ok: true,
+
+      ai:
+        Boolean(
+          GEMINI_API_KEY
+        ),
+
+      aiMode:
+        GEMINI_API_KEY
+          ? "gemini"
+          : "not-configured",
+
+      geminiModels:
+        GEMINI_MODELS,
+
+      mandi:
+        Boolean(
+          DATA_GOV_API_KEY
+        ),
+
+      message:
+        "KisanSaathi AI backend running",
+    });
+  }
+);
 
 /* =========================================================
    AI CHAT
 ========================================================= */
 
-app.post("/api/chat", async (req, res) => {
-  try {
-    const message = String(
-      req.body?.message || ""
-    ).trim();
+app.post(
+  "/api/chat",
+  async (req, res) => {
+    try {
+      const message =
+        String(
+          req.body?.message || ""
+        ).trim();
 
-    if (!message) {
-      return res.status(400).json({
-        error: "सवाल खाली है।",
+      if (!message) {
+        return res.status(400).json({
+          error:
+            "सवाल खाली है।",
+        });
+      }
+
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({
+          error:
+            "GEMINI_API_KEY Render Environment में सेट नहीं है।",
+        });
+      }
+
+      const result =
+        await geminiReply(
+          message
+        );
+
+      return res.json({
+        reply:
+          result.reply,
+
+        mode:
+          "gemini",
+
+        model:
+          result.model,
       });
-    }
+    } catch (error) {
+      console.error(
+        "CHAT ERROR:",
+        error
+      );
 
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({
+      return res.status(500).json({
         error:
-          "GEMINI_API_KEY Render Environment में सेट नहीं है।",
+          error instanceof Error
+            ? `Gemini AI error: ${error.message}`
+            : "Gemini AI से जवाब नहीं मिला।",
       });
     }
-
-    console.log(
-      "AI QUESTION:",
-      message
-    );
-
-    const reply =
-      await geminiReply(message);
-
-    console.log(
-      "AI REPLY SUCCESS"
-    );
-
-    return res.json({
-      ok: true,
-      reply,
-      mode: "gemini",
-    });
-  } catch (error) {
-    console.error(
-      "CHAT ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      ok: false,
-
-      error:
-        error instanceof Error
-          ? `Gemini AI error: ${error.message}`
-          : "Gemini AI से जवाब नहीं मिला।",
-    });
   }
-});
+);
 
 /* =========================================================
-   MANDI COMMODITY ALIASES
+   ALIASES
 ========================================================= */
 
 const aliases = {
@@ -304,7 +398,8 @@ const aliases = {
   "चना": "Gram",
   "gram": "Gram",
 
-  "अरहर": "Arhar (Tur/Red Gram)",
+  "अरहर":
+    "Arhar (Tur/Red Gram)",
 
   "बाजरा":
     "Bajra (Pearl Millet/Cumbu)",
@@ -331,7 +426,7 @@ function cleanText(value) {
 }
 
 /* =========================================================
-   SEARCH NORMALIZE
+   NORMALIZE SEARCH
 ========================================================= */
 
 function normalizeSearch(value) {
@@ -345,7 +440,10 @@ function normalizeSearch(value) {
    FIELD MATCH
 ========================================================= */
 
-function textMatches(value, search) {
+function textMatches(
+  value,
+  search
+) {
   if (!search) {
     return true;
   }
@@ -360,15 +458,20 @@ function textMatches(value, search) {
     return false;
   }
 
-  if (valueText === searchText) {
+  if (
+    valueText ===
+    searchText
+  ) {
     return true;
   }
 
-  return valueText.includes(searchText);
+  return valueText.includes(
+    searchText
+  );
 }
 
 /* =========================================================
-   GOVERNMENT MANDI API
+   GOVERNMENT API REQUEST
 ========================================================= */
 
 async function fetchMandiPage({
@@ -467,7 +570,7 @@ async function fetchMandiPage({
 }
 
 /* =========================================================
-   NORMALIZE MANDI RECORD
+   NORMALIZE RECORD
 ========================================================= */
 
 function normalizeRecord(item) {
@@ -520,7 +623,9 @@ function normalizeRecord(item) {
    NORMALIZE RECORDS
 ========================================================= */
 
-function normalizeRecords(records) {
+function normalizeRecords(
+  records
+) {
   if (!Array.isArray(records)) {
     return [];
   }
@@ -575,7 +680,7 @@ function filterRecords(
 }
 
 /* =========================================================
-   SEARCH MANDI
+   FETCH WITH FALLBACKS
 ========================================================= */
 
 async function searchMandi({
@@ -584,8 +689,10 @@ async function searchMandi({
   market,
 }) {
   /*
-   ATTEMPT 1
-   State + Commodity + Market
+  =========================================================
+  ATTEMPT 1
+  State + Commodity + Market
+  =========================================================
   */
 
   console.log(
@@ -622,7 +729,9 @@ async function searchMandi({
         }
       );
 
-    if (filtered.length > 0) {
+    if (
+      filtered.length > 0
+    ) {
       return filtered;
     }
   } catch (error) {
@@ -633,12 +742,14 @@ async function searchMandi({
   }
 
   /*
-   ATTEMPT 2
-   State + Commodity
+  =========================================================
+  ATTEMPT 2
+  State + Commodity
+  =========================================================
   */
 
   console.log(
-    "MANDI SEARCH ATTEMPT 2"
+    "MANDI SEARCH ATTEMPT 2: state + commodity"
   );
 
   try {
@@ -666,7 +777,9 @@ async function searchMandi({
         }
       );
 
-    if (filtered.length > 0) {
+    if (
+      filtered.length > 0
+    ) {
       return filtered;
     }
   } catch (error) {
@@ -677,12 +790,14 @@ async function searchMandi({
   }
 
   /*
-   ATTEMPT 3
-   State only
+  =========================================================
+  ATTEMPT 3
+  State only
+  =========================================================
   */
 
   console.log(
-    "MANDI SEARCH ATTEMPT 3"
+    "MANDI SEARCH ATTEMPT 3: state only"
   );
 
   try {
@@ -710,7 +825,9 @@ async function searchMandi({
         }
       );
 
-    if (filtered.length > 0) {
+    if (
+      filtered.length > 0
+    ) {
       return filtered;
     }
   } catch (error) {
@@ -721,12 +838,14 @@ async function searchMandi({
   }
 
   /*
-   ATTEMPT 4
-   No filters + pages
+  =========================================================
+  ATTEMPT 4
+  NO FILTERS
+  =========================================================
   */
 
   console.log(
-    "MANDI SEARCH ATTEMPT 4"
+    "MANDI SEARCH ATTEMPT 4: no API filters"
   );
 
   try {
@@ -759,6 +878,16 @@ async function searchMandi({
           records
         );
 
+      if (
+        !Array.isArray(
+          body.records
+        ) ||
+        body.records.length <
+          PAGE_SIZE
+      ) {
+        break;
+      }
+
       const found =
         filterRecords(
           allRecords,
@@ -769,18 +898,10 @@ async function searchMandi({
           }
         );
 
-      if (found.length > 0) {
-        return found;
-      }
-
       if (
-        !Array.isArray(
-          body.records
-        ) ||
-        body.records.length <
-          PAGE_SIZE
+        found.length > 0
       ) {
-        break;
+        return found;
       }
     }
 
@@ -803,7 +924,7 @@ async function searchMandi({
 }
 
 /* =========================================================
-   REAL GOVERNMENT MANDI API ROUTE
+   REAL GOVERNMENT MANDI API
 ========================================================= */
 
 app.get(
@@ -860,10 +981,6 @@ app.get(
           commodity,
           market: rawMarket,
         });
-
-      /*
-       Latest date first
-      */
 
       mandi.sort(
         (a, b) => {
@@ -951,13 +1068,13 @@ app.get(
           ? "gemini"
           : "not-configured",
 
+      geminiModels:
+        GEMINI_MODELS,
+
       mandi:
         Boolean(
           DATA_GOV_API_KEY
         ),
-
-      geminiModel:
-        GEMINI_MODEL,
 
       mandiResource:
         RESOURCE,
@@ -984,7 +1101,9 @@ app.listen(
     );
 
     console.log(
-      `Gemini model: ${GEMINI_MODEL}`
+      `Gemini models: ${GEMINI_MODELS.join(
+        ", "
+      )}`
     );
 
     console.log(
