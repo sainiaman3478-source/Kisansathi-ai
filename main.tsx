@@ -26,10 +26,6 @@ import {
 
 const API_BASE = "https://kisansathi-ai-q9b0.onrender.com";
 
-/* =========================================================
-   TYPES
-========================================================= */
-
 type Tab =
   | "home"
   | "mandi"
@@ -80,24 +76,6 @@ type MandiResponse = {
   count?: number;
   mandi?: MandiRecord[];
   error?: string;
-};
-
-type WeatherData = {
-  current: {
-    temperature_2m: number;
-    relative_humidity_2m: number;
-    apparent_temperature: number;
-    precipitation: number;
-    weather_code: number;
-    wind_speed_10m: number;
-  };
-  daily: {
-    time: string[];
-    temperature_2m_max: number[];
-    temperature_2m_min: number[];
-    weather_code: number[];
-    precipitation_probability_max: number[];
-  };
 };
 
 /* =========================================================
@@ -400,7 +378,6 @@ main {
 
 .primary:disabled {
   opacity: 0.65;
-  cursor: not-allowed;
 }
 
 .addBtn {
@@ -427,8 +404,8 @@ main {
   gap: 8px;
 }
 
-.filterGrid input {
-  width: 100%;
+.filterGrid .search {
+  margin-bottom: 8px;
 }
 
 .mandiStatus {
@@ -824,12 +801,8 @@ function PageTitle({
 }) {
   return (
     <div className="pageTitle">
-      <button
-        className="back"
-        onClick={() => setTab("home")}
-        aria-label="Back"
-      >
-        <ArrowLeft size={20} />
+      <button className="back" onClick={() => setTab("home")}>
+        <ArrowLeft size={19} />
       </button>
 
       <div>
@@ -846,7 +819,6 @@ function PageTitle({
 
 function App() {
   const [tab, setTab] = useState<Tab>("home");
-
   const [name] = useState("किसान भाई");
 
   const [cart, setCart] = useState<Record<number, number>>(() => {
@@ -890,8 +862,9 @@ function App() {
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
 
   const total = Object.entries(cart).reduce(
-    (s, [id, n]) =>
-      s + (products.find((p) => p.id === Number(id))?.price || 0) * n,
+    (sum, [id, qty]) =>
+      sum +
+      (products.find((p) => p.id === Number(id))?.price || 0) * qty,
     0
   );
 
@@ -904,20 +877,20 @@ function App() {
 
   const remove = (id: number) => {
     setCart((c) => {
-      const x = { ...c };
+      const next = { ...c };
 
-      if (x[id] > 1) {
-        x[id]--;
+      if (next[id] > 1) {
+        next[id]--;
       } else {
-        delete x[id];
+        delete next[id];
       }
 
-      return x;
+      return next;
     });
   };
 
   /* =======================================================
-     AI CHAT -> RENDER BACKEND
+     AI CHAT -> RENDER
   ======================================================= */
 
   const send = async (text = q) => {
@@ -927,10 +900,7 @@ function App() {
 
     setChat((c) => [
       ...c,
-      {
-        from: "user",
-        text: t,
-      },
+      { from: "user", text: t },
       {
         from: "ai",
         text: "AI Kisan सोच रहा है...",
@@ -953,7 +923,9 @@ function App() {
       const data = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        throw new Error(data.error || "AI service error");
+        throw new Error(
+          data.error || "AI service error"
+        );
       }
 
       setChat((c) => {
@@ -1180,12 +1152,11 @@ function HomePage({
 
   return (
     <>
-      <section className="hero">
+      <div className="hero">
         <h1>नमस्ते {name} 👋</h1>
 
         <p>
-          आज खेती में आपकी मदद के लिए
-          तैयार हूँ।
+          आज खेती में आपकी मदद के लिए तैयार हूँ।
         </p>
 
         <button
@@ -1197,9 +1168,7 @@ function HomePage({
           <div>
             <strong>आज का मौसम देखें</strong>
             <br />
-            <span>
-              अपने इलाके का live मौसम देखें
-            </span>
+            <span>अपने इलाके का live मौसम देखें</span>
           </div>
 
           <ArrowLeft
@@ -1210,7 +1179,7 @@ function HomePage({
             }}
           />
         </button>
-      </section>
+      </div>
 
       <div className="grid">
         {cards.map((c) => (
@@ -1219,18 +1188,11 @@ function HomePage({
             key={c[3]}
             onClick={() => setTab(c[3])}
           >
-            <div className="cardIcon">
-              {c[0]}
-            </div>
+            <div className="cardIcon">{c[0]}</div>
 
             <div>
-              <div className="cardTitle">
-                {c[1]}
-              </div>
-
-              <div className="cardSub">
-                {c[2]}
-              </div>
+              <div className="cardTitle">{c[1]}</div>
+              <div className="cardSub">{c[2]}</div>
             </div>
           </button>
         ))}
@@ -1239,16 +1201,15 @@ function HomePage({
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
-        दवा या सिंचाई का फैसला करने से
-        पहले फसल की स्थिति और स्थानीय
-        मौसम जरूर जांचें।
+        दवा या सिंचाई का फैसला करने से पहले फसल की
+        स्थिति और स्थानीय मौसम जरूर जांचें।
       </div>
     </>
   );
 }
 
 /* =========================================================
-   REAL MANDI PAGE
+   REAL MANDI
 ========================================================= */
 
 function MandiPage({
@@ -1280,10 +1241,7 @@ function MandiPage({
       }
 
       if (commodity.trim()) {
-        params.set(
-          "commodity",
-          commodity.trim()
-        );
+        params.set("commodity", commodity.trim());
       }
 
       if (market.trim()) {
@@ -1294,8 +1252,9 @@ function MandiPage({
         `${API_BASE}/api/mandi?${params.toString()}`
       );
 
-      const data: MandiResponse =
-        await r.json().catch(() => ({
+      const data: MandiResponse = await r
+        .json()
+        .catch(() => ({
           ok: false,
           error: "Invalid server response",
         }));
@@ -1355,16 +1314,13 @@ function MandiPage({
         <div className="mandiStatus">
           🟢 <b>Real Mandi Data</b>
           <br />
-          Government of India -
-          Data.gov.in / AGMARKNET
+          Government of India - Data.gov.in / AGMARKNET
         </div>
 
         <input
           className="search"
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="🔎 राज्य, फसल, मंडी या जिला खोजें..."
         />
 
@@ -1372,9 +1328,7 @@ function MandiPage({
           <input
             className="search"
             value={state}
-            onChange={(e) =>
-              setState(e.target.value)
-            }
+            onChange={(e) => setState(e.target.value)}
             placeholder="राज्य जैसे Haryana"
           />
 
@@ -1390,9 +1344,7 @@ function MandiPage({
           <input
             className="search"
             value={market}
-            onChange={(e) =>
-              setMarket(e.target.value)
-            }
+            onChange={(e) => setMarket(e.target.value)}
             placeholder="मंडी जैसे Azadpur"
           />
         </div>
@@ -1404,9 +1356,7 @@ function MandiPage({
         >
           <RefreshCw
             size={16}
-            style={{
-              marginRight: 6,
-            }}
+            style={{ marginRight: 6 }}
           />
 
           {loading
@@ -1417,9 +1367,7 @@ function MandiPage({
         {source && (
           <div
             className="muted"
-            style={{
-              marginTop: 8,
-            }}
+            style={{ marginTop: 8 }}
           >
             Source: {source}
           </div>
@@ -1442,15 +1390,13 @@ function MandiPage({
         !error &&
         filtered.length === 0 && (
           <div className="section empty">
-            <div style={{ fontSize: 45 }}>
-              🌾
-            </div>
+            <div style={{ fontSize: 45 }}>🌾</div>
 
             <h3>मंडी भाव नहीं मिला</h3>
 
             <p>
-              राज्य या फसल का नाम सही
-              तरीके से डालकर फिर खोजें।
+              राज्य या फसल का नाम सही तरीके से
+              डालकर फिर खोजें।
             </p>
           </div>
         )}
@@ -1513,16 +1459,12 @@ function MandiPage({
 
             <div className="mandiDetail">
               Variety
-              <b>
-                {x.variety || "-"}
-              </b>
+              <b>{x.variety || "-"}</b>
             </div>
 
             <div className="mandiDetail">
               तारीख
-              <b>
-                {x.arrivalDate || "-"}
-              </b>
+              <b>{x.arrivalDate || "-"}</b>
             </div>
           </div>
         </div>
@@ -1535,6 +1477,24 @@ function MandiPage({
    WEATHER
 ========================================================= */
 
+type WeatherData = {
+  current: {
+    temperature_2m: number;
+    relative_humidity_2m: number;
+    apparent_temperature: number;
+    precipitation: number;
+    weather_code: number;
+    wind_speed_10m: number;
+  };
+  daily: {
+    time: string[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    weather_code: number[];
+    precipitation_probability_max: number[];
+  };
+};
+
 function WeatherPage({
   setTab,
 }: {
@@ -1542,8 +1502,7 @@ function WeatherPage({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [w, setW] =
-    useState<WeatherData | null>(null);
+  const [w, setW] = useState<WeatherData | null>(null);
   const [loc, setLoc] = useState("");
 
   const load = () => {
@@ -1577,15 +1536,12 @@ function WeatherPage({
             throw new Error();
           }
 
-          const d: WeatherData =
-            await r.json();
+          const d: WeatherData = await r.json();
 
           setW(d);
 
           setLoc(
-            `${latitude.toFixed(
-              2
-            )}°, ${longitude.toFixed(2)}°`
+            `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`
           );
         } catch {
           setError(
@@ -1643,7 +1599,7 @@ function WeatherPage({
       <PageTitle
         setTab={setTab}
         title="मौसम"
-        sub="Live Weather"
+        sub="Live Weather Forecast"
       />
 
       <div className="locationRow">
@@ -1675,19 +1631,15 @@ function WeatherPage({
         >
           <CloudSun size={52} />
 
-          <h3>
-            अपने इलाके का मौसम देखें
-          </h3>
+          <h3>अपने इलाके का मौसम देखें</h3>
 
           <p className="muted">
-            Location अनुमति देने के बाद
-            live forecast आएगा।
+            Location अनुमति देने के बाद live forecast आएगा।
           </p>
 
           <button
             className="primary"
             onClick={load}
-            disabled={loading}
           >
             {loading
               ? "मौसम लोड हो रहा है..."
@@ -1709,9 +1661,7 @@ function WeatherPage({
         <>
           <div className="weatherBig">
             <div style={{ fontSize: 48 }}>
-              {emo(
-                w.current.weather_code
-              )}
+              {emo(w.current.weather_code)}
             </div>
 
             <div className="temperature">
@@ -1722,9 +1672,7 @@ function WeatherPage({
             </div>
 
             <h3>
-              {txt(
-                w.current.weather_code
-              )}
+              {txt(w.current.weather_code)}
             </h3>
 
             <div className="weatherInfoGrid">
@@ -1732,11 +1680,7 @@ function WeatherPage({
                 💧 नमी
                 <br />
                 <b>
-                  {
-                    w.current
-                      .relative_humidity_2m
-                  }
-                  %
+                  {w.current.relative_humidity_2m}%
                 </b>
               </div>
 
@@ -1756,8 +1700,7 @@ function WeatherPage({
                 <br />
                 <b>
                   {Math.round(
-                    w.current
-                      .apparent_temperature
+                    w.current.apparent_temperature
                   )}
                   °C
                 </b>
@@ -1767,11 +1710,7 @@ function WeatherPage({
                 🌧️ बारिश
                 <br />
                 <b>
-                  {
-                    w.current
-                      .precipitation
-                  }{" "}
-                  mm
+                  {w.current.precipitation} mm
                 </b>
               </div>
             </div>
@@ -1797,24 +1736,17 @@ function WeatherPage({
 
                     <div className="forecastIcon">
                       {emo(
-                        w.daily
-                          .weather_code[i]
+                        w.daily.weather_code[i]
                       )}
                     </div>
 
                     <b>
                       {Math.round(
-                        w.daily
-                          .temperature_2m_max[
-                          i
-                        ]
+                        w.daily.temperature_2m_max[i]
                       )}
                       ° /{" "}
                       {Math.round(
-                        w.daily
-                          .temperature_2m_min[
-                          i
-                        ]
+                        w.daily.temperature_2m_min[i]
                       )}
                       °
                     </b>
@@ -1823,9 +1755,7 @@ function WeatherPage({
                       बारिश{" "}
                       {
                         w.daily
-                          .precipitation_probability_max[
-                          i
-                        ]
+                          .precipitation_probability_max[i]
                       }
                       %
                     </div>
@@ -1837,9 +1767,9 @@ function WeatherPage({
 
           <div className="advice">
             🌾 <b>किसान सलाह:</b>{" "}
-            बारिश की संभावना अधिक हो तो
-            सिंचाई, स्प्रे और खेत में काम
-            का समय बदलने पर विचार करें।
+            बारिश की संभावना अधिक हो तो सिंचाई,
+            स्प्रे और खेत में काम का समय बदलने
+            पर विचार करें।
           </div>
         </>
       )}
@@ -1887,7 +1817,7 @@ function CropsPage({
       <PageTitle
         setTab={setTab}
         title="मेरी फसल"
-        sub="अपनी फसल संभालें"
+        sub="अपनी फसल सेव करें"
       />
 
       <div className="section">
@@ -1922,17 +1852,11 @@ function CropsPage({
 
       {crops.length === 0 ? (
         <div className="section empty">
-          <div style={{ fontSize: 45 }}>
-            🌱
-          </div>
+          <div style={{ fontSize: 45 }}>🌱</div>
 
-          <h3>
-            अभी कोई फसल सेव नहीं है
-          </h3>
+          <h3>अभी कोई फसल सेव नहीं है</h3>
 
-          <p>
-            ऊपर से अपनी फसल जोड़ें।
-          </p>
+          <p>ऊपर से अपनी फसल जोड़ें।</p>
         </div>
       ) : (
         <div className="section">
@@ -1947,9 +1871,8 @@ function CropsPage({
                 </div>
 
                 <div className="muted">
-                  {c.area ||
-                    "क्षेत्र नहीं दिया"}{" "}
-                  · {c.note}
+                  {c.area || "क्षेत्र नहीं दिया"} ·{" "}
+                  {c.note}
                 </div>
               </div>
 
@@ -1986,9 +1909,7 @@ function DoctorPage({
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [file, setFile] =
-    useState<File | null>(null);
-
+  const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
   const [result, setResult] = useState("");
 
@@ -2023,13 +1944,10 @@ function DoctorPage({
         <div className="upload">
           <Camera size={48} />
 
-          <h3>
-            अपनी फसल की साफ फोटो चुनें
-          </h3>
+          <h3>अपनी फसल की साफ फोटो चुनें</h3>
 
           <p className="muted">
-            अच्छी रोशनी में पत्ती/फल की
-            नज़दीकी फोटो लें।
+            अच्छी रोशनी में पत्ती/फल की नज़दीकी फोटो लें।
           </p>
 
           <input
@@ -2055,9 +1973,7 @@ function DoctorPage({
         {file && (
           <button
             className="primary"
-            style={{
-              marginTop: 10,
-            }}
+            style={{ marginTop: 10 }}
             onClick={analyze}
           >
             🔍 जांच शुरू करें
@@ -2079,10 +1995,8 @@ function DoctorPage({
         <h3>ध्यान रखें</h3>
 
         <p className="muted">
-          सिर्फ फोटो के आधार पर दवा
-          तय करना सुरक्षित नहीं है।
-          फसल, उम्र, खेत, मौसम और
-          लक्षण भी जरूरी हैं।
+          सिर्फ फोटो के आधार पर दवा तय करना सुरक्षित नहीं है।
+          फसल, उम्र, खेत, मौसम और लक्षण भी जरूरी हैं।
         </p>
       </div>
     </>
@@ -2128,11 +2042,7 @@ function StorePage({
                 alignItems: "center",
               }}
             >
-              <span
-                style={{
-                  fontSize: 28,
-                }}
-              >
+              <span style={{ fontSize: 28 }}>
                 {p.emoji}
               </span>
 
@@ -2158,9 +2068,7 @@ function StorePage({
 
         <button
           className="primary"
-          style={{
-            marginTop: 12,
-          }}
+          style={{ marginTop: 12 }}
           onClick={() => setTab("cart")}
         >
           🛒 कार्ट देखें{" "}
@@ -2169,11 +2077,9 @@ function StorePage({
       </div>
 
       <div className="advice">
-        ℹ️ ये अभी app के sample
-        products हैं। वास्तविक खरीद के
-        लिए payment, delivery और
-        verified seller backend जोड़ना
-        होगा।
+        ℹ️ ये अभी app के sample products हैं।
+        वास्तविक खरीद के लिए payment, delivery और
+        verified seller backend जोड़ना होगा।
       </div>
     </>
   );
@@ -2203,7 +2109,7 @@ function CartPage({
       <PageTitle
         setTab={setTab}
         title="Cart"
-        sub="आपका सामान"
+        sub="आपके चुने हुए सामान"
       />
 
       {!ids.length ? (
@@ -2214,9 +2120,7 @@ function CartPage({
 
           <button
             className="addBtn"
-            onClick={() =>
-              setTab("store")
-            }
+            onClick={() => setTab("store")}
           >
             Store देखें
           </button>
@@ -2239,16 +2143,13 @@ function CartPage({
                   <b>{p.name}</b>
 
                   <div className="muted">
-                    ₹{p.price} ×{" "}
-                    {cart[id]}
+                    ₹{p.price} × {cart[id]}
                   </div>
                 </div>
 
                 <div className="quantity">
                   <button
-                    onClick={() =>
-                      remove(id)
-                    }
+                    onClick={() => remove(id)}
                   >
                     <Minus size={15} />
                   </button>
@@ -2256,9 +2157,7 @@ function CartPage({
                   <b>{cart[id]}</b>
 
                   <button
-                    onClick={() =>
-                      add(id)
-                    }
+                    onClick={() => add(id)}
                   >
                     <Plus size={15} />
                   </button>
@@ -2271,10 +2170,7 @@ function CartPage({
             <span>कुल राशि</span>
 
             <span>
-              ₹
-              {total.toLocaleString(
-                "en-IN"
-              )}
+              ₹{total.toLocaleString("en-IN")}
             </span>
           </div>
 
@@ -2324,7 +2220,7 @@ function ChatPage({
       <PageTitle
         setTab={setTab}
         title="AI Kisan"
-        sub="खेती से जुड़े सवाल पूछें"
+        sub="खेती से जुड़ा सवाल पूछें"
       />
 
       <div className="chatBox">
@@ -2332,13 +2228,10 @@ function ChatPage({
           <div className="empty">
             <MessageCircle size={48} />
 
-            <h3>
-              नमस्ते किसान भाई 👋
-            </h3>
+            <h3>नमस्ते किसान भाई 👋</h3>
 
             <p>
-              फसल, मौसम, मंडी या खेती
-              के बारे में पूछें।
+              फसल, मौसम, मंडी या खेती के बारे में पूछें।
             </p>
           </div>
         ) : (
@@ -2447,11 +2340,7 @@ function ProfilePage({
               {s.icon}
             </div>
 
-            <div
-              style={{
-                flex: 1,
-              }}
-            >
+            <div style={{ flex: 1 }}>
               <b>{s.title}</b>
 
               <div className="muted">
@@ -2475,16 +2364,14 @@ function ProfilePage({
         <h3>ℹ️ ऐप की स्थिति</h3>
 
         <p className="muted">
-          ✅ Real Mandi Bhav -
-          Government Data.gov.in /
+          ✅ Real Mandi Bhav - Government Data.gov.in /
           AGMARKNET
           <br />
           ✅ AI Kisan - Render backend
           <br />
           ✅ Weather - live forecast
           <br />
-          🌱 Crop Doctor - safe guidance
-          mode
+          🌱 Crop Doctor - safe guidance mode
         </p>
       </div>
     </>
