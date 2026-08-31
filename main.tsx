@@ -78,6 +78,24 @@ type MandiResponse = {
   error?: string;
 };
 
+type WeatherData = {
+  current: {
+    temperature_2m: number;
+    relative_humidity_2m: number;
+    apparent_temperature: number;
+    precipitation: number;
+    weather_code: number;
+    wind_speed_10m: number;
+  };
+  daily: {
+    time: string[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    weather_code: number[];
+    precipitation_probability_max: number[];
+  };
+};
+
 /* =========================================================
    PRODUCTS
 ========================================================= */
@@ -143,645 +161,638 @@ const schemes = [
 ========================================================= */
 
 const css = `
-* {
-  box-sizing: border-box;
+*{
+  box-sizing:border-box;
 }
 
 html,
 body,
-#root {
-  margin: 0;
-  min-height: 100%;
-  font-family: Arial, "Noto Sans Devanagari", sans-serif;
-  background: #f3f7f1;
-  color: #243024;
+#root{
+  margin:0;
+  min-height:100%;
+  font-family:Arial,"Noto Sans Devanagari",sans-serif;
+  background:#f3f7f1;
+  color:#243024;
 }
 
 button,
 input,
-select {
-  font: inherit;
+select{
+  font:inherit;
 }
 
-button {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+button{
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
 
-.app {
-  min-height: 100vh;
-  max-width: 700px;
-  margin: auto;
-  background: #f3f7f1;
-  padding-bottom: 86px;
+.app{
+  min-height:100vh;
+  max-width:700px;
+  margin:auto;
+  background:#f3f7f1;
+  padding-bottom:86px;
 }
 
-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: #fff;
-  padding: 11px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 8px #00000012;
+header{
+  position:sticky;
+  top:0;
+  z-index:30;
+  background:#fff;
+  padding:11px 14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  box-shadow:0 1px 8px #00000012;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #287b31;
-  font-weight: 800;
-  font-size: 17px;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  color:#287b31;
+  font-weight:800;
+  font-size:17px;
 }
 
-.logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #e8f6e5;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
+.logo{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:#e8f6e5;
+  display:grid;
+  place-items:center;
+  font-size:22px;
 }
 
-header small {
-  display: block;
-  color: #7b817b;
-  font-size: 10px;
-  margin-top: 2px;
+header small{
+  display:block;
+  color:#7b817b;
+  font-size:10px;
+  margin-top:2px;
 }
 
-.profileIcon {
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 50%;
-  background: #e8f5e9;
-  color: #28752e;
-  display: grid;
-  place-items: center;
+.profileIcon{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:50%;
+  background:#e8f5e9;
+  color:#28752e;
+  display:grid;
+  place-items:center;
 }
 
-main {
-  padding: 12px;
+main{
+  padding:12px;
 }
 
-.hero {
-  background: linear-gradient(135deg, #e3f7dc, #f9fff6);
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 12px;
-  border: 1px solid #e2efdf;
+.hero{
+  background:linear-gradient(135deg,#e3f7dc,#f9fff6);
+  border-radius:20px;
+  padding:18px;
+  margin-bottom:12px;
+  border:1px solid #e2efdf;
 }
 
-.hero h1 {
-  font-size: 21px;
-  margin: 0 0 6px;
+.hero h1{
+  font-size:21px;
+  margin:0 0 6px;
 }
 
-.hero p {
-  margin: 0 0 12px;
-  color: #667066;
-  font-size: 13px;
+.hero p{
+  margin:0 0 12px;
+  color:#667066;
+  font-size:13px;
 }
 
-.weatherButton {
-  width: 100%;
-  border: 0;
-  background: #fff;
-  border-radius: 15px;
-  padding: 13px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-align: left;
-  box-shadow: 0 2px 8px #00000008;
+.weatherButton{
+  width:100%;
+  border:0;
+  background:#fff;
+  border-radius:15px;
+  padding:13px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  box-shadow:0 2px 8px #00000008;
 }
 
-.weatherButton strong {
-  font-size: 15px;
+.weatherButton strong{
+  font-size:15px;
 }
 
-.weatherButton span {
-  font-size: 11px;
-  color: #777;
+.weatherButton span{
+  font-size:11px;
+  color:#777;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
 }
 
-.card {
-  border: 0;
-  background: #fff;
-  border-radius: 16px;
-  padding: 14px 10px;
-  min-height: 84px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-align: left;
-  box-shadow: 0 2px 8px #0000000d;
+.card{
+  border:0;
+  background:#fff;
+  border-radius:16px;
+  padding:14px 10px;
+  min-height:84px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  text-align:left;
+  box-shadow:0 2px 8px #0000000d;
 }
 
-.card:active {
-  transform: scale(0.985);
+.card:active{
+  transform:scale(.985);
 }
 
-.cardIcon {
-  font-size: 23px;
-  width: 30px;
-  text-align: center;
+.cardIcon{
+  font-size:23px;
+  width:30px;
+  text-align:center;
 }
 
-.cardTitle {
-  font-weight: 800;
-  font-size: 13px;
+.cardTitle{
+  font-weight:800;
+  font-size:13px;
 }
 
-.cardSub {
-  color: #777;
-  font-size: 10px;
-  margin-top: 4px;
+.cardSub{
+  color:#777;
+  font-size:10px;
+  margin-top:4px;
 }
 
 .advice,
 .section,
-.chatBox {
-  background: #fff;
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: 0 2px 8px #0000000b;
+.chatBox{
+  background:#fff;
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 2px 8px #0000000b;
 }
 
-.advice {
-  margin-top: 11px;
-  background: #fff8df;
-  font-size: 12px;
-  line-height: 1.6;
+.advice{
+  margin-top:11px;
+  background:#fff8df;
+  font-size:12px;
+  line-height:1.6;
 }
 
-.section {
-  margin-bottom: 11px;
+.section{
+  margin-bottom:11px;
 }
 
-.pageTitle {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: 2px 0 12px;
+.pageTitle{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:2px 0 12px;
 }
 
-.pageTitle h2 {
-  margin: 0;
-  font-size: 18px;
+.pageTitle h2{
+  margin:0;
+  font-size:18px;
 }
 
-.pageTitle small {
-  color: #777;
-  font-size: 11px;
+.pageTitle small{
+  color:#777;
+  font-size:11px;
 }
 
-.back {
-  border: 0;
-  background: #fff;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 1px 5px #0000000c;
+.back{
+  border:0;
+  background:#fff;
+  border-radius:50%;
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  box-shadow:0 1px 5px #0000000c;
 }
 
 .primary,
 .addBtn,
-.sendBtn {
-  background: #2e7d32;
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 13px;
-  font-weight: 700;
+.sendBtn{
+  background:#2e7d32;
+  color:#fff;
+  border:0;
+  border-radius:10px;
+  padding:10px 13px;
+  font-weight:700;
 }
 
-.primary {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.primary{
+  width:100%;
 }
 
-.primary:disabled {
-  opacity: 0.65;
+.addBtn{
+  font-size:12px;
 }
 
-.addBtn {
-  font-size: 12px;
+.search{
+  width:100%;
+  border:1px solid #ddd;
+  border-radius:11px;
+  padding:11px;
+  outline:none;
+  margin-bottom:10px;
+  background:#fff;
 }
 
-.search {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 11px;
-  padding: 11px;
-  outline: none;
-  margin-bottom: 10px;
-  background: #fff;
+.search:focus{
+  border-color:#2e7d32;
 }
 
-.search:focus {
-  border-color: #2e7d32;
+.filterGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
 }
 
-.filterGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.filterGrid input{
+  width:100%;
 }
 
-.filterGrid .search {
-  margin-bottom: 8px;
+.mandiStatus{
+  background:#edf7ea;
+  color:#28752e;
+  border-radius:11px;
+  padding:9px 10px;
+  font-size:11px;
+  margin-bottom:10px;
 }
 
-.mandiStatus {
-  background: #edf7ea;
-  color: #28752e;
-  border-radius: 11px;
-  padding: 9px 10px;
-  font-size: 11px;
-  margin-bottom: 10px;
+.mandiCard{
+  background:#fff;
+  border-radius:15px;
+  padding:13px;
+  margin-bottom:9px;
+  box-shadow:0 2px 8px #0000000a;
 }
 
-.mandiCard {
-  background: #fff;
-  border-radius: 15px;
-  padding: 13px;
-  margin-bottom: 9px;
-  box-shadow: 0 2px 8px #0000000a;
+.mandiTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
 }
 
-.mandiTop {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+.mandiCrop{
+  font-weight:800;
+  font-size:14px;
 }
 
-.mandiCrop {
-  font-weight: 800;
-  font-size: 14px;
+.mandiMarket{
+  font-size:12px;
+  font-weight:700;
+  margin-top:4px;
 }
 
-.mandiMarket {
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 4px;
+.mandiPrice{
+  color:#28752e;
+  font-weight:800;
+  text-align:right;
+  white-space:nowrap;
 }
 
-.mandiPrice {
-  color: #28752e;
-  font-weight: 800;
-  text-align: right;
-  white-space: nowrap;
+.priceLabel{
+  color:#777;
+  font-size:10px;
+  font-weight:400;
 }
 
-.priceLabel {
-  color: #777;
-  font-size: 10px;
-  font-weight: 400;
+.mandiDetails{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-top:10px;
 }
 
-.mandiDetails {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-top: 10px;
+.mandiDetail{
+  background:#f7faf6;
+  border-radius:9px;
+  padding:8px;
+  font-size:10px;
+  color:#666;
 }
 
-.mandiDetail {
-  background: #f7faf6;
-  border-radius: 9px;
-  padding: 8px;
-  font-size: 10px;
-  color: #666;
+.mandiDetail b{
+  display:block;
+  color:#222;
+  font-size:11px;
+  margin-top:2px;
 }
 
-.mandiDetail b {
-  display: block;
-  color: #222;
-  font-size: 11px;
-  margin-top: 2px;
+.muted{
+  font-size:11px;
+  color:#777;
+  margin-top:3px;
 }
 
-.muted {
-  font-size: 11px;
-  color: #777;
-  margin-top: 3px;
+.weatherBig{
+  background:linear-gradient(135deg,#e4f7dd,#fff);
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
+  margin-bottom:11px;
 }
 
-.weatherBig {
-  background: linear-gradient(135deg, #e4f7dd, #fff);
-  border-radius: 20px;
-  padding: 20px;
-  text-align: center;
-  margin-bottom: 11px;
+.temperature{
+  font-size:48px;
+  font-weight:800;
+  color:#28752e;
+  margin:4px 0;
 }
 
-.temperature {
-  font-size: 48px;
-  font-weight: 800;
-  color: #28752e;
-  margin: 4px 0;
+.weatherInfoGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:11px;
 }
 
-.weatherInfoGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 11px;
+.weatherInfo{
+  background:#fff;
+  border-radius:13px;
+  padding:11px;
+  font-size:12px;
 }
 
-.weatherInfo {
-  background: #fff;
-  border-radius: 13px;
-  padding: 11px;
-  font-size: 12px;
+.forecast{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
 }
 
-.forecast {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+.forecastCard{
+  background:#f7faf6;
+  border-radius:13px;
+  padding:11px;
+  text-align:center;
+  font-size:11px;
 }
 
-.forecastCard {
-  background: #f7faf6;
-  border-radius: 13px;
-  padding: 11px;
-  text-align: center;
-  font-size: 11px;
+.forecastIcon{
+  font-size:25px;
+  margin:7px;
 }
 
-.forecastIcon {
-  font-size: 25px;
-  margin: 7px;
+.locationRow{
+  display:flex;
+  gap:7px;
+  align-items:center;
+  background:#fff;
+  padding:10px;
+  border-radius:12px;
+  margin-bottom:10px;
+  font-size:12px;
 }
 
-.locationRow {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  background: #fff;
-  padding: 10px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  font-size: 12px;
+.chatBox{
+  min-height:330px;
+  max-height:55vh;
+  overflow:auto;
 }
 
-.chatBox {
-  min-height: 330px;
-  max-height: 55vh;
-  overflow: auto;
+.bubble{
+  max-width:88%;
+  padding:10px 12px;
+  border-radius:13px;
+  margin-bottom:8px;
+  font-size:13px;
+  line-height:1.5;
 }
 
-.bubble {
-  max-width: 88%;
-  padding: 10px 12px;
-  border-radius: 13px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.5;
+.aiBubble{
+  background:#edf7ea;
 }
 
-.aiBubble {
-  background: #edf7ea;
+.userBubble{
+  background:#2e7d32;
+  color:#fff;
+  margin-left:auto;
 }
 
-.userBubble {
-  background: #2e7d32;
-  color: #fff;
-  margin-left: auto;
+.quick{
+  display:flex;
+  gap:6px;
+  overflow:auto;
+  margin:8px 0;
 }
 
-.quick {
-  display: flex;
-  gap: 6px;
-  overflow: auto;
-  margin: 8px 0;
+.quick button{
+  white-space:nowrap;
+  border:1px solid #dce7d9;
+  background:#fff;
+  border-radius:18px;
+  padding:7px 10px;
+  font-size:10px;
 }
 
-.quick button {
-  white-space: nowrap;
-  border: 1px solid #dce7d9;
-  background: #fff;
-  border-radius: 18px;
-  padding: 7px 10px;
-  font-size: 10px;
+.inputRow{
+  display:flex;
+  gap:7px;
+  margin-top:9px;
 }
 
-.inputRow {
-  display: flex;
-  gap: 7px;
-  margin-top: 9px;
+.inputRow input{
+  flex:1;
+  min-width:0;
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:11px;
+  outline:none;
 }
 
-.inputRow input {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 11px;
-  outline: none;
-}
-
-.sendBtn {
-  padding: 0 15px;
+.sendBtn{
+  padding:0 15px;
 }
 
 .cropRow,
 .product,
-.cartRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 9px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
+.cartRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
 }
 
 .cropRow:last-child,
 .product:last-child,
-.cartRow:last-child {
-  border-bottom: 0;
+.cartRow:last-child{
+  border-bottom:0;
 }
 
 .cropName,
-.productName {
-  font-weight: 800;
+.productName{
+  font-weight:800;
 }
 
-.quantity {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.quantity{
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
-.quantity button {
-  width: 29px;
-  height: 29px;
-  border: 0;
-  border-radius: 8px;
-  background: #e8f5e9;
-  color: #28752e;
-  display: grid;
-  place-items: center;
+.quantity button{
+  width:29px;
+  height:29px;
+  border:0;
+  border-radius:8px;
+  background:#e8f5e9;
+  color:#28752e;
+  display:grid;
+  place-items:center;
 }
 
-.upload {
-  border: 2px dashed #cfe3cb;
-  border-radius: 15px;
-  padding: 15px;
-  text-align: center;
-  background: #f8fcf7;
+.upload{
+  border:2px dashed #cfe3cb;
+  border-radius:15px;
+  padding:15px;
+  text-align:center;
+  background:#f8fcf7;
 }
 
-.preview {
-  max-width: 100%;
-  max-height: 220px;
-  border-radius: 12px;
-  margin-top: 10px;
+.preview{
+  max-width:100%;
+  max-height:220px;
+  border-radius:12px;
+  margin-top:10px;
 }
 
-.result {
-  background: #edf7ea;
-  border-radius: 13px;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.6;
+.result{
+  background:#edf7ea;
+  border-radius:13px;
+  padding:12px;
+  margin-top:10px;
+  font-size:12px;
+  line-height:1.6;
 }
 
-.profileCard {
-  text-align: center;
+.profileCard{
+  text-align:center;
 }
 
-.bigProfile {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  margin: auto;
-  background: #e8f5e9;
-  color: #28752e;
-  display: grid;
-  place-items: center;
+.bigProfile{
+  width:72px;
+  height:72px;
+  border-radius:50%;
+  margin:auto;
+  background:#e8f5e9;
+  color:#28752e;
+  display:grid;
+  place-items:center;
 }
 
-.scheme {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
+.scheme{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
 }
 
-.scheme:last-child {
-  border-bottom: 0;
+.scheme:last-child{
+  border-bottom:0;
 }
 
-.schemeIcon {
-  font-size: 23px;
+.schemeIcon{
+  font-size:23px;
 }
 
-.scheme a {
-  font-size: 11px;
-  color: #28752e;
-  text-decoration: none;
+.scheme a{
+  font-size:11px;
+  color:#28752e;
+  text-decoration:none;
 }
 
-.empty {
-  text-align: center;
-  padding: 38px 10px;
-  color: #777;
+.empty{
+  text-align:center;
+  padding:38px 10px;
+  color:#777;
 }
 
-.total {
-  display: flex;
-  justify-content: space-between;
-  font-size: 18px;
-  font-weight: 800;
-  padding: 13px 0;
+.total{
+  display:flex;
+  justify-content:space-between;
+  font-size:18px;
+  font-weight:800;
+  padding:13px 0;
 }
 
-.bottomNav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(700px, 100%);
-  background: #fff;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 7px 4px;
-  box-shadow: 0 -2px 12px #00000014;
-  z-index: 20;
+.bottomNav{
+  position:fixed;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(700px,100%);
+  background:#fff;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  padding:7px 4px;
+  box-shadow:0 -2px 12px #00000014;
+  z-index:20;
 }
 
-.navBtn {
-  border: 0;
-  background: transparent;
-  color: #777;
-  font-size: 10px;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+.navBtn{
+  border:0;
+  background:transparent;
+  color:#777;
+  font-size:10px;
+  padding:5px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
 }
 
-.navBtn.active {
-  color: #28752e;
-  font-weight: 800;
+.navBtn.active{
+  color:#28752e;
+  font-weight:800;
 }
 
-.fab {
-  position: fixed;
-  right: max(18px, calc((100vw - 700px) / 2 + 18px));
-  bottom: 72px;
-  width: 52px;
-  height: 52px;
-  border: 0;
-  border-radius: 50%;
-  background: #16843a;
-  color: #fff;
-  box-shadow: 0 4px 14px #0003;
-  z-index: 15;
-  display: grid;
-  place-items: center;
+.fab{
+  position:fixed;
+  right:max(18px,calc((100vw - 700px)/2 + 18px));
+  bottom:72px;
+  width:52px;
+  height:52px;
+  border:0;
+  border-radius:50%;
+  background:#16843a;
+  color:#fff;
+  box-shadow:0 4px 14px #0003;
+  z-index:15;
+  display:grid;
+  place-items:center;
 }
 
-@media (max-width: 420px) {
-  main {
-    padding: 10px;
+@media(max-width:420px){
+  main{
+    padding:10px;
   }
 
-  .hero {
-    padding: 15px;
+  .hero{
+    padding:15px;
   }
 
-  .card {
-    padding: 12px 8px;
+  .card{
+    padding:12px 8px;
   }
 
-  .temperature {
-    font-size: 44px;
+  .temperature{
+    font-size:44px;
   }
 
-  .filterGrid {
-    grid-template-columns: 1fr;
+  .filterGrid{
+    grid-template-columns:1fr;
   }
 }
 `;
@@ -801,7 +812,11 @@ function PageTitle({
 }) {
   return (
     <div className="pageTitle">
-      <button className="back" onClick={() => setTab("home")}>
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+        aria-label="Back"
+      >
         <ArrowLeft size={19} />
       </button>
 
@@ -819,6 +834,7 @@ function PageTitle({
 
 function App() {
   const [tab, setTab] = useState<Tab>("home");
+
   const [name] = useState("किसान भाई");
 
   const [cart, setCart] = useState<Record<number, number>>(() => {
@@ -859,12 +875,16 @@ function App() {
     localStorage.setItem("ks_chat", JSON.stringify(chat));
   }, [chat]);
 
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
+  const count = Object.values(cart).reduce(
+    (a, b) => a + b,
+    0
+  );
 
   const total = Object.entries(cart).reduce(
-    (sum, [id, qty]) =>
-      sum +
-      (products.find((p) => p.id === Number(id))?.price || 0) * qty,
+    (s, [id, n]) =>
+      s +
+      (products.find((p) => p.id === Number(id))?.price || 0) *
+        n,
     0
   );
 
@@ -877,15 +897,15 @@ function App() {
 
   const remove = (id: number) => {
     setCart((c) => {
-      const next = { ...c };
+      const x = { ...c };
 
-      if (next[id] > 1) {
-        next[id]--;
+      if (x[id] > 1) {
+        x[id]--;
       } else {
-        delete next[id];
+        delete x[id];
       }
 
-      return next;
+      return x;
     });
   };
 
@@ -900,7 +920,10 @@ function App() {
 
     setChat((c) => [
       ...c,
-      { from: "user", text: t },
+      {
+        from: "user",
+        text: t,
+      },
       {
         from: "ai",
         text: "AI Kisan सोच रहा है...",
@@ -931,12 +954,16 @@ function App() {
       setChat((c) => {
         const copy = [...c];
 
-        const i = copy.map((x) => x.from).lastIndexOf("ai");
+        const i = copy
+          .map((x) => x.from)
+          .lastIndexOf("ai");
 
         if (i >= 0) {
           copy[i] = {
             from: "ai",
-            text: data.reply || "AI से जवाब नहीं मिला।",
+            text:
+              data.reply ||
+              "AI से जवाब नहीं मिला।",
           };
         }
 
@@ -951,7 +978,9 @@ function App() {
       setChat((c) => {
         const copy = [...c];
 
-        const i = copy.map((x) => x.from).lastIndexOf("ai");
+        const i = copy
+          .map((x) => x.from)
+          .lastIndexOf("ai");
 
         if (i >= 0) {
           copy[i] = {
@@ -970,6 +999,7 @@ function App() {
       <style>{css}</style>
 
       <div className="app">
+
         <header>
           <button
             className="brand"
@@ -984,7 +1014,9 @@ function App() {
 
             <span>
               KisanSaathi AI
-              <small>आपका डिजिटल किसान दोस्त</small>
+              <small>
+                आपका डिजिटल किसान दोस्त
+              </small>
             </span>
           </button>
 
@@ -997,6 +1029,7 @@ function App() {
         </header>
 
         <main>
+
           {tab === "home" && (
             <HomePage
               setTab={setTab}
@@ -1059,6 +1092,7 @@ function App() {
               crops={crops}
             />
           )}
+
         </main>
 
         <button
@@ -1070,6 +1104,7 @@ function App() {
         </button>
 
         <nav className="bottomNav">
+
           <Nav
             active={tab === "home"}
             on={() => setTab("home")}
@@ -1097,6 +1132,7 @@ function App() {
             icon={<User size={19} />}
             text="Profile"
           />
+
         </nav>
       </div>
     </>
@@ -1120,7 +1156,9 @@ function Nav({
 }) {
   return (
     <button
-      className={"navBtn " + (active ? "active" : "")}
+      className={
+        "navBtn " + (active ? "active" : "")
+      }
       onClick={on}
     >
       {icon}
@@ -1140,7 +1178,12 @@ function HomePage({
   setTab: (t: Tab) => void;
   name: string;
 }) {
-  const cards: [string, string, string, Tab][] = [
+  const cards: [
+    string,
+    string,
+    string,
+    Tab
+  ][] = [
     ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
     ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
     ["🌦️", "मौसम", "अपने इलाके का मौसम", "weather"],
@@ -1152,11 +1195,14 @@ function HomePage({
 
   return (
     <>
-      <div className="hero">
-        <h1>नमस्ते {name} 👋</h1>
+      <section className="hero">
+        <h1>
+          नमस्ते {name} 👋
+        </h1>
 
         <p>
-          आज खेती में आपकी मदद के लिए तैयार हूँ।
+          आज खेती में आपकी मदद के लिए
+          तैयार हूँ।
         </p>
 
         <button
@@ -1166,9 +1212,15 @@ function HomePage({
           <CloudSun size={29} />
 
           <div>
-            <strong>आज का मौसम देखें</strong>
+            <strong>
+              आज का मौसम देखें
+            </strong>
+
             <br />
-            <span>अपने इलाके का live मौसम देखें</span>
+
+            <span>
+              अपने इलाके का live मौसम देखें
+            </span>
           </div>
 
           <ArrowLeft
@@ -1179,7 +1231,7 @@ function HomePage({
             }}
           />
         </button>
-      </div>
+      </section>
 
       <div className="grid">
         {cards.map((c) => (
@@ -1188,11 +1240,18 @@ function HomePage({
             key={c[3]}
             onClick={() => setTab(c[3])}
           >
-            <div className="cardIcon">{c[0]}</div>
+            <div className="cardIcon">
+              {c[0]}
+            </div>
 
             <div>
-              <div className="cardTitle">{c[1]}</div>
-              <div className="cardSub">{c[2]}</div>
+              <div className="cardTitle">
+                {c[1]}
+              </div>
+
+              <div className="cardSub">
+                {c[2]}
+              </div>
             </div>
           </button>
         ))}
@@ -1201,8 +1260,9 @@ function HomePage({
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
-        दवा या सिंचाई का फैसला करने से पहले फसल की
-        स्थिति और स्थानीय मौसम जरूर जांचें।
+        दवा या सिंचाई का फैसला करने
+        से पहले फसल की स्थिति और
+        स्थानीय मौसम जरूर जांचें।
       </div>
     </>
   );
@@ -1241,20 +1301,25 @@ function MandiPage({
       }
 
       if (commodity.trim()) {
-        params.set("commodity", commodity.trim());
+        params.set(
+          "commodity",
+          commodity.trim()
+        );
       }
 
       if (market.trim()) {
-        params.set("market", market.trim());
+        params.set(
+          "market",
+          market.trim()
+        );
       }
 
       const r = await fetch(
         `${API_BASE}/api/mandi?${params.toString()}`
       );
 
-      const data: MandiResponse = await r
-        .json()
-        .catch(() => ({
+      const data: MandiResponse =
+        await r.json().catch(() => ({
           ok: false,
           error: "Invalid server response",
         }));
@@ -1311,24 +1376,31 @@ function MandiPage({
       />
 
       <div className="section">
+
         <div className="mandiStatus">
           🟢 <b>Real Mandi Data</b>
           <br />
-          Government of India - Data.gov.in / AGMARKNET
+          Government of India -
+          Data.gov.in / AGMARKNET
         </div>
 
         <input
           className="search"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
           placeholder="🔎 राज्य, फसल, मंडी या जिला खोजें..."
         />
 
         <div className="filterGrid">
+
           <input
             className="search"
             value={state}
-            onChange={(e) => setState(e.target.value)}
+            onChange={(e) =>
+              setState(e.target.value)
+            }
             placeholder="राज्य जैसे Haryana"
           />
 
@@ -1344,9 +1416,12 @@ function MandiPage({
           <input
             className="search"
             value={market}
-            onChange={(e) => setMarket(e.target.value)}
+            onChange={(e) =>
+              setMarket(e.target.value)
+            }
             placeholder="मंडी जैसे Azadpur"
           />
+
         </div>
 
         <button
@@ -1356,7 +1431,10 @@ function MandiPage({
         >
           <RefreshCw
             size={16}
-            style={{ marginRight: 6 }}
+            style={{
+              verticalAlign: "middle",
+              marginRight: 5,
+            }}
           />
 
           {loading
@@ -1372,6 +1450,7 @@ function MandiPage({
             Source: {source}
           </div>
         )}
+
       </div>
 
       {error && (
@@ -1390,13 +1469,18 @@ function MandiPage({
         !error &&
         filtered.length === 0 && (
           <div className="section empty">
-            <div style={{ fontSize: 45 }}>🌾</div>
+            <div style={{ fontSize: 45 }}>
+              🌾
+            </div>
 
-            <h3>मंडी भाव नहीं मिला</h3>
+            <h3>
+              मंडी भाव नहीं मिला
+            </h3>
 
             <p>
-              राज्य या फसल का नाम सही तरीके से
-              डालकर फिर खोजें।
+              राज्य या फसल का नाम
+              सही तरीके से डालकर फिर
+              खोजें।
             </p>
           </div>
         )}
@@ -1407,6 +1491,7 @@ function MandiPage({
           key={`${x.state}-${x.market}-${x.commodity}-${i}`}
         >
           <div className="mandiTop">
+
             <div>
               <div className="mandiCrop">
                 🌾 {x.commodity || "फसल"}
@@ -1434,9 +1519,11 @@ function MandiPage({
                 Modal / क्विंटल
               </div>
             </div>
+
           </div>
 
           <div className="mandiDetails">
+
             <div className="mandiDetail">
               न्यूनतम भाव
               <b>
@@ -1459,13 +1546,18 @@ function MandiPage({
 
             <div className="mandiDetail">
               Variety
-              <b>{x.variety || "-"}</b>
+              <b>
+                {x.variety || "-"}
+              </b>
             </div>
 
             <div className="mandiDetail">
               तारीख
-              <b>{x.arrivalDate || "-"}</b>
+              <b>
+                {x.arrivalDate || "-"}
+              </b>
             </div>
+
           </div>
         </div>
       ))}
@@ -1476,24 +1568,6 @@ function MandiPage({
 /* =========================================================
    WEATHER
 ========================================================= */
-
-type WeatherData = {
-  current: {
-    temperature_2m: number;
-    relative_humidity_2m: number;
-    apparent_temperature: number;
-    precipitation: number;
-    weather_code: number;
-    wind_speed_10m: number;
-  };
-  daily: {
-    time: string[];
-    temperature_2m_max: number[];
-    temperature_2m_min: number[];
-    weather_code: number[];
-    precipitation_probability_max: number[];
-  };
-};
 
 function WeatherPage({
   setTab,
@@ -1536,12 +1610,15 @@ function WeatherPage({
             throw new Error();
           }
 
-          const d: WeatherData = await r.json();
+          const d: WeatherData =
+            await r.json();
 
           setW(d);
 
           setLoc(
-            `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`
+            `${latitude.toFixed(
+              2
+            )}°, ${longitude.toFixed(2)}°`
           );
         } catch {
           setError(
@@ -1599,7 +1676,7 @@ function WeatherPage({
       <PageTitle
         setTab={setTab}
         title="मौसम"
-        sub="Live Weather Forecast"
+        sub="आपके इलाके का live weather"
       />
 
       <div className="locationRow">
@@ -1631,10 +1708,13 @@ function WeatherPage({
         >
           <CloudSun size={52} />
 
-          <h3>अपने इलाके का मौसम देखें</h3>
+          <h3>
+            अपने इलाके का मौसम देखें
+          </h3>
 
           <p className="muted">
-            Location अनुमति देने के बाद live forecast आएगा।
+            Location अनुमति देने के बाद
+            live forecast आएगा।
           </p>
 
           <button
@@ -1660,8 +1740,11 @@ function WeatherPage({
       ) : (
         <>
           <div className="weatherBig">
+
             <div style={{ fontSize: 48 }}>
-              {emo(w.current.weather_code)}
+              {emo(
+                w.current.weather_code
+              )}
             </div>
 
             <div className="temperature">
@@ -1672,15 +1755,22 @@ function WeatherPage({
             </div>
 
             <h3>
-              {txt(w.current.weather_code)}
+              {txt(
+                w.current.weather_code
+              )}
             </h3>
 
             <div className="weatherInfoGrid">
+
               <div className="weatherInfo">
                 💧 नमी
                 <br />
                 <b>
-                  {w.current.relative_humidity_2m}%
+                  {
+                    w.current
+                      .relative_humidity_2m
+                  }
+                  %
                 </b>
               </div>
 
@@ -1689,7 +1779,8 @@ function WeatherPage({
                 <br />
                 <b>
                   {Math.round(
-                    w.current.wind_speed_10m
+                    w.current
+                      .wind_speed_10m
                   )}{" "}
                   km/h
                 </b>
@@ -1700,7 +1791,8 @@ function WeatherPage({
                 <br />
                 <b>
                   {Math.round(
-                    w.current.apparent_temperature
+                    w.current
+                      .apparent_temperature
                   )}
                   °C
                 </b>
@@ -1710,14 +1802,21 @@ function WeatherPage({
                 🌧️ बारिश
                 <br />
                 <b>
-                  {w.current.precipitation} mm
+                  {
+                    w.current
+                      .precipitation
+                  }{" "}
+                  mm
                 </b>
               </div>
+
             </div>
           </div>
 
           <div className="section">
-            <h3>📅 अगले 3 दिन</h3>
+            <h3>
+              📅 अगले 3 दिन
+            </h3>
 
             <div className="forecast">
               {w.daily.time.map(
@@ -1736,17 +1835,20 @@ function WeatherPage({
 
                     <div className="forecastIcon">
                       {emo(
-                        w.daily.weather_code[i]
+                        w.daily
+                          .weather_code[i]
                       )}
                     </div>
 
                     <b>
                       {Math.round(
-                        w.daily.temperature_2m_max[i]
+                        w.daily
+                          .temperature_2m_max[i]
                       )}
                       ° /{" "}
                       {Math.round(
-                        w.daily.temperature_2m_min[i]
+                        w.daily
+                          .temperature_2m_min[i]
                       )}
                       °
                     </b>
@@ -1755,7 +1857,9 @@ function WeatherPage({
                       बारिश{" "}
                       {
                         w.daily
-                          .precipitation_probability_max[i]
+                          .precipitation_probability_max[
+                          i
+                        ]
                       }
                       %
                     </div>
@@ -1767,9 +1871,9 @@ function WeatherPage({
 
           <div className="advice">
             🌾 <b>किसान सलाह:</b>{" "}
-            बारिश की संभावना अधिक हो तो सिंचाई,
-            स्प्रे और खेत में काम का समय बदलने
-            पर विचार करें।
+            बारिश की संभावना अधिक हो तो
+            सिंचाई, स्प्रे और खेत में काम
+            का समय बदलने पर विचार करें।
           </div>
         </>
       )}
@@ -1821,7 +1925,9 @@ function CropsPage({
       />
 
       <div className="section">
-        <h3>🌱 नई फसल जोड़ें</h3>
+        <h3>
+          🌱 नई फसल जोड़ें
+        </h3>
 
         <input
           className="search"
@@ -1845,18 +1951,23 @@ function CropsPage({
           className="primary"
           onClick={save}
         >
-          <Plus size={16} />
-          {" "}फसल सेव करें
+          <Plus size={16} /> फसल सेव करें
         </button>
       </div>
 
       {crops.length === 0 ? (
         <div className="section empty">
-          <div style={{ fontSize: 45 }}>🌱</div>
+          <div style={{ fontSize: 45 }}>
+            🌱
+          </div>
 
-          <h3>अभी कोई फसल सेव नहीं है</h3>
+          <h3>
+            अभी कोई फसल सेव नहीं है
+          </h3>
 
-          <p>ऊपर से अपनी फसल जोड़ें।</p>
+          <p>
+            ऊपर से अपनी फसल जोड़ें।
+          </p>
         </div>
       ) : (
         <div className="section">
@@ -1871,8 +1982,9 @@ function CropsPage({
                 </div>
 
                 <div className="muted">
-                  {c.area || "क्षेत्र नहीं दिया"} ·{" "}
-                  {c.note}
+                  {c.area ||
+                    "क्षेत्र नहीं दिया"}{" "}
+                  · {c.note}
                 </div>
               </div>
 
@@ -1909,7 +2021,9 @@ function DoctorPage({
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] =
+    useState<File | null>(null);
+
   const [url, setUrl] = useState("");
   const [result, setResult] = useState("");
 
@@ -1918,7 +2032,9 @@ function DoctorPage({
     setResult("");
 
     if (f) {
-      setUrl(URL.createObjectURL(f));
+      setUrl(
+        URL.createObjectURL(f)
+      );
     } else {
       setUrl("");
     }
@@ -1936,7 +2052,7 @@ function DoctorPage({
     <>
       <PageTitle
         setTab={setTab}
-        title="फसल जाँच"
+        title="फसल जाँचें"
         sub="Crop Doctor"
       />
 
@@ -1944,10 +2060,13 @@ function DoctorPage({
         <div className="upload">
           <Camera size={48} />
 
-          <h3>अपनी फसल की साफ फोटो चुनें</h3>
+          <h3>
+            अपनी फसल की साफ फोटो चुनें
+          </h3>
 
           <p className="muted">
-            अच्छी रोशनी में पत्ती/फल की नज़दीकी फोटो लें।
+            अच्छी रोशनी में पत्ती/फल की
+            नज़दीकी फोटो लें।
           </p>
 
           <input
@@ -1992,11 +2111,15 @@ function DoctorPage({
       <div className="section">
         <Stethoscope size={28} />
 
-        <h3>ध्यान रखें</h3>
+        <h3>
+          ध्यान रखें
+        </h3>
 
         <p className="muted">
-          सिर्फ फोटो के आधार पर दवा तय करना सुरक्षित नहीं है।
-          फसल, उम्र, खेत, मौसम और लक्षण भी जरूरी हैं।
+          सिर्फ फोटो के आधार पर दवा
+          तय करना सुरक्षित नहीं है।
+          फसल, उम्र, खेत, मौसम और
+          लक्षण भी जरूरी हैं।
         </p>
       </div>
     </>
@@ -2042,7 +2165,9 @@ function StorePage({
                 alignItems: "center",
               }}
             >
-              <span style={{ fontSize: 28 }}>
+              <span
+                style={{ fontSize: 28 }}
+              >
                 {p.emoji}
               </span>
 
@@ -2077,9 +2202,11 @@ function StorePage({
       </div>
 
       <div className="advice">
-        ℹ️ ये अभी app के sample products हैं।
-        वास्तविक खरीद के लिए payment, delivery और
-        verified seller backend जोड़ना होगा।
+        ℹ️ ये अभी app के sample
+        products हैं। वास्तविक खरीद के
+        लिए payment, delivery और
+        verified seller backend जोड़ना
+        होगा।
       </div>
     </>
   );
@@ -2109,14 +2236,16 @@ function CartPage({
       <PageTitle
         setTab={setTab}
         title="Cart"
-        sub="आपके चुने हुए सामान"
+        sub="आपके products"
       />
 
       {!ids.length ? (
         <div className="section empty">
           <ShoppingCart size={50} />
 
-          <h3>Cart खाली है</h3>
+          <h3>
+            Cart खाली है
+          </h3>
 
           <button
             className="addBtn"
@@ -2127,10 +2256,12 @@ function CartPage({
         </div>
       ) : (
         <div className="section">
+
           {ids.map((id) => {
-            const p = products.find(
-              (x) => x.id === id
-            );
+            const p =
+              products.find(
+                (x) => x.id === id
+              );
 
             if (!p) return null;
 
@@ -2143,34 +2274,48 @@ function CartPage({
                   <b>{p.name}</b>
 
                   <div className="muted">
-                    ₹{p.price} × {cart[id]}
+                    ₹{p.price} ×{" "}
+                    {cart[id]}
                   </div>
                 </div>
 
                 <div className="quantity">
+
                   <button
-                    onClick={() => remove(id)}
+                    onClick={() =>
+                      remove(id)
+                    }
                   >
                     <Minus size={15} />
                   </button>
 
-                  <b>{cart[id]}</b>
+                  <b>
+                    {cart[id]}
+                  </b>
 
                   <button
-                    onClick={() => add(id)}
+                    onClick={() =>
+                      add(id)
+                    }
                   >
                     <Plus size={15} />
                   </button>
+
                 </div>
               </div>
             );
           })}
 
           <div className="total">
-            <span>कुल राशि</span>
+            <span>
+              कुल राशि
+            </span>
 
             <span>
-              ₹{total.toLocaleString("en-IN")}
+              ₹
+              {total.toLocaleString(
+                "en-IN"
+              )}
             </span>
           </div>
 
@@ -2184,6 +2329,7 @@ function CartPage({
           >
             ऑर्डर करें
           </button>
+
         </div>
       )}
     </>
@@ -2220,18 +2366,22 @@ function ChatPage({
       <PageTitle
         setTab={setTab}
         title="AI Kisan"
-        sub="खेती से जुड़ा सवाल पूछें"
+        sub="खेती से जुड़े सवाल पूछें"
       />
 
       <div className="chatBox">
+
         {!chat.length ? (
           <div className="empty">
             <MessageCircle size={48} />
 
-            <h3>नमस्ते किसान भाई 👋</h3>
+            <h3>
+              नमस्ते किसान भाई 👋
+            </h3>
 
             <p>
-              फसल, मौसम, मंडी या खेती के बारे में पूछें।
+              फसल, मौसम, मंडी या खेती
+              के बारे में पूछें।
             </p>
           </div>
         ) : (
@@ -2257,6 +2407,7 @@ function ChatPage({
             </div>
           ))
         )}
+
       </div>
 
       <div className="quick">
@@ -2271,6 +2422,7 @@ function ChatPage({
       </div>
 
       <div className="inputRow">
+
         <input
           value={q}
           onChange={(e) =>
@@ -2290,6 +2442,7 @@ function ChatPage({
         >
           <Send size={18} />
         </button>
+
       </div>
     </>
   );
@@ -2317,19 +2470,26 @@ function ProfilePage({
       />
 
       <div className="section profileCard">
+
         <div className="bigProfile">
           <User size={36} />
         </div>
 
-        <h2>{name}</h2>
+        <h2>
+          {name}
+        </h2>
 
         <p className="muted">
           {crops.length} फसल सेव हैं
         </p>
+
       </div>
 
       <div className="section">
-        <h3>🏛️ सरकारी योजनाएं</h3>
+
+        <h3>
+          🏛️ सरकारी योजनाएं
+        </h3>
 
         {schemes.map((s) => (
           <div
@@ -2340,8 +2500,12 @@ function ProfilePage({
               {s.icon}
             </div>
 
-            <div style={{ flex: 1 }}>
-              <b>{s.title}</b>
+            <div
+              style={{ flex: 1 }}
+            >
+              <b>
+                {s.title}
+              </b>
 
               <div className="muted">
                 {s.text}
@@ -2358,21 +2522,28 @@ function ProfilePage({
             </div>
           </div>
         ))}
+
       </div>
 
       <div className="section">
-        <h3>ℹ️ ऐप की स्थिति</h3>
+
+        <h3>
+          ℹ️ ऐप की स्थिति
+        </h3>
 
         <p className="muted">
-          ✅ Real Mandi Bhav - Government Data.gov.in /
+          ✅ Real Mandi Bhav -
+          Government Data.gov.in /
           AGMARKNET
           <br />
           ✅ AI Kisan - Render backend
           <br />
           ✅ Weather - live forecast
           <br />
-          🌱 Crop Doctor - safe guidance mode
+          🌱 Crop Doctor - safe guidance
+          mode
         </p>
+
       </div>
     </>
   );
@@ -2382,7 +2553,8 @@ function ProfilePage({
    START APP
 ========================================================= */
 
-const root = document.getElementById("root");
+const root =
+  document.getElementById("root");
 
 if (root) {
   createRoot(root).render(
