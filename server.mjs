@@ -19,73 +19,96 @@ const PORT = process.env.PORT || 10000;
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-/*
-=========================================================
-GEMINI MODEL
-=========================================================
-Google का current stable Flash model.
-अगर Render Environment में GEMINI_MODEL नहीं है,
-तो यह model इस्तेमाल होगा.
-*/
 const GEMINI_MODEL =
-  process.env.GEMINI_MODEL || "gemini-3.7-flash";
+  process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
-/*
-=========================================================
-KISANSAATHI AI SYSTEM
-=========================================================
-*/
+/* =========================================================
+   KISANSAATHI AI - FARMING SYSTEM
+========================================================= */
 
 const KISAN_SYSTEM_INSTRUCTION = `
-You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
+तुम KisanSaathi AI हो — भारतीय किसानों के लिए आसान और भरोसेमंद खेती सहायक।
 
-Reply in simple Hindi or easy Hinglish.
+भाषा:
+- किसान जिस भाषा में पूछे उसी भाषा में जवाब दो।
+- Hindi में पूछे तो सरल Hindi/Hinglish में जवाब दो।
+- बहुत कठिन कृषि शब्दों से बचो।
+- जवाब छोटा लेकिन उपयोगी रखो।
 
-Be practical, clear and concise.
+तुम्हारा काम:
+1. फसल की देखभाल
+2. खाद और पोषण
+3. सिंचाई
+4. कीट और रोग की सामान्य जानकारी
+5. बुवाई और फसल प्रबंधन
+6. कटाई का सामान्य समय
+7. मिट्टी और खेती से जुड़ी सामान्य सलाह
 
-For crop problems, ask for:
-- crop name
-- crop age
-- state/district
-- symptoms
+CROP PROBLEM:
+अगर किसान फसल की बीमारी/समस्या पूछता है तो जरूरत के अनुसार पूछो:
+- कौन सी फसल?
+- फसल कितने दिन की है?
+- राज्य और जिला?
+- समस्या कब से है?
+- पत्तियों/तने/फल में क्या लक्षण हैं?
+- खेत में पानी या नमी की स्थिति कैसी है?
 
-when needed.
+अगर फोटो उपलब्ध नहीं है तो फोटो देखने का दावा बिल्कुल मत करो।
 
-For fertilizer or pesticide advice:
-- do not invent unsafe exact doses
-- follow product label
-- mention local agriculture expert when exact dosage depends on product,
-  crop, soil or region.
+FERTILIZER:
+अगर किसान पूछता है "खाद कब डालें", "कौन सी खाद डालें" आदि:
+- पहले फसल और फसल की उम्र/बुवाई के दिन समझो।
+- सामान्य कृषि जानकारी दो।
+- बहुत ज्यादा या गलत निश्चित मात्रा खुद से मत गढ़ो।
+- जहाँ मात्रा मिट्टी, फसल, किस्म या उत्पाद पर निर्भर करती है वहाँ मिट्टी परीक्षण/स्थानीय कृषि विशेषज्ञ और उत्पाद के label की सलाह दो।
+- Urea, DAP, NPK या किसी दूसरे fertilizer की exact मात्रा तभी बताओ जब संदर्भ पर्याप्त हो और सलाह सुरक्षित/सामान्य हो।
 
-Never invent live mandi prices.
+PESTICIDE:
+- बिना पर्याप्त जानकारी के खतरनाक pesticide dose मत गढ़ो।
+- दवा का label और स्थानीय कृषि विभाग/कृषि विशेषज्ञ की सलाह लेने को कहो।
+- एक ही समस्या के लिए कई दवाओं का अनावश्यक मिश्रण मत सुझाओ।
+- किसान को safety precautions बताओ।
 
-Never invent live weather.
+LIVE DATA:
+- Live mandi price खुद से कभी मत बनाओ।
+- Live weather खुद से कभी मत बनाओ।
+- किसान live mandi भाव पूछे तो app के मंडी भाव section का उपयोग करने को कहो।
+- किसान live weather पूछे तो app के weather section का उपयोग करने को कहो।
+- अगर live data API से उपलब्ध नहीं है तो साफ-साफ बताओ।
 
-If the user asks for live mandi prices,
-tell them to use the app's Real Mandi section.
+RESPONSE STYLE:
+जवाब इस तरह दो:
 
-If the user asks for live weather,
-tell them to use the app's Weather section.
+"राम-राम किसान भाई 🌾
 
-Do not claim that you saw a crop photo unless an image was actually
-provided to the API.
+[सीधा जवाब]
 
-Talk like a friendly Indian farming assistant.
+अगर जरूरत हो:
+1. ...
+2. ...
+3. ...
+
+अगर आप अपनी फसल की उम्र और जिला बता दें तो मैं सलाह और बेहतर कर सकता हूँ।"
+
+जरूरी:
+- झूठी जानकारी मत बनाओ।
+- किसान को डराओ मत।
+- जरूरत से ज्यादा लंबा जवाब मत दो।
+- अगर सवाल स्पष्ट है तो सीधे जवाब दो।
+- अगर जानकारी कम है तो 1-2 जरूरी सवाल पूछो।
 `;
 
-/*
-=========================================================
-GEMINI
-=========================================================
-*/
+/* =========================================================
+   GEMINI AI
+========================================================= */
 
 async function geminiReply(message) {
   if (!GEMINI_API_KEY) {
     throw new Error(
-      "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+      "GEMINI_API_KEY backend में सेट नहीं है।"
     );
   }
 
@@ -123,8 +146,8 @@ async function geminiReply(message) {
       ],
 
       generationConfig: {
-        maxOutputTokens: 500,
-        temperature: 0.7,
+        temperature: 0.4,
+        maxOutputTokens: 900,
       },
     }),
   });
@@ -136,43 +159,13 @@ async function geminiReply(message) {
     console.error(
       "GEMINI API ERROR:",
       response.status,
-      JSON.stringify(body)
+      body
     );
 
-    const apiMessage =
+    throw new Error(
       body?.error?.message ||
-      `Gemini API HTTP ${response.status}`;
-
-    /*
-    साफ error messages
-    */
-
-    if (
-      response.status === 401 ||
-      response.status === 403
-    ) {
-      throw new Error(
-        "Gemini API key गलत है या इस API के लिए अनुमति नहीं है।"
-      );
-    }
-
-    if (
-      response.status === 429
-    ) {
-      throw new Error(
-        "Gemini API की free quota/rate limit खत्म हो गई है। थोड़ी देर बाद फिर कोशिश करें।"
-      );
-    }
-
-    if (
-      response.status === 402
-    ) {
-      throw new Error(
-        "Gemini API billing/credits उपलब्ध नहीं हैं।"
-      );
-    }
-
-    throw new Error(apiMessage);
+        `Gemini API HTTP ${response.status}`
+    );
   }
 
   const reply =
@@ -190,11 +183,9 @@ async function geminiReply(message) {
   return reply;
 }
 
-/*
-=========================================================
-HEALTH
-=========================================================
-*/
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -215,11 +206,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-/*
-=========================================================
-AI CHAT
-=========================================================
-*/
+/* =========================================================
+   AI CHAT
+========================================================= */
 
 app.post("/api/chat", async (req, res) => {
   try {
@@ -240,10 +229,20 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
+    console.log(
+      "AI QUESTION:",
+      message
+    );
+
     const reply =
       await geminiReply(message);
 
+    console.log(
+      "AI REPLY SUCCESS"
+    );
+
     return res.json({
+      ok: true,
       reply,
       mode: "gemini",
     });
@@ -254,19 +253,19 @@ app.post("/api/chat", async (req, res) => {
     );
 
     return res.status(500).json({
+      ok: false,
+
       error:
         error instanceof Error
-          ? error.message
+          ? `Gemini AI error: ${error.message}`
           : "Gemini AI से जवाब नहीं मिला।",
     });
   }
 });
 
-/*
-=========================================================
-MANDI ALIASES
-=========================================================
-*/
+/* =========================================================
+   MANDI COMMODITY ALIASES
+========================================================= */
 
 const aliases = {
   "गेहूं": "Wheat",
@@ -307,22 +306,22 @@ const aliases = {
 
   "अरहर": "Arhar (Tur/Red Gram)",
 
-  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
+  "बाजरा":
+    "Bajra (Pearl Millet/Cumbu)",
 
   "जौ": "Barley",
   "barley": "Barley",
 
-  "मूंग": "Green Gram (Moong)(Whole)",
+  "मूंग":
+    "Green Gram (Moong)(Whole)",
 
   "उड़द":
     "Black Gram (Urd Beans)(Whole)",
 };
 
-/*
-=========================================================
-TEXT NORMALIZE
-=========================================================
-*/
+/* =========================================================
+   TEXT NORMALIZE
+========================================================= */
 
 function cleanText(value) {
   return String(value || "")
@@ -331,6 +330,10 @@ function cleanText(value) {
     .replace(/\s+/g, " ");
 }
 
+/* =========================================================
+   SEARCH NORMALIZE
+========================================================= */
+
 function normalizeSearch(value) {
   return cleanText(value)
     .replace(/[(),./_-]/g, " ")
@@ -338,11 +341,9 @@ function normalizeSearch(value) {
     .trim();
 }
 
-/*
-=========================================================
-FIELD MATCH
-=========================================================
-*/
+/* =========================================================
+   FIELD MATCH
+========================================================= */
 
 function textMatches(value, search) {
   if (!search) {
@@ -366,11 +367,9 @@ function textMatches(value, search) {
   return valueText.includes(searchText);
 }
 
-/*
-=========================================================
-GOVERNMENT API REQUEST
-=========================================================
-*/
+/* =========================================================
+   GOVERNMENT MANDI API
+========================================================= */
 
 async function fetchMandiPage({
   state = "",
@@ -379,12 +378,6 @@ async function fetchMandiPage({
   offset = 0,
   limit = 1000,
 }) {
-  if (!DATA_GOV_API_KEY) {
-    throw new Error(
-      "DATA_GOV_API_KEY सेट नहीं है।"
-    );
-  }
-
   const params =
     new URLSearchParams();
 
@@ -473,11 +466,9 @@ async function fetchMandiPage({
   return body;
 }
 
-/*
-=========================================================
-NORMALIZE RECORD
-=========================================================
-*/
+/* =========================================================
+   NORMALIZE MANDI RECORD
+========================================================= */
 
 function normalizeRecord(item) {
   return {
@@ -525,11 +516,9 @@ function normalizeRecord(item) {
   };
 }
 
-/*
-=========================================================
-NORMALIZE RECORDS
-=========================================================
-*/
+/* =========================================================
+   NORMALIZE RECORDS
+========================================================= */
 
 function normalizeRecords(records) {
   if (!Array.isArray(records)) {
@@ -544,11 +533,9 @@ function normalizeRecords(records) {
     );
 }
 
-/*
-=========================================================
-LOCAL FILTER
-=========================================================
-*/
+/* =========================================================
+   LOCAL FILTER
+========================================================= */
 
 function filterRecords(
   records,
@@ -587,11 +574,9 @@ function filterRecords(
   );
 }
 
-/*
-=========================================================
-SEARCH MANDI
-=========================================================
-*/
+/* =========================================================
+   SEARCH MANDI
+========================================================= */
 
 async function searchMandi({
   state,
@@ -599,8 +584,8 @@ async function searchMandi({
   market,
 }) {
   /*
-  ATTEMPT 1
-  State + Commodity + Market
+   ATTEMPT 1
+   State + Commodity + Market
   */
 
   console.log(
@@ -648,12 +633,12 @@ async function searchMandi({
   }
 
   /*
-  ATTEMPT 2
-  State + Commodity
+   ATTEMPT 2
+   State + Commodity
   */
 
   console.log(
-    "MANDI SEARCH ATTEMPT 2: state + commodity"
+    "MANDI SEARCH ATTEMPT 2"
   );
 
   try {
@@ -692,12 +677,12 @@ async function searchMandi({
   }
 
   /*
-  ATTEMPT 3
-  State only
+   ATTEMPT 3
+   State only
   */
 
   console.log(
-    "MANDI SEARCH ATTEMPT 3: state only"
+    "MANDI SEARCH ATTEMPT 3"
   );
 
   try {
@@ -736,13 +721,12 @@ async function searchMandi({
   }
 
   /*
-  ATTEMPT 4
-  No filters.
-  Maximum 5 pages.
+   ATTEMPT 4
+   No filters + pages
   */
 
   console.log(
-    "MANDI SEARCH ATTEMPT 4: no API filters"
+    "MANDI SEARCH ATTEMPT 4"
   );
 
   try {
@@ -818,11 +802,9 @@ async function searchMandi({
   }
 }
 
-/*
-=========================================================
-REAL GOVERNMENT MANDI API
-=========================================================
-*/
+/* =========================================================
+   REAL GOVERNMENT MANDI API ROUTE
+========================================================= */
 
 app.get(
   "/api/mandi",
@@ -833,7 +815,7 @@ app.get(
           ok: false,
 
           error:
-            "DATA_GOV_API_KEY Render Environment में सेट नहीं है।",
+            "DATA_GOV_API_KEY backend में सेट नहीं है। Render Environment में key डालें।",
         });
       }
 
@@ -878,6 +860,10 @@ app.get(
           commodity,
           market: rawMarket,
         });
+
+      /*
+       Latest date first
+      */
 
       mandi.sort(
         (a, b) => {
@@ -941,11 +927,9 @@ app.get(
   }
 );
 
-/*
-=========================================================
-ROOT
-=========================================================
-*/
+/* =========================================================
+   ROOT
+========================================================= */
 
 app.get(
   "/",
@@ -981,11 +965,9 @@ app.get(
   }
 );
 
-/*
-=========================================================
-START SERVER
-=========================================================
-*/
+/* =========================================================
+   START SERVER
+========================================================= */
 
 app.listen(
   PORT,
