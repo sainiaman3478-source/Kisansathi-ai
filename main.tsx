@@ -19,19 +19,10 @@ import {
   X,
 } from "lucide-react";
 
-/* =========================================================
-   KISANSAATHI AI
-   FRONTEND -> RENDER BACKEND
-========================================================= */
-
 const API_BASE = (
   import.meta.env.VITE_API_BASE ||
   "https://kisansathi-ai-q9b0.onrender.com"
 ).replace(/\/$/, "");
-
-/* =========================================================
-   TYPES
-========================================================= */
 
 type Tab =
   | "home"
@@ -103,9 +94,7 @@ type WeatherData = {
   };
 };
 
-/* =========================================================
-   PRODUCTS
-========================================================= */
+/* ================= PRODUCTS ================= */
 
 const products: Product[] = [
   {
@@ -138,9 +127,7 @@ const products: Product[] = [
   },
 ];
 
-/* =========================================================
-   GOVERNMENT SCHEMES
-========================================================= */
+/* ================= SCHEMES ================= */
 
 const schemes = [
   {
@@ -163,9 +150,7 @@ const schemes = [
   },
 ];
 
-/* =========================================================
-   CSS
-========================================================= */
+/* ================= CSS ================= */
 
 const css = `
 * {
@@ -316,7 +301,7 @@ main {
 }
 
 .card:active {
-  transform: scale(0.985);
+  transform: scale(.985);
 }
 
 .cardIcon {
@@ -400,7 +385,7 @@ main {
 }
 
 .primary:disabled {
-  opacity: 0.65;
+  opacity: .65;
   cursor: not-allowed;
 }
 
@@ -819,9 +804,7 @@ main {
 }
 `;
 
-/* =========================================================
-   PAGE TITLE
-========================================================= */
+/* ================= PAGE TITLE ================= */
 
 function PageTitle({
   setTab,
@@ -839,7 +822,7 @@ function PageTitle({
         onClick={() => setTab("home")}
         aria-label="Back"
       >
-        <ArrowLeft size={20} />
+        <ArrowLeft size={21} />
       </button>
 
       <div>
@@ -850,374 +833,7 @@ function PageTitle({
   );
 }
 
-/* =========================================================
-   APP
-========================================================= */
-
-function App() {
-  const [tab, setTab] = useState<Tab>("home");
-
-  const [name] = useState("किसान भाई");
-
-  const [cart, setCart] = useState<Record<number, number>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ks_cart") || "{}");
-    } catch {
-      return {};
-    }
-  });
-
-  const [crops, setCrops] = useState<Crop[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ks_crops") || "[]");
-    } catch {
-      return [];
-    }
-  });
-
-  const [chat, setChat] = useState<ChatMsg[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("ks_chat") || "[]");
-    } catch {
-      return [];
-    }
-  });
-
-  const [q, setQ] = useState("");
-
-  useEffect(() => {
-    localStorage.setItem("ks_cart", JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem("ks_crops", JSON.stringify(crops));
-  }, [crops]);
-
-  useEffect(() => {
-    localStorage.setItem("ks_chat", JSON.stringify(chat));
-  }, [chat]);
-
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
-
-  const total = Object.entries(cart).reduce(
-    (sum, [id, n]) =>
-      sum +
-      (products.find((p) => p.id === Number(id))?.price || 0) * n,
-    0
-  );
-
-  const add = (id: number) => {
-    setCart((c) => ({
-      ...c,
-      [id]: (c[id] || 0) + 1,
-    }));
-  };
-
-  const remove = (id: number) => {
-    setCart((c) => {
-      const x = { ...c };
-
-      if (x[id] > 1) {
-        x[id]--;
-      } else {
-        delete x[id];
-      }
-
-      return x;
-    });
-  };
-
-  /* =======================================================
-     AI CHAT
-  ======================================================= */
-
-  const send = async (text = q) => {
-    const t = text.trim();
-
-    if (!t) return;
-
-    setChat((c) => [
-      ...c,
-      {
-        from: "user",
-        text: t,
-      },
-      {
-        from: "ai",
-        text: "AI Kisan सोच रहा है...",
-      },
-    ]);
-
-    setQ("");
-
-    try {
-      const controller = new AbortController();
-
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 30000);
-
-      const response = await fetch(`${API_BASE}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: t,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "AI service error"
-        );
-      }
-
-      setChat((c) => {
-        const copy = [...c];
-
-        const index = copy
-          .map((x) => x.from)
-          .lastIndexOf("ai");
-
-        if (index >= 0) {
-          copy[index] = {
-            from: "ai",
-            text: data.reply || "AI से जवाब नहीं मिला।",
-          };
-        }
-
-        return copy;
-      });
-    } catch (e) {
-      const msg =
-        e instanceof DOMException && e.name === "AbortError"
-          ? "AI server ने समय पर जवाब नहीं दिया।"
-          : e instanceof Error
-          ? e.message
-          : "AI सेवा से कनेक्शन नहीं हो पाया।";
-
-      setChat((c) => {
-        const copy = [...c];
-
-        const index = copy
-          .map((x) => x.from)
-          .lastIndexOf("ai");
-
-        if (index >= 0) {
-          copy[index] = {
-            from: "ai",
-            text: "❌ " + msg,
-          };
-        }
-
-        return copy;
-      });
-    }
-  };
-
-  return (
-    <>
-      <style>{css}</style>
-
-      <div className="app">
-        <header>
-          <button
-            className="brand"
-            style={{
-              border: 0,
-              background: "transparent",
-              padding: 0,
-            }}
-            onClick={() => setTab("home")}
-          >
-            <span className="logo">🌾</span>
-
-            <span>
-              KisanSaathi AI
-              <small>आपका डिजिटल किसान दोस्त</small>
-            </span>
-          </button>
-
-          <button
-            className="profileIcon"
-            onClick={() => setTab("profile")}
-          >
-            <User size={20} />
-          </button>
-        </header>
-
-        <main>
-          {tab === "home" && (
-            <HomePage
-              setTab={setTab}
-              name={name}
-            />
-          )}
-
-          {tab === "mandi" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="मंडी भाव"
-                sub="Real Mandi Data"
-              />
-              <MandiPage setTab={setTab} />
-            </>
-          )}
-
-          {tab === "weather" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="मौसम"
-                sub="Live Weather"
-              />
-              <WeatherPage setTab={setTab} />
-            </>
-          )}
-
-          {tab === "crops" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="मेरी फसल"
-                sub="अपनी फसल संभालें"
-              />
-              <CropsPage
-                setTab={setTab}
-                crops={crops}
-                setCrops={setCrops}
-              />
-            </>
-          )}
-
-          {tab === "doctor" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="फसल जाँचें"
-                sub="AI Crop Doctor"
-              />
-              <DoctorPage setTab={setTab} />
-            </>
-          )}
-
-          {tab === "store" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="Kisan Store"
-                sub="कृषि सामान"
-              />
-              <StorePage
-                setTab={setTab}
-                cart={cart}
-                add={add}
-              />
-            </>
-          )}
-
-          {tab === "cart" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="Cart"
-                sub="आपके उत्पाद"
-              />
-              <CartPage
-                setTab={setTab}
-                cart={cart}
-                add={add}
-                remove={remove}
-                total={total}
-              />
-            </>
-          )}
-
-          {tab === "chat" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="AI Kisan"
-                sub="खेती से जुड़े सवाल पूछें"
-              />
-              <ChatPage
-                setTab={setTab}
-                chat={chat}
-                q={q}
-                setQ={setQ}
-                send={send}
-              />
-            </>
-          )}
-
-          {tab === "profile" && (
-            <>
-              <PageTitle
-                setTab={setTab}
-                title="Profile"
-                sub="किसान प्रोफाइल"
-              />
-              <ProfilePage
-                setTab={setTab}
-                name={name}
-                crops={crops}
-              />
-            </>
-          )}
-        </main>
-
-        <button
-          className="fab"
-          onClick={() => setTab("chat")}
-          aria-label="AI Kisan"
-        >
-          <MessageCircle size={23} />
-        </button>
-
-        <nav className="bottomNav">
-          <Nav
-            active={tab === "home"}
-            on={() => setTab("home")}
-            icon={<Home size={19} />}
-            text="Home"
-          />
-
-          <Nav
-            active={tab === "crops"}
-            on={() => setTab("crops")}
-            icon={<Leaf size={19} />}
-            text="मेरी फसल"
-          />
-
-          <Nav
-            active={tab === "store"}
-            on={() => setTab("store")}
-            icon={<ShoppingCart size={19} />}
-            text={count ? `Store (${count})` : "Store"}
-          />
-
-          <Nav
-            active={tab === "profile"}
-            on={() => setTab("profile")}
-            icon={<User size={19} />}
-            text="Profile"
-          />
-        </nav>
-      </div>
-    </>
-  );
-}
-
-/* =========================================================
-   NAV
-========================================================= */
+/* ================= NAV ================= */
 
 function Nav({
   active,
@@ -1241,9 +857,7 @@ function Nav({
   );
 }
 
-/* =========================================================
-   HOME
-========================================================= */
+/* ================= HOME ================= */
 
 function HomePage({
   setTab,
@@ -1304,7 +918,6 @@ function HomePage({
 
             <div>
               <div className="cardTitle">{c[1]}</div>
-
               <div className="cardSub">{c[2]}</div>
             </div>
           </button>
@@ -1314,16 +927,14 @@ function HomePage({
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
-        दवा या सिंचाई का फैसला करने से पहले
-        फसल की स्थिति और स्थानीय मौसम जरूर जांचें।
+        दवा या सिंचाई का फैसला करने से पहले फसल की
+        स्थिति और स्थानीय मौसम जरूर जांचें।
       </div>
     </>
   );
 }
 
-/* =========================================================
-   REAL MANDI
-========================================================= */
+/* ================= MANDI ================= */
 
 function MandiPage({
   setTab,
@@ -1334,7 +945,6 @@ function MandiPage({
   const [commodity, setCommodity] = useState("");
   const [market, setMarket] = useState("");
   const [search, setSearch] = useState("");
-
   const [records, setRecords] = useState<MandiRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1364,23 +974,22 @@ function MandiPage({
         params.set("market", market.trim());
       }
 
-      const url =
-        `${API_BASE}/api/mandi?${params.toString()}`;
-
       const controller = new AbortController();
 
       const timeout = setTimeout(() => {
         controller.abort();
-      }, 20000);
+      }, 30000);
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        cache: "no-store",
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${API_BASE}/api/mandi?${params.toString()}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 
@@ -1391,8 +1000,7 @@ function MandiPage({
         contentType.includes("application/json")
           ? await response.json().catch(() => ({
               ok: false,
-              error:
-                "Server ने गलत JSON response दिया।",
+              error: "Server ने गलत JSON response दिया।",
             }))
           : {
               ok: false,
@@ -1415,7 +1023,7 @@ function MandiPage({
       setSource(data.source || "");
       setHasLoaded(true);
 
-      if (mandiData.length === 0) {
+      if (!mandiData.length) {
         setError(
           "इस search के लिए अभी कोई mandi record नहीं मिला।"
         );
@@ -1429,7 +1037,7 @@ function MandiPage({
         e.name === "AbortError"
       ) {
         setError(
-          "Mandi server ने 20 सेकंड में जवाब नहीं दिया।"
+          "Mandi server ने समय पर जवाब नहीं दिया।"
         );
       } else {
         setError(
@@ -1457,6 +1065,12 @@ function MandiPage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="मंडी भाव"
+        sub="Real Government Mandi Data"
+      />
+
       <div className="section">
         <div className="mandiStatus">
           🟢 <b>Real Mandi Data</b>
@@ -1527,9 +1141,7 @@ function MandiPage({
       {!hasLoaded && !loading && (
         <div className="section empty">
           <div style={{ fontSize: 45 }}>🌾</div>
-
           <h3>Real Mandi Bhav देखें</h3>
-
           <p>
             राज्य, फसल या मंडी डालें और ऊपर वाला
             बटन दबाएं।
@@ -1549,22 +1161,6 @@ function MandiPage({
         </div>
       )}
 
-      {!loading &&
-        hasLoaded &&
-        !error &&
-        filtered.length === 0 && (
-          <div className="section empty">
-            <div style={{ fontSize: 45 }}>🌾</div>
-
-            <h3>मंडी भाव नहीं मिला</h3>
-
-            <p>
-              राज्य या फसल का नाम सही तरीके से डालकर
-              फिर खोजें।
-            </p>
-          </div>
-        )}
-
       {filtered.map((x, i) => (
         <div
           className="mandiCard"
@@ -1581,7 +1177,9 @@ function MandiPage({
               </div>
 
               <div className="muted">
-                {x.district ? `${x.district}, ` : ""}
+                {x.district
+                  ? `${x.district}, `
+                  : ""}
                 {x.state}
               </div>
             </div>
@@ -1635,9 +1233,7 @@ function MandiPage({
   );
 }
 
-/* =========================================================
-   WEATHER
-========================================================= */
+/* ================= WEATHER ================= */
 
 function WeatherPage({
   setTab,
@@ -1661,12 +1257,9 @@ function WeatherPage({
     setError("");
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      async (p) => {
         try {
-          const {
-            latitude,
-            longitude,
-          } = position.coords;
+          const { latitude, longitude } = p.coords;
 
           const url =
             `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
@@ -1674,19 +1267,18 @@ function WeatherPage({
             `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
             `&timezone=auto&forecast_days=3`;
 
-          const response = await fetch(url);
+          const r = await fetch(url);
 
-          if (!response.ok) {
-            throw new Error();
-          }
+          if (!r.ok) throw new Error();
 
-          const data: WeatherData =
-            await response.json();
+          const d: WeatherData = await r.json();
 
-          setW(data);
+          setW(d);
 
           setLoc(
-            `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°`
+            `${latitude.toFixed(2)}°, ${longitude.toFixed(
+              2
+            )}°`
           );
         } catch {
           setError(
@@ -1700,7 +1292,6 @@ function WeatherPage({
         setError(
           "Location की अनुमति दें, तभी आपके इलाके का live मौसम दिखेगा।"
         );
-
         setLoading(false);
       },
       {
@@ -1741,6 +1332,12 @@ function WeatherPage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="मौसम"
+        sub="Live Weather"
+      />
+
       <div className="locationRow">
         <MapPin size={17} />
 
@@ -1773,7 +1370,8 @@ function WeatherPage({
           <h3>अपने इलाके का मौसम देखें</h3>
 
           <p className="muted">
-            Location अनुमति देने के बाद live forecast आएगा।
+            Location अनुमति देने के बाद live forecast
+            आएगा।
           </p>
 
           <button
@@ -1859,10 +1457,10 @@ function WeatherPage({
             <h3>अगले 3 दिन</h3>
 
             <div className="forecast">
-              {w.daily.time.map((date, i) => (
+              {w.daily.time.map((d, i) => (
                 <div
                   className="forecastCard"
-                  key={date}
+                  key={d}
                 >
                   <b>
                     {i === 0
@@ -1901,22 +1499,13 @@ function WeatherPage({
               ))}
             </div>
           </div>
-
-          <div className="advice">
-            🌾 <b>किसान सलाह:</b>{" "}
-            बारिश की संभावना अधिक हो तो सिंचाई,
-            स्प्रे और खेत में काम का समय बदलने
-            पर विचार करें।
-          </div>
         </>
       )}
     </>
   );
 }
 
-/* =========================================================
-   CROPS
-========================================================= */
+/* ================= CROPS ================= */
 
 function CropsPage({
   setTab,
@@ -1951,20 +1540,30 @@ function CropsPage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="मेरी फसल"
+        sub="आपकी Saved Crops"
+      />
+
       <div className="section">
         <h3>🌱 नई फसल जोड़ें</h3>
 
         <input
           className="search"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
           placeholder="फसल का नाम (गेहूं, धान...)"
         />
 
         <input
           className="search"
           value={area}
-          onChange={(e) => setArea(e.target.value)}
+          onChange={(e) =>
+            setArea(e.target.value)
+          }
           placeholder="खेत/क्षेत्र (जैसे 2 एकड़)"
         />
 
@@ -1979,9 +1578,7 @@ function CropsPage({
       {crops.length === 0 ? (
         <div className="section empty">
           <div style={{ fontSize: 45 }}>🌱</div>
-
           <h3>अभी कोई फसल सेव नहीं है</h3>
-
           <p>ऊपर से अपनी फसल जोड़ें।</p>
         </div>
       ) : (
@@ -2026,36 +1623,120 @@ function CropsPage({
   );
 }
 
-/* =========================================================
-   CROP DOCTOR
-========================================================= */
+/* ================= IMAGE COMPRESS ================= */
+
+async function compressImage(
+  file: File
+): Promise<File> {
+  const image = new Image();
+
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () =>
+        reject(new Error("Image load नहीं हुई"));
+      image.src = objectUrl;
+    });
+
+    const maxSize = 1280;
+
+    let width = image.naturalWidth;
+    let height = image.naturalHeight;
+
+    if (width > maxSize || height > maxSize) {
+      if (width > height) {
+        height = Math.round(
+          (height / width) * maxSize
+        );
+        width = maxSize;
+      } else {
+        width = Math.round(
+          (width / height) * maxSize
+        );
+        height = maxSize;
+      }
+    }
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return file;
+
+    ctx.drawImage(
+      image,
+      0,
+      0,
+      width,
+      height
+    );
+
+    const blob = await new Promise<Blob | null>(
+      (resolve) =>
+        canvas.toBlob(
+          resolve,
+          "image/jpeg",
+          0.78
+        )
+    );
+
+    if (!blob) return file;
+
+    return new File(
+      [blob],
+      "crop-photo.jpg",
+      {
+        type: "image/jpeg",
+      }
+    );
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+/* ================= CROP DOCTOR ================= */
 
 function DoctorPage({
   setTab,
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] =
+    useState<File | null>(null);
+
   const [url, setUrl] = useState("");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
   const [crop, setCrop] = useState("");
   const [symptoms, setSymptoms] = useState("");
 
-  const choose = (selectedFile: File | null) => {
+  const choose = (f: File | null) => {
     if (url) {
       URL.revokeObjectURL(url);
     }
 
-    setFile(selectedFile);
+    setFile(f);
     setResult("");
 
-    if (selectedFile) {
-      setUrl(URL.createObjectURL(selectedFile));
+    if (f) {
+      setUrl(URL.createObjectURL(f));
     } else {
       setUrl("");
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [url]);
 
   const analyze = async () => {
     if (!file || loading) return;
@@ -2064,9 +1745,18 @@ function DoctorPage({
     setResult("");
 
     try {
+      /* फोटो को छोटा करते हैं ताकि Render server
+         पर upload जल्दी हो */
+      const smallImage =
+        await compressImage(file);
+
       const formData = new FormData();
 
-      formData.append("image", file);
+      formData.append(
+        "image",
+        smallImage,
+        "crop-photo.jpg"
+      );
 
       formData.append(
         "crop",
@@ -2080,11 +1770,13 @@ function DoctorPage({
           "कोई अतिरिक्त लक्षण नहीं बताया गया"
       );
 
-      const controller = new AbortController();
+      const controller =
+        new AbortController();
 
+      /* 30 sec की जगह 90 sec */
       const timeout = setTimeout(() => {
         controller.abort();
-      }, 30000);
+      }, 90000);
 
       const response = await fetch(
         `${API_BASE}/api/crop-doctor`,
@@ -2098,11 +1790,17 @@ function DoctorPage({
       clearTimeout(timeout);
 
       const contentType =
-        response.headers.get("content-type") || "";
+        response.headers.get(
+          "content-type"
+        ) || "";
 
       const data =
-        contentType.includes("application/json")
-          ? await response.json().catch(() => ({}))
+        contentType.includes(
+          "application/json"
+        )
+          ? await response
+              .json()
+              .catch(() => ({}))
           : {};
 
       if (!response.ok) {
@@ -2123,7 +1821,7 @@ function DoctorPage({
         e.name === "AbortError"
       ) {
         setResult(
-          "❌ Crop Doctor server ने 30 सेकंड में जवाब नहीं दिया।"
+          "❌ Crop Doctor server ने 90 सेकंड में जवाब नहीं दिया। Render backend या AI API की जांच करनी होगी।"
         );
       } else {
         setResult(
@@ -2139,6 +1837,12 @@ function DoctorPage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="फसल जाँचें"
+        sub="AI Crop Doctor"
+      />
+
       <div className="section">
         <div className="upload">
           <Camera size={48} />
@@ -2146,8 +1850,8 @@ function DoctorPage({
           <h3>🌱 फसल की फोटो लें</h3>
 
           <p className="muted">
-            पत्ती या पौधे की साफ और अच्छी रोशनी
-            वाली फोटो लें।
+            पत्ती या पौधे की साफ और अच्छी रोशनी वाली
+            फोटो लें।
           </p>
 
           <input
@@ -2174,7 +1878,9 @@ function DoctorPage({
           className="search"
           style={{ marginTop: 10 }}
           value={crop}
-          onChange={(e) => setCrop(e.target.value)}
+          onChange={(e) =>
+            setCrop(e.target.value)
+          }
           placeholder="🌾 फसल का नाम (गेहूं, धान, कपास...)"
         />
 
@@ -2232,23 +1938,21 @@ function DoctorPage({
 
         <p className="muted">
           AI की फोटो पहचान शुरुआती सहायता के लिए है।
-          दवा की मात्रा और अंतिम उपचार तय करने से
-          पहले स्थानीय कृषि विशेषज्ञ से पुष्टि करें।
+          दवा की मात्रा और अंतिम उपचार तय करने से पहले
+          स्थानीय कृषि विशेषज्ञ से पुष्टि करें।
         </p>
 
         <div className="doctorTip">
-          💡 बेहतर परिणाम के लिए: पूरी पत्ती,
-          प्रभावित हिस्सा, पौधे का आकार और खेत की
-          स्थिति साफ दिखाई देने वाली फोटो भेजें।
+          💡 बेहतर परिणाम के लिए: पूरी पत्ती, प्रभावित
+          हिस्सा, पौधे का आकार और खेत की स्थिति साफ
+          दिखाई देने वाली फोटो भेजें।
         </div>
       </div>
     </>
   );
 }
 
-/* =========================================================
-   STORE
-========================================================= */
+/* ================= STORE ================= */
 
 function StorePage({
   setTab,
@@ -2266,6 +1970,12 @@ function StorePage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="Kisan Store"
+        sub="कृषि सामान"
+      />
+
       <div className="section">
         {products.map((p) => (
           <div
@@ -2312,19 +2022,11 @@ function StorePage({
           {count ? `(${count})` : ""}
         </button>
       </div>
-
-      <div className="advice">
-        ℹ️ ये अभी app के sample products हैं।
-        वास्तविक खरीद के लिए payment, delivery और
-        verified seller backend जोड़ना होगा।
-      </div>
     </>
   );
 }
 
-/* =========================================================
-   CART
-========================================================= */
+/* ================= CART ================= */
 
 function CartPage({
   setTab,
@@ -2343,6 +2045,12 @@ function CartPage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="Cart"
+        sub="आपका सामान"
+      />
+
       {!ids.length ? (
         <div className="section empty">
           <ShoppingCart size={50} />
@@ -2421,9 +2129,7 @@ function CartPage({
   );
 }
 
-/* =========================================================
-   CHAT
-========================================================= */
+/* ================= CHAT ================= */
 
 function ChatPage({
   setTab,
@@ -2448,12 +2154,20 @@ function ChatPage({
 
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="AI Kisan"
+        sub="खेती से जुड़े सवाल पूछें"
+      />
+
       <div className="chatBox">
         {!chat.length ? (
           <div className="empty">
             <MessageCircle size={48} />
 
-            <h3>नमस्ते किसान भाई 👋</h3>
+            <h3>
+              नमस्ते किसान भाई 👋
+            </h3>
 
             <p>
               फसल, मौसम, मंडी या खेती के बारे में पूछें।
@@ -2498,7 +2212,9 @@ function ChatPage({
       <div className="inputRow">
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) =>
+            setQ(e.target.value)
+          }
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               send();
@@ -2518,9 +2234,7 @@ function ChatPage({
   );
 }
 
-/* =========================================================
-   PROFILE
-========================================================= */
+/* ================= PROFILE ================= */
 
 function ProfilePage({
   setTab,
@@ -2533,6 +2247,12 @@ function ProfilePage({
 }) {
   return (
     <>
+      <PageTitle
+        setTab={setTab}
+        title="Profile"
+        sub="किसान प्रोफाइल"
+      />
+
       <div className="section profileCard">
         <div className="bigProfile">
           <User size={36} />
@@ -2557,11 +2277,7 @@ function ProfilePage({
               {s.icon}
             </div>
 
-            <div
-              style={{
-                flex: 1,
-              }}
-            >
+            <div style={{ flex: 1 }}>
               <b>{s.title}</b>
 
               <div className="muted">
@@ -2585,8 +2301,7 @@ function ProfilePage({
         <h3>ℹ️ ऐप की स्थिति</h3>
 
         <p className="muted">
-          ✅ Real Mandi Bhav - Government
-          Data.gov.in / AGMARKNET
+          ✅ Real Mandi Bhav
           <br />
           ✅ AI Kisan - Render backend
           <br />
@@ -2599,11 +2314,383 @@ function ProfilePage({
   );
 }
 
-/* =========================================================
-   START APP
-========================================================= */
+/* ================= APP ================= */
 
-const root = document.getElementById("root");
+function App() {
+  const [tab, setTab] =
+    useState<Tab>("home");
+
+  const [name] =
+    useState("किसान भाई");
+
+  const [cart, setCart] =
+    useState<Record<number, number>>(() => {
+      try {
+        return JSON.parse(
+          localStorage.getItem(
+            "ks_cart"
+          ) || "{}"
+        );
+      } catch {
+        return {};
+      }
+    });
+
+  const [crops, setCrops] =
+    useState<Crop[]>(() => {
+      try {
+        return JSON.parse(
+          localStorage.getItem(
+            "ks_crops"
+          ) || "[]"
+        );
+      } catch {
+        return [];
+      }
+    });
+
+  const [chat, setChat] =
+    useState<ChatMsg[]>(() => {
+      try {
+        return JSON.parse(
+          localStorage.getItem(
+            "ks_chat"
+          ) || "[]"
+        );
+      } catch {
+        return [];
+      }
+    });
+
+  const [q, setQ] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem(
+      "ks_cart",
+      JSON.stringify(cart)
+    );
+  }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "ks_crops",
+      JSON.stringify(crops)
+    );
+  }, [crops]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "ks_chat",
+      JSON.stringify(chat)
+    );
+  }, [chat]);
+
+  const count = Object.values(cart).reduce(
+    (a, b) => a + b,
+    0
+  );
+
+  const total = Object.entries(cart).reduce(
+    (s, [id, n]) =>
+      s +
+      (products.find(
+        (p) => p.id === Number(id)
+      )?.price || 0) *
+        n,
+    0
+  );
+
+  const add = (id: number) => {
+    setCart((c) => ({
+      ...c,
+      [id]: (c[id] || 0) + 1,
+    }));
+  };
+
+  const remove = (id: number) => {
+    setCart((c) => {
+      const x = { ...c };
+
+      if (x[id] > 1) {
+        x[id]--;
+      } else {
+        delete x[id];
+      }
+
+      return x;
+    });
+  };
+
+  /* ================= AI CHAT ================= */
+
+  const send = async (text = q) => {
+    const t = text.trim();
+
+    if (!t) return;
+
+    setChat((c) => [
+      ...c,
+      {
+        from: "user",
+        text: t,
+      },
+      {
+        from: "ai",
+        text: "AI Kisan सोच रहा है...",
+      },
+    ]);
+
+    setQ("");
+
+    try {
+      const controller =
+        new AbortController();
+
+      const timeout = setTimeout(
+        () => controller.abort(),
+        30000
+      );
+
+      const r = await fetch(
+        `${API_BASE}/api/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            message: t,
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeout);
+
+      const data = await r
+        .json()
+        .catch(() => ({}));
+
+      if (!r.ok) {
+        throw new Error(
+          data.error ||
+            "AI service error"
+        );
+      }
+
+      setChat((c) => {
+        const copy = [...c];
+
+        const i = copy
+          .map((x) => x.from)
+          .lastIndexOf("ai");
+
+        if (i >= 0) {
+          copy[i] = {
+            from: "ai",
+            text:
+              data.reply ||
+              "AI से जवाब नहीं मिला।",
+          };
+        }
+
+        return copy;
+      });
+    } catch (e) {
+      const msg =
+        e instanceof DOMException &&
+        e.name === "AbortError"
+          ? "AI server ने समय पर जवाब नहीं दिया।"
+          : e instanceof Error
+          ? e.message
+          : "AI सेवा से कनेक्शन नहीं हो पाया।";
+
+      setChat((c) => {
+        const copy = [...c];
+
+        const i = copy
+          .map((x) => x.from)
+          .lastIndexOf("ai");
+
+        if (i >= 0) {
+          copy[i] = {
+            from: "ai",
+            text: "❌ " + msg,
+          };
+        }
+
+        return copy;
+      });
+    }
+  };
+
+  return (
+    <>
+      <style>{css}</style>
+
+      <div className="app">
+        <header>
+          <button
+            className="brand"
+            style={{
+              border: 0,
+              background: "transparent",
+              padding: 0,
+            }}
+            onClick={() =>
+              setTab("home")
+            }
+          >
+            <span className="logo">
+              🌾
+            </span>
+
+            <span>
+              KisanSaathi AI
+              <small>
+                आपका डिजिटल किसान दोस्त
+              </small>
+            </span>
+          </button>
+
+          <button
+            className="profileIcon"
+            onClick={() =>
+              setTab("profile")
+            }
+          >
+            <User size={20} />
+          </button>
+        </header>
+
+        <main>
+          {tab === "home" && (
+            <HomePage
+              setTab={setTab}
+              name={name}
+            />
+          )}
+
+          {tab === "mandi" && (
+            <MandiPage
+              setTab={setTab}
+            />
+          )}
+
+          {tab === "weather" && (
+            <WeatherPage
+              setTab={setTab}
+            />
+          )}
+
+          {tab === "crops" && (
+            <CropsPage
+              setTab={setTab}
+              crops={crops}
+              setCrops={setCrops}
+            />
+          )}
+
+          {tab === "doctor" && (
+            <DoctorPage
+              setTab={setTab}
+            />
+          )}
+
+          {tab === "store" && (
+            <StorePage
+              setTab={setTab}
+              cart={cart}
+              add={add}
+            />
+          )}
+
+          {tab === "cart" && (
+            <CartPage
+              setTab={setTab}
+              cart={cart}
+              add={add}
+              remove={remove}
+              total={total}
+            />
+          )}
+
+          {tab === "chat" && (
+            <ChatPage
+              setTab={setTab}
+              chat={chat}
+              q={q}
+              setQ={setQ}
+              send={send}
+            />
+          )}
+
+          {tab === "profile" && (
+            <ProfilePage
+              setTab={setTab}
+              name={name}
+              crops={crops}
+            />
+          )}
+        </main>
+
+        <button
+          className="fab"
+          onClick={() =>
+            setTab("chat")
+          }
+          aria-label="AI Kisan"
+        >
+          <MessageCircle size={23} />
+        </button>
+
+        <nav className="bottomNav">
+          <Nav
+            active={tab === "home"}
+            on={() => setTab("home")}
+            icon={<Home size={19} />}
+            text="Home"
+          />
+
+          <Nav
+            active={tab === "crops"}
+            on={() => setTab("crops")}
+            icon={<Leaf size={19} />}
+            text="मेरी फसल"
+          />
+
+          <Nav
+            active={tab === "store"}
+            on={() => setTab("store")}
+            icon={
+              <ShoppingCart size={19} />
+            }
+            text={
+              count
+                ? `Store (${count})`
+                : "Store"
+            }
+          />
+
+          <Nav
+            active={tab === "profile"}
+            on={() =>
+              setTab("profile")
+            }
+            icon={<User size={19} />}
+            text="Profile"
+          />
+        </nav>
+      </div>
+    </>
+  );
+}
+
+/* ================= START ================= */
+
+const root =
+  document.getElementById("root");
 
 if (root) {
   createRoot(root).render(
