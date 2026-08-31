@@ -2114,7 +2114,7 @@ function WeatherPage({
 
           <div className="section">
             <h3>
-              📅 अगले 3 दिन
+             अगले 3 दिन
             </h3>
 
             <div className="forecast">
