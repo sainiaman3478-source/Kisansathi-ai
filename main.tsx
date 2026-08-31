@@ -26,6 +26,10 @@ import {
 
 const API_BASE = "https://kisansathi-ai-q9b0.onrender.com";
 
+/* =========================================================
+   TYPES
+========================================================= */
+
 type Tab =
   | "home"
   | "mandi"
@@ -308,7 +312,7 @@ main {
 }
 
 .card:active {
-  transform: scale(.985);
+  transform: scale(0.985);
 }
 
 .cardIcon {
@@ -389,6 +393,14 @@ main {
 
 .primary {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .addBtn {
@@ -774,7 +786,7 @@ main {
   place-items: center;
 }
 
-@media(max-width:420px) {
+@media (max-width: 420px) {
   main {
     padding: 10px;
   }
@@ -812,7 +824,11 @@ function PageTitle({
 }) {
   return (
     <div className="pageTitle">
-      <button className="back" onClick={() => setTab("home")}>
+      <button
+        className="back"
+        onClick={() => setTab("home")}
+        aria-label="Back"
+      >
         <ArrowLeft size={20} />
       </button>
 
@@ -830,6 +846,7 @@ function PageTitle({
 
 function App() {
   const [tab, setTab] = useState<Tab>("home");
+
   const [name] = useState("किसान भाई");
 
   const [cart, setCart] = useState<Record<number, number>>(() => {
@@ -873,9 +890,8 @@ function App() {
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
 
   const total = Object.entries(cart).reduce(
-    (sum, [id, n]) =>
-      sum +
-      (products.find((p) => p.id === Number(id))?.price || 0) * n,
+    (s, [id, n]) =>
+      s + (products.find((p) => p.id === Number(id))?.price || 0) * n,
     0
   );
 
@@ -901,7 +917,7 @@ function App() {
   };
 
   /* =======================================================
-     AI CHAT -> RENDER
+     AI CHAT -> RENDER BACKEND
   ======================================================= */
 
   const send = async (text = q) => {
@@ -978,144 +994,140 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <>
       <style>{css}</style>
 
-      <header>
-        <button
-          className="brand"
-          style={{
-            border: 0,
-            background: "transparent",
-            padding: 0,
-          }}
-          onClick={() => setTab("home")}
-        >
-          <span className="logo">🌾</span>
+      <div className="app">
+        <header>
+          <button
+            className="brand"
+            style={{
+              border: 0,
+              background: "transparent",
+              padding: 0,
+            }}
+            onClick={() => setTab("home")}
+          >
+            <span className="logo">🌾</span>
 
-          <span>
-            KisanSaathi AI
-            <small>आपका डिजिटल किसान दोस्त</small>
-          </span>
+            <span>
+              KisanSaathi AI
+              <small>आपका डिजिटल किसान दोस्त</small>
+            </span>
+          </button>
+
+          <button
+            className="profileIcon"
+            onClick={() => setTab("profile")}
+          >
+            <User size={20} />
+          </button>
+        </header>
+
+        <main>
+          {tab === "home" && (
+            <HomePage
+              setTab={setTab}
+              name={name}
+            />
+          )}
+
+          {tab === "mandi" && (
+            <MandiPage setTab={setTab} />
+          )}
+
+          {tab === "weather" && (
+            <WeatherPage setTab={setTab} />
+          )}
+
+          {tab === "crops" && (
+            <CropsPage
+              setTab={setTab}
+              crops={crops}
+              setCrops={setCrops}
+            />
+          )}
+
+          {tab === "doctor" && (
+            <DoctorPage setTab={setTab} />
+          )}
+
+          {tab === "store" && (
+            <StorePage
+              setTab={setTab}
+              cart={cart}
+              add={add}
+            />
+          )}
+
+          {tab === "cart" && (
+            <CartPage
+              setTab={setTab}
+              cart={cart}
+              add={add}
+              remove={remove}
+              total={total}
+            />
+          )}
+
+          {tab === "chat" && (
+            <ChatPage
+              setTab={setTab}
+              chat={chat}
+              q={q}
+              setQ={setQ}
+              send={send}
+            />
+          )}
+
+          {tab === "profile" && (
+            <ProfilePage
+              setTab={setTab}
+              name={name}
+              crops={crops}
+            />
+          )}
+        </main>
+
+        <button
+          className="fab"
+          onClick={() => setTab("chat")}
+          aria-label="AI Kisan"
+        >
+          <MessageCircle size={23} />
         </button>
 
-        <button
-          className="profileIcon"
-          onClick={() => setTab("profile")}
-        >
-          <User size={20} />
-        </button>
-      </header>
-
-      <main>
-        {tab === "home" && (
-          <HomePage
-            setTab={setTab}
-            name={name}
+        <nav className="bottomNav">
+          <Nav
+            active={tab === "home"}
+            on={() => setTab("home")}
+            icon={<Home size={19} />}
+            text="Home"
           />
-        )}
 
-        {tab === "mandi" && (
-          <MandiPage
-            setTab={setTab}
+          <Nav
+            active={tab === "crops"}
+            on={() => setTab("crops")}
+            icon={<Leaf size={19} />}
+            text="मेरी फसल"
           />
-        )}
 
-        {tab === "weather" && (
-          <WeatherPage
-            setTab={setTab}
+          <Nav
+            active={tab === "store"}
+            on={() => setTab("store")}
+            icon={<ShoppingCart size={19} />}
+            text={count ? `Store (${count})` : "Store"}
           />
-        )}
 
-        {tab === "crops" && (
-          <CropsPage
-            setTab={setTab}
-            crops={crops}
-            setCrops={setCrops}
+          <Nav
+            active={tab === "profile"}
+            on={() => setTab("profile")}
+            icon={<User size={19} />}
+            text="Profile"
           />
-        )}
-
-        {tab === "doctor" && (
-          <DoctorPage
-            setTab={setTab}
-          />
-        )}
-
-        {tab === "store" && (
-          <StorePage
-            setTab={setTab}
-            cart={cart}
-            add={add}
-          />
-        )}
-
-        {tab === "cart" && (
-          <CartPage
-            setTab={setTab}
-            cart={cart}
-            add={add}
-            remove={remove}
-            total={total}
-          />
-        )}
-
-        {tab === "chat" && (
-          <ChatPage
-            setTab={setTab}
-            chat={chat}
-            q={q}
-            setQ={setQ}
-            send={send}
-          />
-        )}
-
-        {tab === "profile" && (
-          <ProfilePage
-            setTab={setTab}
-            name={name}
-            crops={crops}
-          />
-        )}
-      </main>
-
-      <button
-        className="fab"
-        onClick={() => setTab("chat")}
-        aria-label="AI Kisan"
-      >
-        <MessageCircle size={23} />
-      </button>
-
-      <nav className="bottomNav">
-        <Nav
-          active={tab === "home"}
-          on={() => setTab("home")}
-          icon={<Home size={19} />}
-          text="Home"
-        />
-
-        <Nav
-          active={tab === "crops"}
-          on={() => setTab("crops")}
-          icon={<Leaf size={19} />}
-          text="मेरी फसल"
-        />
-
-        <Nav
-          active={tab === "store"}
-          on={() => setTab("store")}
-          icon={<ShoppingCart size={19} />}
-          text={count ? `Store (${count})` : "Store"}
-        />
-
-        <Nav
-          active={tab === "profile"}
-          on={() => setTab("profile")}
-          icon={<User size={19} />}
-          text="Profile"
-        />
-      </nav>
-    </div>
+        </nav>
+      </div>
+    </>
   );
 }
 
@@ -1168,7 +1180,7 @@ function HomePage({
 
   return (
     <>
-      <div className="hero">
+      <section className="hero">
         <h1>नमस्ते {name} 👋</h1>
 
         <p>
@@ -1198,13 +1210,13 @@ function HomePage({
             }}
           />
         </button>
-      </div>
+      </section>
 
       <div className="grid">
-        {cards.map((c, i) => (
+        {cards.map((c) => (
           <button
             className="card"
-            key={`${c[3]}-${i}`}
+            key={c[3]}
             onClick={() => setTab(c[3])}
           >
             <div className="cardIcon">
@@ -1227,9 +1239,9 @@ function HomePage({
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
-        दवा या सिंचाई का फैसला करने से पहले
-        फसल की स्थिति और स्थानीय मौसम जरूर
-        जांचें।
+        दवा या सिंचाई का फैसला करने से
+        पहले फसल की स्थिति और स्थानीय
+        मौसम जरूर जांचें।
       </div>
     </>
   );
@@ -1275,10 +1287,7 @@ function MandiPage({
       }
 
       if (market.trim()) {
-        params.set(
-          "market",
-          market.trim()
-        );
+        params.set("market", market.trim());
       }
 
       const r = await fetch(
@@ -1346,8 +1355,8 @@ function MandiPage({
         <div className="mandiStatus">
           🟢 <b>Real Mandi Data</b>
           <br />
-          Government of India - Data.gov.in /
-          AGMARKNET
+          Government of India -
+          Data.gov.in / AGMARKNET
         </div>
 
         <input
@@ -1396,8 +1405,7 @@ function MandiPage({
           <RefreshCw
             size={16}
             style={{
-              verticalAlign: "middle",
-              marginRight: 5,
+              marginRight: 6,
             }}
           />
 
@@ -1409,7 +1417,9 @@ function MandiPage({
         {source && (
           <div
             className="muted"
-            style={{ marginTop: 8 }}
+            style={{
+              marginTop: 8,
+            }}
           >
             Source: {source}
           </div>
@@ -1436,13 +1446,11 @@ function MandiPage({
               🌾
             </div>
 
-            <h3>
-              मंडी भाव नहीं मिला
-            </h3>
+            <h3>मंडी भाव नहीं मिला</h3>
 
             <p>
-              राज्य या फसल का नाम सही तरीके
-              से डालकर फिर खोजें।
+              राज्य या फसल का नाम सही
+              तरीके से डालकर फिर खोजें।
             </p>
           </div>
         )}
@@ -1534,7 +1542,8 @@ function WeatherPage({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [w, setW] = useState<WeatherData | null>(null);
+  const [w, setW] =
+    useState<WeatherData | null>(null);
   const [loc, setLoc] = useState("");
 
   const load = () => {
@@ -1641,8 +1650,7 @@ function WeatherPage({
         <MapPin size={17} />
 
         <span>
-          {loc ||
-            "Location अभी नहीं ली गई"}
+          {loc || "Location अभी नहीं ली गई"}
         </span>
 
         <button
@@ -1679,6 +1687,7 @@ function WeatherPage({
           <button
             className="primary"
             onClick={load}
+            disabled={loading}
           >
             {loading
               ? "मौसम लोड हो रहा है..."
@@ -1769,9 +1778,7 @@ function WeatherPage({
           </div>
 
           <div className="section">
-            <h3>
-              📅 अगले 3 दिन
-            </h3>
+            <h3>📅 अगले 3 दिन</h3>
 
             <div className="forecast">
               {w.daily.time.map(
@@ -1798,12 +1805,16 @@ function WeatherPage({
                     <b>
                       {Math.round(
                         w.daily
-                          .temperature_2m_max[i]
+                          .temperature_2m_max[
+                          i
+                        ]
                       )}
                       ° /{" "}
                       {Math.round(
                         w.daily
-                          .temperature_2m_min[i]
+                          .temperature_2m_min[
+                          i
+                        ]
                       )}
                       °
                     </b>
@@ -1812,7 +1823,9 @@ function WeatherPage({
                       बारिश{" "}
                       {
                         w.daily
-                          .precipitation_probability_max[i]
+                          .precipitation_probability_max[
+                          i
+                        ]
                       }
                       %
                     </div>
@@ -1874,13 +1887,11 @@ function CropsPage({
       <PageTitle
         setTab={setTab}
         title="मेरी फसल"
-        sub="अपनी फसल सेव करें"
+        sub="अपनी फसल संभालें"
       />
 
       <div className="section">
-        <h3>
-          🌱 नई फसल जोड़ें
-        </h3>
+        <h3>🌱 नई फसल जोड़ें</h3>
 
         <input
           className="search"
@@ -1904,7 +1915,8 @@ function CropsPage({
           className="primary"
           onClick={save}
         >
-          <Plus size={16} /> फसल सेव करें
+          <Plus size={16} />
+          {" "}फसल सेव करें
         </button>
       </div>
 
@@ -1945,15 +1957,13 @@ function CropsPage({
                 onClick={() =>
                   setCrops((x) =>
                     x.filter(
-                      (y) =>
-                        y.id !== c.id
+                      (y) => y.id !== c.id
                     )
                   )
                 }
                 style={{
                   border: 0,
-                  background:
-                    "transparent",
+                  background: "transparent",
                   color: "#a33",
                 }}
               >
@@ -1988,6 +1998,8 @@ function DoctorPage({
 
     if (f) {
       setUrl(URL.createObjectURL(f));
+    } else {
+      setUrl("");
     }
   };
 
@@ -2026,8 +2038,7 @@ function DoctorPage({
             capture="environment"
             onChange={(e) =>
               choose(
-                e.target.files?.[0] ||
-                  null
+                e.target.files?.[0] || null
               )
             }
           />
@@ -2044,7 +2055,9 @@ function DoctorPage({
         {file && (
           <button
             className="primary"
-            style={{ marginTop: 10 }}
+            style={{
+              marginTop: 10,
+            }}
             onClick={analyze}
           >
             🔍 जांच शुरू करें
@@ -2063,15 +2076,13 @@ function DoctorPage({
       <div className="section">
         <Stethoscope size={28} />
 
-        <h3>
-          ध्यान रखें
-        </h3>
+        <h3>ध्यान रखें</h3>
 
         <p className="muted">
-          सिर्फ फोटो के आधार पर दवा तय
-          करना सुरक्षित नहीं है। फसल,
-          उम्र, खेत, मौसम और लक्षण भी
-          जरूरी हैं।
+          सिर्फ फोटो के आधार पर दवा
+          तय करना सुरक्षित नहीं है।
+          फसल, उम्र, खेत, मौसम और
+          लक्षण भी जरूरी हैं।
         </p>
       </div>
     </>
@@ -2117,7 +2128,11 @@ function StorePage({
                 alignItems: "center",
               }}
             >
-              <span style={{ fontSize: 28 }}>
+              <span
+                style={{
+                  fontSize: 28,
+                }}
+              >
                 {p.emoji}
               </span>
 
@@ -2134,9 +2149,7 @@ function StorePage({
 
             <button
               className="addBtn"
-              onClick={() =>
-                add(p.id)
-              }
+              onClick={() => add(p.id)}
             >
               कार्ट में डालें
             </button>
@@ -2145,7 +2158,9 @@ function StorePage({
 
         <button
           className="primary"
-          style={{ marginTop: 12 }}
+          style={{
+            marginTop: 12,
+          }}
           onClick={() => setTab("cart")}
         >
           🛒 कार्ट देखें{" "}
@@ -2154,10 +2169,11 @@ function StorePage({
       </div>
 
       <div className="advice">
-        ℹ️ ये अभी app के sample products
-        हैं। वास्तविक खरीद के लिए payment,
-        delivery और verified seller backend
-        जोड़ना होगा।
+        ℹ️ ये अभी app के sample
+        products हैं। वास्तविक खरीद के
+        लिए payment, delivery और
+        verified seller backend जोड़ना
+        होगा।
       </div>
     </>
   );
@@ -2194,9 +2210,7 @@ function CartPage({
         <div className="section empty">
           <ShoppingCart size={50} />
 
-          <h3>
-            Cart खाली है
-          </h3>
+          <h3>Cart खाली है</h3>
 
           <button
             className="addBtn"
@@ -2225,7 +2239,8 @@ function CartPage({
                   <b>{p.name}</b>
 
                   <div className="muted">
-                    ₹{p.price} × {cart[id]}
+                    ₹{p.price} ×{" "}
+                    {cart[id]}
                   </div>
                 </div>
 
@@ -2309,7 +2324,7 @@ function ChatPage({
       <PageTitle
         setTab={setTab}
         title="AI Kisan"
-        sub="आपका खेती सलाहकार"
+        sub="खेती से जुड़े सवाल पूछें"
       />
 
       <div className="chatBox">
@@ -2322,8 +2337,8 @@ function ChatPage({
             </h3>
 
             <p>
-              फसल, मौसम, मंडी या खेती के
-              बारे में पूछें।
+              फसल, मौसम, मंडी या खेती
+              के बारे में पूछें।
             </p>
           </div>
         ) : (
@@ -2355,9 +2370,7 @@ function ChatPage({
         {quick.map((x) => (
           <button
             key={x}
-            onClick={() =>
-              send(x)
-            }
+            onClick={() => send(x)}
           >
             {x}
           </button>
@@ -2407,7 +2420,7 @@ function ProfilePage({
       <PageTitle
         setTab={setTab}
         title="Profile"
-        sub="किसान प्रोफाइल"
+        sub="KisanSaathi AI"
       />
 
       <div className="section profileCard">
@@ -2423,9 +2436,7 @@ function ProfilePage({
       </div>
 
       <div className="section">
-        <h3>
-          🏛️ सरकारी योजनाएं
-        </h3>
+        <h3>🏛️ सरकारी योजनाएं</h3>
 
         {schemes.map((s) => (
           <div
@@ -2461,9 +2472,7 @@ function ProfilePage({
       </div>
 
       <div className="section">
-        <h3>
-          ℹ️ ऐप की स्थिति
-        </h3>
+        <h3>ℹ️ ऐप की स्थिति</h3>
 
         <p className="muted">
           ✅ Real Mandi Bhav -
