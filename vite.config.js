@@ -2,11 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? "/Kisansathi-ai/" : "/",
+  // Relative assets work on both GitHub Pages root and /Kisansathi-ai/.
+  base: "./",
   plugins: [react()],
-  server: {
-    proxy: {
-      "/api": "http://localhost:3001"
-    }
-  }
 });

@@ -24,7 +24,9 @@ import {
    FRONTEND -> RENDER BACKEND
 ========================================================= */
 
-const API_BASE = "https://kisansathi-ai-q9b0.onrender.com";
+const API_BASE =
+  (import.meta.env.VITE_API_BASE ||
+    "https://kisansathi-ai-q9b0.onrender.com").replace(/\/$/, "");
 
 type Tab =
   | "home"
@@ -1314,9 +1316,14 @@ function MandiPage({
         );
       }
 
-      const r = await fetch(
-        `${API_BASE}/api/mandi?${params.toString()}`
-      );
+      const url = `${API_BASE}/api/mandi?${params.toString()}`;
+      console.log("KisanSaathi Mandi request:", url);
+
+      const r = await fetch(url, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
 
       const data: MandiResponse =
         await r.json().catch(() => ({
