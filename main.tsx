@@ -942,6 +942,7 @@ function App() {
 
     try {
       const controller = new AbortController();
+
       const timeout = setTimeout(
         () => controller.abort(),
         30000
@@ -1289,7 +1290,7 @@ function HomePage({
 }
 
 /* =========================================================
-   REAL MANDI
+   REAL MANDI - FIXED
 ========================================================= */
 
 function MandiPage({
@@ -1308,53 +1309,55 @@ function MandiPage({
   const [source, setSource] = useState("");
   const [hasLoaded, setHasLoaded] = useState(false);
 
-  const loadMandi = async () => {
-    if (loading) return;
+  /* Hindi/English search conversion */
 
-    setLoading(true);
-    setError("");
+  const normalize = (value: string) => {
+    const v = value.trim().toLowerCase();
+
+    const map: Record<string, string> = {
+      "दिल्ली": "Delhi",
+      "आलू": "Potato",
+      "आलु": "Potato",
+      "पोटैटो": "Potato",
+      "गेहूं": "Wheat",
+      "गेहूँ": "Wheat",
+      "गेंहू": "Wheat",
+      "धान": "Paddy",
+      "चावल": "Rice",
+      "सरसों": "Mustard",
+      "मक्का": "Maize",
+      "बाजरा": "Bajra",
+      "चना": "Gram",
+      "कपास": "Cotton",
+      "प्याज": "Onion",
+      "टमाटर": "Tomato",
+      "आजादपुर": "Azadpur",
+      "आज़ादपुर": "Azadpur",
+    };
+
+    return map[v] || value.trim();
+  };
+
+  /* API request */
+
+  const fetchMandi = async (
+    params: URLSearchParams
+  ): Promise<MandiResponse> => {
+    const url =
+      `${API_BASE}/api/mandi?${params.toString()}`;
+
+    console.log(
+      "KisanSaathi Mandi request:",
+      url
+    );
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 25000);
 
     try {
-      const params = new URLSearchParams();
-
-      params.set("limit", "100");
-
-      if (state.trim()) {
-        params.set(
-          "state",
-          state.trim()
-        );
-      }
-
-      if (commodity.trim()) {
-        params.set(
-          "commodity",
-          commodity.trim()
-        );
-      }
-
-      if (market.trim()) {
-        params.set(
-          "market",
-          market.trim()
-        );
-      }
-
-      const url =
-        `${API_BASE}/api/mandi?${params.toString()}`;
-
-      console.log(
-        "KisanSaathi Mandi request:",
-        url
-      );
-
-      const controller =
-        new AbortController();
-
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 20000);
-
       const r = await fetch(url, {
         method: "GET",
         headers: {
@@ -1363,8 +1366,6 @@ function MandiPage({
         cache: "no-store",
         signal: controller.signal,
       });
-
-      clearTimeout(timeout);
 
       const contentType =
         r.headers.get("content-type") || "";
@@ -1379,7 +1380,7 @@ function MandiPage({
           : {
               ok: false,
               error:
-                "Mandi API ने JSON की जगह दूसरा response दिया। Render backend route जांचें।",
+                "Mandi API ने JSON की जगह दूसरा response दिया।",
             };
 
       if (!r.ok || !data.ok) {
@@ -1389,19 +1390,141 @@ function MandiPage({
         );
       }
 
-      const mandiData = Array.isArray(
-        data.mandi
-      )
+      return data;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  /* Main Mandi search */
+
+  const loadMandi = async () => {
+    if (loading) return;
+
+    setLoading(true);
+    setError("");
+    setHasLoaded(false);
+    setRecords([]);
+
+    try {
+      const apiState = normalize(state);
+      const apiCommodity = normalize(commodity);
+      const apiMarket = normalize(market);
+
+      const params = new URLSearchParams();
+
+      params.set("limit", "100");
+
+      if (apiState) {
+        params.set("state", apiState);
+      }
+
+      if (apiCommodity) {
+        params.set(
+          "commodity",
+          apiCommodity
+        );
+      }
+
+      if (apiMarket) {
+        params.set(
+          "market",
+          apiMarket
+        );
+      }
+
+      let data = await fetchMandi(params);
+
+      let mandiData = Array.isArray(data.mandi)
         ? data.mandi
         : [];
 
+      /*
+       * अगर filtered API search में data नहीं मिला,
+       * तो पूरा data लेकर frontend पर matching करेंगे।
+       */
+
+      if (
+        mandiData.length === 0 &&
+        (apiState ||
+          apiCommodity ||
+          apiMarket)
+      ) {
+        const broadParams =
+          new URLSearchParams();
+
+        broadParams.set("limit", "100");
+
+        const broadData =
+          await fetchMandi(broadParams);
+
+        const allData =
+          Array.isArray(broadData.mandi)
+            ? broadData.mandi
+            : [];
+
+        const wantedState =
+          apiState.toLowerCase();
+
+        const wantedCommodity =
+          apiCommodity.toLowerCase();
+
+        const wantedMarket =
+          apiMarket.toLowerCase();
+
+        mandiData = allData.filter((x) => {
+          const rowState =
+            String(x.state || "")
+              .toLowerCase();
+
+          const rowCommodity =
+            String(x.commodity || "")
+              .toLowerCase();
+
+          const rowMarket =
+            String(x.market || "")
+              .toLowerCase();
+
+          const stateOK =
+            !wantedState ||
+            rowState.includes(
+              wantedState
+            );
+
+          const commodityOK =
+            !wantedCommodity ||
+            rowCommodity.includes(
+              wantedCommodity
+            );
+
+          const marketOK =
+            !wantedMarket ||
+            rowMarket.includes(
+              wantedMarket
+            );
+
+          return (
+            stateOK &&
+            commodityOK &&
+            marketOK
+          );
+        });
+
+        data = broadData;
+      }
+
       setRecords(mandiData);
-      setSource(data.source || "");
+
+      setSource(
+        data.source ||
+          "Government of India - Data.gov.in / AGMARKNET"
+      );
+
       setHasLoaded(true);
 
       if (mandiData.length === 0) {
         setError(
-          "इस search के लिए अभी कोई mandi record नहीं मिला।"
+          "इस search के लिए अभी कोई mandi record नहीं मिला। राज्य/फसल/मंडी का नाम थोड़ा बदलकर देखें।"
         );
       }
     } catch (e) {
@@ -1413,7 +1536,7 @@ function MandiPage({
         e.name === "AbortError"
       ) {
         setError(
-          "Mandi server ने 20 सेकंड में जवाब नहीं दिया। Render backend/API को जांचना होगा।"
+          "Mandi server ने 25 सेकंड में जवाब नहीं दिया। Render backend/API जांचना होगा।"
         );
       } else {
         setError(
@@ -1427,18 +1550,23 @@ function MandiPage({
     }
   };
 
+  /* Search inside loaded records */
+
   const filtered = useMemo(() => {
-    const s = search
-      .trim()
+    const s = normalize(search)
       .toLowerCase();
 
-    if (!s) return records;
+    if (!s) {
+      return records;
+    }
 
-    return records.filter((x) =>
-      `${x.state} ${x.district} ${x.market} ${x.commodity} ${x.variety} ${x.grade}`
-        .toLowerCase()
-        .includes(s)
-    );
+    return records.filter((x) => {
+      const text =
+        `${x.state} ${x.district} ${x.market} ${x.commodity} ${x.variety} ${x.grade}`
+          .toLowerCase();
+
+      return text.includes(s);
+    });
   }, [records, search]);
 
   return (
@@ -1475,7 +1603,7 @@ function MandiPage({
             onChange={(e) =>
               setState(e.target.value)
             }
-            placeholder="राज्य जैसे Haryana"
+            placeholder="राज्य जैसे Delhi"
           />
 
           <input
@@ -1484,7 +1612,7 @@ function MandiPage({
             onChange={(e) =>
               setCommodity(e.target.value)
             }
-            placeholder="फसल जैसे Wheat"
+            placeholder="फसल जैसे Potato"
           />
 
           <input
