@@ -71,69 +71,95 @@ async function geminiReply(message) {
     `https://generativelanguage.googleapis.com/v1beta/models/` +
     `${encodeURIComponent(GEMINI_MODEL)}:generateContent`;
 
-  const response = await fetch(url, {
-    method: "POST",
+  const controller = new AbortController();
 
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": GEMINI_API_KEY,
-    },
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 30000);
 
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [
-          {
-            text: KISAN_SYSTEM_INSTRUCTION,
-          },
-        ],
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
       },
 
-      contents: [
-        {
-          role: "user",
+      body: JSON.stringify({
+        systemInstruction: {
           parts: [
             {
-              text: message,
+              text: KISAN_SYSTEM_INSTRUCTION,
             },
           ],
         },
-      ],
 
-      generationConfig: {
-        maxOutputTokens: 700,
-      },
-    }),
-  });
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: message,
+              },
+            ],
+          },
+        ],
 
-  const body =
-    await response.json().catch(() => ({}));
+        generationConfig: {
+          maxOutputTokens: 500,
+        },
+      }),
 
-  if (!response.ok) {
-    console.error(
-      "GEMINI API ERROR:",
-      response.status,
-      body
-    );
+      signal: controller.signal,
+    });
 
-    throw new Error(
-      body?.error?.message ||
-        `Gemini API HTTP ${response.status}`
-    );
+    const body =
+      await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error(
+        "GEMINI API ERROR:",
+        JSON.stringify(body, null, 2)
+      );
+
+      const apiMessage =
+        body?.error?.message ||
+        body?.message ||
+        `Gemini API HTTP ${response.status}`;
+
+      throw new Error(apiMessage);
+    }
+
+    const reply =
+      body?.candidates?.[0]?.content?.parts
+        ?.map((part) => part?.text || "")
+        .join("")
+        .trim();
+
+    if (!reply) {
+      console.error(
+        "GEMINI EMPTY RESPONSE:",
+        JSON.stringify(body, null, 2)
+      );
+
+      throw new Error(
+        "Gemini ने कोई जवाब नहीं दिया।"
+      );
+    }
+
+    return reply;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error(
+        "Gemini AI ने 30 सेकंड में जवाब नहीं दिया।"
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const reply =
-    body?.candidates?.[0]?.content?.parts
-      ?.map((part) => part?.text || "")
-      .join("")
-      .trim();
-
-  if (!reply) {
-    throw new Error(
-      "Gemini ने कोई जवाब नहीं दिया।"
-    );
-  }
-
-  return reply;
 }
 
 /* =========================================================
@@ -339,12 +365,6 @@ async function fetchMandiPage({
     String(limit)
   );
 
-  /*
-   State filter:
-   state.keyword is used by the current
-   data.gov.in API contract.
-  */
-
   if (state) {
     params.set(
       "filters[state.keyword]",
@@ -352,24 +372,12 @@ async function fetchMandiPage({
     );
   }
 
-  /*
-   IMPORTANT:
-   Commodity को पहले API filter में भेजेंगे,
-   लेकिन market को local filtering से भी check करेंगे.
-  */
-
   if (commodity) {
     params.set(
       "filters[commodity]",
       commodity
     );
   }
-
-  /*
-   Market API filter भी भेज रहे हैं।
-   अगर उससे result नहीं मिला तो नीचे
-   fallback बिना market filter के होगा.
-  */
 
   if (market) {
     params.set(
@@ -539,13 +547,6 @@ async function searchMandi({
   commodity,
   market,
 }) {
-  /*
-   ---------------------------------------------------------
-   ATTEMPT 1
-   State + Commodity + Market
-   ---------------------------------------------------------
-  */
-
   console.log(
     "MANDI SEARCH ATTEMPT 1:",
     {
@@ -590,14 +591,6 @@ async function searchMandi({
     );
   }
 
-  /*
-   ---------------------------------------------------------
-   ATTEMPT 2
-   State + Commodity
-   फिर market local filtering
-   ---------------------------------------------------------
-  */
-
   console.log(
     "MANDI SEARCH ATTEMPT 2: state + commodity"
   );
@@ -636,14 +629,6 @@ async function searchMandi({
       error
     );
   }
-
-  /*
-   ---------------------------------------------------------
-   ATTEMPT 3
-   State only
-   फिर commodity + market local filtering
-   ---------------------------------------------------------
-  */
 
   console.log(
     "MANDI SEARCH ATTEMPT 3: state only"
@@ -684,14 +669,6 @@ async function searchMandi({
     );
   }
 
-  /*
-   ---------------------------------------------------------
-   ATTEMPT 4
-   No filters.
-   This is the final fallback.
-   ---------------------------------------------------------
-  */
-
   console.log(
     "MANDI SEARCH ATTEMPT 4: no API filters"
   );
@@ -700,11 +677,6 @@ async function searchMandi({
     let allRecords = [];
 
     const PAGE_SIZE = 1000;
-
-    /*
-     ज्यादा pages नहीं खींचेंगे।
-     पहले 5 pages तक search करेंगे।
-    */
 
     for (
       let page = 0;
@@ -731,11 +703,6 @@ async function searchMandi({
           records
         );
 
-      /*
-       अगर इस page में 1000 से कम मिले,
-       तो आगे data नहीं है।
-       */
-
       if (
         !Array.isArray(
           body.records
@@ -745,11 +712,6 @@ async function searchMandi({
       ) {
         break;
       }
-
-      /*
-       Search मिल गया तो आगे pages
-       fetch करने की जरूरत नहीं।
-      */
 
       const found =
         filterRecords(
@@ -818,10 +780,6 @@ app.get(
           req.query.market || ""
         ).trim();
 
-      /*
-       Hindi → Government commodity
-      */
-
       const commodity =
         aliases[
           rawCommodity.toLowerCase()
@@ -840,20 +798,12 @@ app.get(
         }
       );
 
-      /*
-       Search
-      */
-
       const mandi =
         await searchMandi({
           state: rawState,
           commodity,
           market: rawMarket,
         });
-
-      /*
-       Latest date first
-      */
 
       mandi.sort(
         (a, b) => {
@@ -881,10 +831,6 @@ app.get(
       console.log(
         "================================================"
       );
-
-      /*
-       SUCCESS
-      */
 
       return res.json({
         ok: true,
