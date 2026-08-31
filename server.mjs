@@ -1,29 +1,33 @@
 import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
 const PORT = process.env.PORT || 10000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
 /* =========================
-   HEALTH CHECK
+   HOME / HEALTH CHECK
 ========================= */
 
 app.get("/", (req, res) => {
   res.json({
     ok: true,
+    app: "KisanSaathi AI",
     message: "KisanSaathi AI backend is running 🌾"
   });
 });
 
-app.get("/api/health", (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
     ok: true,
-    service: "KisanSaathi AI",
-    status: "online"
+    service: "KisanSaathi AI API"
   });
 });
 
@@ -33,27 +37,21 @@ app.get("/api/health", (req, res) => {
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const message = String(
-      req.body?.message || ""
-    ).trim();
+    const message =
+      typeof req.body?.message === "string"
+        ? req.body.message.trim()
+        : "";
 
     if (!message) {
       return res.status(400).json({
-        error: "सवाल खाली नहीं हो सकता।"
+        error: "सवाल खाली है।"
       });
     }
 
-    /*
-      OpenAI API key Render Environment
-      Variable से आएगी।
-    */
-
-    const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
+    if (!OPENAI_API_KEY) {
       return res.status(500).json({
         error:
-          "OPENAI_API_KEY Render में सेट नहीं है।"
+          "OPENAI_API_KEY अभी server में सेट नहीं है।"
       });
     }
 
@@ -64,44 +62,38 @@ app.post("/api/chat", async (req, res) => {
 
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`
+          Authorization: `Bearer ${OPENAI_API_KEY}`
         },
 
         body: JSON.stringify({
-          model:
-            process.env.OPENAI_MODEL ||
-            "gpt-5-mini",
+          model: "gpt-5-mini",
 
           instructions: `
-आप KisanSaathi AI हैं — भारत के किसानों के लिए
-एक सरल और भरोसेमंद AI कृषि सहायक।
+तुम KisanSaathi AI हो।
 
-हमेशा हिंदी में सरल भाषा में जवाब दें।
-जरूरत हो तो किसान की भाषा में छोटे और स्पष्ट
-points में जवाब दें।
+तुम भारतीय किसानों के लिए सरल और उपयोगी
+हिंदी में जवाब देते हो।
 
-आप इन विषयों में मदद कर सकते हैं:
-- खेती
+तुम इन विषयों में मदद कर सकते हो:
 - फसल
+- खेती
 - खाद
 - सिंचाई
-- कीट और रोग
+- कीट
+- फसल रोग
 - मौसम
 - मंडी
 - सरकारी कृषि योजनाएं
 - खेती की सामान्य जानकारी
 
-दवा या pesticide की सलाह देते समय बिना पर्याप्त
-जानकारी के निश्चित diagnosis न करें।
-जरूरत पड़ने पर किसान को कृषि विशेषज्ञ/स्थानीय
-कृषि अधिकारी से पुष्टि करने की सलाह दें।
-
-अगर सवाल मौसम या आज के मंडी भाव का है और
-live data उपलब्ध नहीं है, तो साफ बताएं कि
-live जानकारी verify करनी चाहिए।
-
-किसान को डराने वाली या झूठी जानकारी न दें।
-संक्षिप्त लेकिन उपयोगी जवाब दें।
+नियम:
+1. जवाब सरल हिंदी में दो।
+2. किसान को practical steps बताओ।
+3. बिना पक्की जानकारी के दवा की मात्रा या खतरनाक chemical dosage मत बताओ।
+4. बीमारी की पहचान केवल फोटो/लक्षण से निश्चित न बताओ।
+5. जरूरत होने पर कृषि विशेषज्ञ/KVK/स्थानीय अधिकारी से पुष्टि करने को कहो।
+6. मौसम और मंडी के बारे में live data होने का दावा मत करो जब तक data उपलब्ध न हो।
+7. जवाब छोटा, साफ और किसान के काम का रखो।
           `,
 
           input: message
@@ -113,65 +105,51 @@ live जानकारी verify करनी चाहिए।
 
     if (!response.ok) {
       console.error(
-        "OpenAI API error:",
+        "OpenAI API Error:",
         data
       );
 
-      return res.status(
-        response.status || 500
-      ).json({
+      return res.status(response.status).json({
         error:
           data?.error?.message ||
           "AI service से जवाब नहीं मिला।"
       });
     }
 
-    /*
-      Responses API का text निकालना
-    */
-
     let reply = "";
 
-    if (
-      typeof data.output_text ===
-      "string"
-    ) {
+    if (typeof data.output_text === "string") {
       reply = data.output_text;
     }
 
-    /*
-      Fallback extraction
-    */
-
     if (!reply && Array.isArray(data.output)) {
       for (const item of data.output) {
-        if (
-          Array.isArray(item.content)
-        ) {
-          for (const content of item.content) {
-            if (
-              content.type ===
-                "output_text" &&
-              typeof content.text ===
-                "string"
-            ) {
-              reply += content.text;
-            }
+        if (!Array.isArray(item.content)) {
+          continue;
+        }
+
+        for (const content of item.content) {
+          if (
+            content.type === "output_text" &&
+            typeof content.text === "string"
+          ) {
+            reply += content.text;
           }
         }
       }
     }
 
+    reply = reply.trim();
+
     if (!reply) {
       reply =
-        "माफ कीजिए, अभी AI से जवाब नहीं मिल पाया। कृपया दोबारा कोशिश करें।";
+        "AI से इस समय जवाब नहीं मिला। कृपया दोबारा कोशिश करें।";
     }
 
     return res.json({
       ok: true,
       reply
     });
-
   } catch (error) {
     console.error(
       "Server error:",
@@ -180,16 +158,26 @@ live जानकारी verify करनी चाहिए।
 
     return res.status(500).json({
       error:
-        "AI सेवा से कनेक्शन नहीं हो पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।"
+        "AI सेवा से कनेक्शन नहीं हो पाया।"
     });
   }
+});
+
+/* =========================
+   404
+========================= */
+
+app.use((req, res) => {
+  res.status(404).json({
+    error: "API route नहीं मिला।"
+  });
 });
 
 /* =========================
    START SERVER
 ========================= */
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(
     `🌾 KisanSaathi AI server running on port ${PORT}`
   );
