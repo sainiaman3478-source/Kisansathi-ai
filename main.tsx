@@ -847,7 +847,9 @@ function App() {
 
   const [cart, setCart] = useState<Record<number, number>>(() => {
     try {
-      return JSON.parse(localStorage.getItem("ks_cart") || "{}");
+      return JSON.parse(
+        localStorage.getItem("ks_cart") || "{}"
+      );
     } catch {
       return {};
     }
@@ -855,7 +857,9 @@ function App() {
 
   const [crops, setCrops] = useState<Crop[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem("ks_crops") || "[]");
+      return JSON.parse(
+        localStorage.getItem("ks_crops") || "[]"
+      );
     } catch {
       return [];
     }
@@ -863,7 +867,9 @@ function App() {
 
   const [chat, setChat] = useState<ChatMsg[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem("ks_chat") || "[]");
+      return JSON.parse(
+        localStorage.getItem("ks_chat") || "[]"
+      );
     } catch {
       return [];
     }
@@ -872,15 +878,24 @@ function App() {
   const [q, setQ] = useState("");
 
   useEffect(() => {
-    localStorage.setItem("ks_cart", JSON.stringify(cart));
+    localStorage.setItem(
+      "ks_cart",
+      JSON.stringify(cart)
+    );
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem("ks_crops", JSON.stringify(crops));
+    localStorage.setItem(
+      "ks_crops",
+      JSON.stringify(crops)
+    );
   }, [crops]);
 
   useEffect(() => {
-    localStorage.setItem("ks_chat", JSON.stringify(chat));
+    localStorage.setItem(
+      "ks_chat",
+      JSON.stringify(chat)
+    );
   }, [chat]);
 
   const count = Object.values(cart).reduce(
@@ -891,7 +906,9 @@ function App() {
   const total = Object.entries(cart).reduce(
     (s, [id, n]) =>
       s +
-      (products.find((p) => p.id === Number(id))?.price || 0) *
+      (products.find(
+        (p) => p.id === Number(id)
+      )?.price || 0) *
         n,
     0
   );
@@ -941,31 +958,39 @@ function App() {
     setQ("");
 
     try {
-      const controller = new AbortController();
+      const controller =
+        new AbortController();
 
       const timeout = setTimeout(
         () => controller.abort(),
         30000
       );
 
-      const r = await fetch(`${API_BASE}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: t,
-        }),
-        signal: controller.signal,
-      });
+      const r = await fetch(
+        `${API_BASE}/api/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            message: t,
+          }),
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
 
-      const data = await r.json().catch(() => ({}));
+      const data = await r
+        .json()
+        .catch(() => ({}));
 
       if (!r.ok) {
         throw new Error(
-          data.error || "AI service error"
+          data.error ||
+            "AI service error"
         );
       }
 
@@ -1026,12 +1051,17 @@ function App() {
             className="brand"
             style={{
               border: 0,
-              background: "transparent",
+              background:
+                "transparent",
               padding: 0,
             }}
-            onClick={() => setTab("home")}
+            onClick={() =>
+              setTab("home")
+            }
           >
-            <span className="logo">🌾</span>
+            <span className="logo">
+              🌾
+            </span>
 
             <span>
               KisanSaathi AI
@@ -1043,7 +1073,9 @@ function App() {
 
           <button
             className="profileIcon"
-            onClick={() => setTab("profile")}
+            onClick={() =>
+              setTab("profile")
+            }
           >
             <User size={20} />
           </button>
@@ -1059,11 +1091,15 @@ function App() {
           )}
 
           {tab === "mandi" && (
-            <MandiPage setTab={setTab} />
+            <MandiPage
+              setTab={setTab}
+            />
           )}
 
           {tab === "weather" && (
-            <WeatherPage setTab={setTab} />
+            <WeatherPage
+              setTab={setTab}
+            />
           )}
 
           {tab === "crops" && (
@@ -1075,7 +1111,9 @@ function App() {
           )}
 
           {tab === "doctor" && (
-            <DoctorPage setTab={setTab} />
+            <DoctorPage
+              setTab={setTab}
+            />
           )}
 
           {tab === "store" && (
@@ -1118,7 +1156,9 @@ function App() {
 
         <button
           className="fab"
-          onClick={() => setTab("chat")}
+          onClick={() =>
+            setTab("chat")
+          }
           aria-label="AI Kisan"
         >
           <MessageCircle size={23} />
@@ -1127,30 +1167,60 @@ function App() {
         <nav className="bottomNav">
 
           <Nav
-            active={tab === "home"}
-            on={() => setTab("home")}
-            icon={<Home size={19} />}
+            active={
+              tab === "home"
+            }
+            on={() =>
+              setTab("home")
+            }
+            icon={
+              <Home size={19} />
+            }
             text="Home"
           />
 
           <Nav
-            active={tab === "crops"}
-            on={() => setTab("crops")}
-            icon={<Leaf size={19} />}
+            active={
+              tab === "crops"
+            }
+            on={() =>
+              setTab("crops")
+            }
+            icon={
+              <Leaf size={19} />
+            }
             text="मेरी फसल"
           />
 
           <Nav
-            active={tab === "store"}
-            on={() => setTab("store")}
-            icon={<ShoppingCart size={19} />}
-            text={count ? `Store (${count})` : "Store"}
+            active={
+              tab === "store"
+            }
+            on={() =>
+              setTab("store")
+            }
+            icon={
+              <ShoppingCart
+                size={19}
+              />
+            }
+            text={
+              count
+                ? `Store (${count})`
+                : "Store"
+            }
           />
 
           <Nav
-            active={tab === "profile"}
-            on={() => setTab("profile")}
-            icon={<User size={19} />}
+            active={
+              tab === "profile"
+            }
+            on={() =>
+              setTab("profile")
+            }
+            icon={
+              <User size={19} />
+            }
             text="Profile"
           />
 
@@ -1178,7 +1248,10 @@ function Nav({
   return (
     <button
       className={
-        "navBtn " + (active ? "active" : "")
+        "navBtn " +
+        (active
+          ? "active"
+          : "")
       }
       onClick={on}
     >
@@ -1205,13 +1278,48 @@ function HomePage({
     string,
     Tab
   ][] = [
-    ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
-    ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
-    ["🌦️", "मौसम", "अपने इलाके का मौसम", "weather"],
-    ["💰", "मंडी भाव", "सरकारी मंडी के भाव", "mandi"],
-    ["🌱", "मेरी फसल", "अपनी फसल जोड़ें", "crops"],
-    ["🛒", "Kisan Store", "कृषि सामान", "store"],
-    ["🏛️", "सरकारी योजना", "किसानों की योजनाएं", "profile"],
+    [
+      "📷",
+      "फसल जाँचें",
+      "फोटो से जांच",
+      "doctor",
+    ],
+    [
+      "🤖",
+      "AI Kisan",
+      "सवाल पूछें",
+      "chat",
+    ],
+    [
+      "🌦️",
+      "मौसम",
+      "अपने इलाके का मौसम",
+      "weather",
+    ],
+    [
+      "💰",
+      "मंडी भाव",
+      "सरकारी मंडी के भाव",
+      "mandi",
+    ],
+    [
+      "🌱",
+      "मेरी फसल",
+      "अपनी फसल जोड़ें",
+      "crops",
+    ],
+    [
+      "🛒",
+      "Kisan Store",
+      "कृषि सामान",
+      "store",
+    ],
+    [
+      "🏛️",
+      "सरकारी योजना",
+      "किसानों की योजनाएं",
+      "profile",
+    ],
   ];
 
   return (
@@ -1228,7 +1336,9 @@ function HomePage({
 
         <button
           className="weatherButton"
-          onClick={() => setTab("weather")}
+          onClick={() =>
+            setTab("weather")
+          }
         >
           <CloudSun size={29} />
 
@@ -1248,7 +1358,8 @@ function HomePage({
             size={16}
             style={{
               marginLeft: "auto",
-              transform: "rotate(180deg)",
+              transform:
+                "rotate(180deg)",
             }}
           />
         </button>
@@ -1259,7 +1370,9 @@ function HomePage({
           <button
             className="card"
             key={c[3]}
-            onClick={() => setTab(c[3])}
+            onClick={() =>
+              setTab(c[3])
+            }
           >
             <div className="cardIcon">
               {c[0]}
@@ -1291,7 +1404,6 @@ function HomePage({
 
 /* =========================================================
    REAL MANDI
-   FIXED VERSION
 ========================================================= */
 
 function MandiPage({
@@ -1299,10 +1411,17 @@ function MandiPage({
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [state, setState] = useState("");
-  const [commodity, setCommodity] = useState("");
-  const [market, setMarket] = useState("");
-  const [search, setSearch] = useState("");
+  const [state, setState] =
+    useState("");
+
+  const [commodity, setCommodity] =
+    useState("");
+
+  const [market, setMarket] =
+    useState("");
+
+  const [search, setSearch] =
+    useState("");
 
   const [records, setRecords] =
     useState<MandiRecord[]>([]);
@@ -1319,138 +1438,82 @@ function MandiPage({
   const [hasLoaded, setHasLoaded] =
     useState(false);
 
-  /* -------------------------------------------------------
-     INPUT NORMALIZER
-  ------------------------------------------------------- */
+  const loadMandi = async () => {
+    if (loading) return;
 
-  const normalizeState = (value: string) => {
-    const v = value.trim().toLowerCase();
-
-    const map: Record<string, string> = {
-      "दिल्ली": "Delhi",
-      "delhi": "Delhi",
-      "new delhi": "Delhi",
-      "नई दिल्ली": "Delhi",
-
-      "हरियाणा": "Haryana",
-      "haryana": "Haryana",
-
-      "पंजाब": "Punjab",
-      "punjab": "Punjab",
-
-      "राजस्थान": "Rajasthan",
-      "rajasthan": "Rajasthan",
-
-      "उत्तर प्रदेश": "Uttar Pradesh",
-      "uttar pradesh": "Uttar Pradesh",
-      "up": "Uttar Pradesh",
-
-      "मध्य प्रदेश": "Madhya Pradesh",
-      "madhya pradesh": "Madhya Pradesh",
-      "mp": "Madhya Pradesh",
-
-      "महाराष्ट्र": "Maharashtra",
-      "maharashtra": "Maharashtra",
-    };
-
-    return map[v] || value.trim();
-  };
-
-  const normalizeCommodity = (value: string) => {
-    const v = value.trim().toLowerCase();
-
-    const map: Record<string, string> = {
-      "आलू": "Potato",
-      "aloo": "Potato",
-      "potato": "Potato",
-
-      "प्याज": "Onion",
-      "प्याज़": "Onion",
-      "onion": "Onion",
-
-      "टमाटर": "Tomato",
-      "tamatar": "Tomato",
-      "tomato": "Tomato",
-
-      "गेहूं": "Wheat",
-      "गेहूँ": "Wheat",
-      "wheat": "Wheat",
-
-      "धान": "Paddy",
-      "paddy": "Paddy",
-      "rice": "Paddy",
-      "चावल": "Rice",
-
-      "सरसों": "Mustard",
-      "mustard": "Mustard",
-
-      "मक्का": "Maize",
-      "maize": "Maize",
-      "corn": "Maize",
-    };
-
-    return map[v] || value.trim();
-  };
-
-  const normalizeMarket = (value: string) => {
-    const v = value.trim().toLowerCase();
-
-    const map: Record<string, string> = {
-      "आज़ादपुर": "Azadpur",
-      "आजादपुर": "Azadpur",
-      "azadpur": "Azadpur",
-    };
-
-    return map[v] || value.trim();
-  };
-
-  /* -------------------------------------------------------
-     FETCH MANDI
-  ------------------------------------------------------- */
-
-  const requestMandi = async (
-    params: URLSearchParams
-  ): Promise<MandiResponse> => {
-    const url =
-      `${API_BASE}/api/mandi?${params.toString()}`;
-
-    console.log(
-      "KisanSaathi Mandi request:",
-      url
-    );
-
-    const controller =
-      new AbortController();
-
-    const timeout = setTimeout(
-      () => controller.abort(),
-      20000
-    );
+    setLoading(true);
+    setError("");
 
     try {
+      const params =
+        new URLSearchParams();
+
+      params.set("limit", "100");
+
+      if (state.trim()) {
+        params.set(
+          "state",
+          state.trim()
+        );
+      }
+
+      if (commodity.trim()) {
+        params.set(
+          "commodity",
+          commodity.trim()
+        );
+      }
+
+      if (market.trim()) {
+        params.set(
+          "market",
+          market.trim()
+        );
+      }
+
+      const url =
+        `${API_BASE}/api/mandi?${params.toString()}`;
+
+      const controller =
+        new AbortController();
+
+      const timeout = setTimeout(
+        () => controller.abort(),
+        20000
+      );
+
       const r = await fetch(url, {
         method: "GET",
         headers: {
-          Accept: "application/json",
+          Accept:
+            "application/json",
         },
         cache: "no-store",
         signal: controller.signal,
       });
 
+      clearTimeout(timeout);
+
       const contentType =
-        r.headers.get("content-type") || "";
+        r.headers.get(
+          "content-type"
+        ) || "";
 
       const data: MandiResponse =
-        contentType.includes("application/json")
-          ? await r.json().catch(() => ({
-              ok: false,
-              error:
-                "Server ने गलत JSON response दिया।",
-            }))
+        contentType.includes(
+          "application/json"
+        )
+          ? await r
+              .json()
+              .catch(() => ({
+                ok: false,
+                error:
+                  "Server ने गलत JSON response दिया।",
+              }))
           : {
               ok: false,
               error:
-                "Mandi API ने JSON की जगह दूसरा response दिया।",
+                "Mandi API ने JSON की जगह दूसरा response दिया। Render backend route जांचें।",
             };
 
       if (!r.ok || !data.ok) {
@@ -1460,127 +1523,22 @@ function MandiPage({
         );
       }
 
-      return data;
-    } finally {
-      clearTimeout(timeout);
-    }
-  };
-
-  const loadMandi = async () => {
-    if (loading) return;
-
-    setLoading(true);
-    setError("");
-    setHasLoaded(false);
-    setRecords([]);
-    setSource("");
-
-    try {
-      const s = normalizeState(state);
-      const c = normalizeCommodity(commodity);
-      const m = normalizeMarket(market);
-
-      /*
-       * FIRST:
-       * User ke exact filters ke saath request.
-       */
-
-      const first =
-        new URLSearchParams();
-
-      first.set("limit", "100");
-
-      if (s) {
-        first.set("state", s);
-      }
-
-      if (c) {
-        first.set("commodity", c);
-      }
-
-      if (m) {
-        first.set("market", m);
-      }
-
-      let data =
-        await requestMandi(first);
-
-      let mandiData =
+      const mandiData =
         Array.isArray(data.mandi)
           ? data.mandi
           : [];
 
-      /*
-       * SECOND:
-       * Agar exact search se data nahi aaya,
-       * to broad search try karo.
-       */
-
-      if (
-        mandiData.length === 0 &&
-        (s || c || m)
-      ) {
-        const broad =
-          new URLSearchParams();
-
-        broad.set("limit", "100");
-
-        if (c) {
-          broad.set(
-            "commodity",
-            c
-          );
-        }
-
-        data =
-          await requestMandi(broad);
-
-        mandiData =
-          Array.isArray(data.mandi)
-            ? data.mandi
-            : [];
-
-        /*
-         * Frontend-side filtering.
-         */
-
-        if (s || m) {
-          const ns = s.toLowerCase();
-          const nm = m.toLowerCase();
-
-          mandiData =
-            mandiData.filter((x) => {
-              const row =
-                `${x.state} ${x.district} ${x.market}`
-                  .toLowerCase();
-
-              const stateOk =
-                !ns ||
-                row.includes(ns);
-
-              const marketOk =
-                !nm ||
-                row.includes(nm);
-
-              return (
-                stateOk &&
-                marketOk
-              );
-            });
-        }
-      }
-
       setRecords(mandiData);
       setSource(
-        data.source ||
-          "Government of India - Data.gov.in / AGMARKNET"
+        data.source || ""
       );
-
       setHasLoaded(true);
 
-      if (mandiData.length === 0) {
+      if (
+        mandiData.length === 0
+      ) {
         setError(
-          "इस search के लिए अभी कोई mandi record नहीं मिला। अलग राज्य, फसल या मंडी नाम से दोबारा खोजें।"
+          "इस search के लिए अभी कोई mandi record नहीं मिला।"
         );
       }
     } catch (e) {
@@ -1606,22 +1564,22 @@ function MandiPage({
     }
   };
 
-  /* -------------------------------------------------------
-     SEARCH DISPLAY FILTER
-  ------------------------------------------------------- */
+  const filtered =
+    useMemo(() => {
+      const s =
+        search
+          .trim()
+          .toLowerCase();
 
-  const filtered = useMemo(() => {
-    const s =
-      search.trim().toLowerCase();
+      if (!s) return records;
 
-    if (!s) return records;
-
-    return records.filter((x) =>
-      `${x.state} ${x.district} ${x.market} ${x.commodity} ${x.variety} ${x.grade}`
-        .toLowerCase()
-        .includes(s)
-    );
-  }, [records, search]);
+      return records.filter(
+        (x) =>
+          `${x.state} ${x.district} ${x.market} ${x.commodity} ${x.variety} ${x.grade}`
+            .toLowerCase()
+            .includes(s)
+      );
+    }, [records, search]);
 
   return (
     <>
@@ -1644,7 +1602,9 @@ function MandiPage({
           className="search"
           value={search}
           onChange={(e) =>
-            setSearch(e.target.value)
+            setSearch(
+              e.target.value
+            )
           }
           placeholder="🔎 राज्य, फसल, मंडी या जिला खोजें..."
         />
@@ -1655,25 +1615,31 @@ function MandiPage({
             className="search"
             value={state}
             onChange={(e) =>
-              setState(e.target.value)
+              setState(
+                e.target.value
+              )
             }
-            placeholder="राज्य जैसे Delhi"
+            placeholder="राज्य जैसे Haryana"
           />
 
           <input
             className="search"
             value={commodity}
             onChange={(e) =>
-              setCommodity(e.target.value)
+              setCommodity(
+                e.target.value
+              )
             }
-            placeholder="फसल जैसे Potato"
+            placeholder="फसल जैसे Wheat"
           />
 
           <input
             className="search"
             value={market}
             onChange={(e) =>
-              setMarket(e.target.value)
+              setMarket(
+                e.target.value
+              )
             }
             placeholder="मंडी जैसे Azadpur"
           />
@@ -1688,7 +1654,8 @@ function MandiPage({
           <RefreshCw
             size={16}
             style={{
-              verticalAlign: "middle",
+              verticalAlign:
+                "middle",
               marginRight: 5,
             }}
           />
@@ -1701,7 +1668,9 @@ function MandiPage({
         {source && (
           <div
             className="muted"
-            style={{ marginTop: 8 }}
+            style={{
+              marginTop: 8,
+            }}
           >
             Source: {source}
           </div>
@@ -1709,41 +1678,52 @@ function MandiPage({
 
       </div>
 
-      {!hasLoaded && !loading && (
-        <div className="section empty">
-          <div style={{ fontSize: 45 }}>
-            🌾
+      {!hasLoaded &&
+        !loading && (
+          <div className="section empty">
+            <div
+              style={{
+                fontSize: 45,
+              }}
+            >
+              🌾
+            </div>
+
+            <h3>
+              Real Mandi Bhav देखें
+            </h3>
+
+            <p>
+              राज्य, फसल या मंडी डालें
+              और ऊपर वाला बटन दबाएं।
+            </p>
           </div>
+        )}
 
-          <h3>
-            Real Mandi Bhav देखें
-          </h3>
-
-          <p>
-            राज्य, फसल या मंडी डालें
-            और ऊपर वाला बटन दबाएं।
-          </p>
-        </div>
-      )}
-
-      {error && hasLoaded && (
-        <div
-          className="section"
-          style={{
-            color: "#a33",
-            background: "#fff0f0",
-          }}
-        >
-          ❌ {error}
-        </div>
-      )}
+      {error &&
+        hasLoaded && (
+          <div
+            className="section"
+            style={{
+              color: "#a33",
+              background:
+                "#fff0f0",
+            }}
+          >
+            ❌ {error}
+          </div>
+        )}
 
       {!loading &&
         hasLoaded &&
         !error &&
         filtered.length === 0 && (
           <div className="section empty">
-            <div style={{ fontSize: 45 }}>
+            <div
+              style={{
+                fontSize: 45,
+              }}
+            >
               🌾
             </div>
 
@@ -1759,82 +1739,99 @@ function MandiPage({
           </div>
         )}
 
-      {filtered.map((x, i) => (
-        <div
-          className="mandiCard"
-          key={`${x.state}-${x.market}-${x.commodity}-${i}`}
-        >
-          <div className="mandiTop">
+      {filtered.map(
+        (x, i) => (
+          <div
+            className="mandiCard"
+            key={`${x.state}-${x.market}-${x.commodity}-${i}`}
+          >
+            <div className="mandiTop">
 
-            <div>
-              <div className="mandiCrop">
-                🌾 {x.commodity || "फसल"}
+              <div>
+                <div className="mandiCrop">
+                  🌾{" "}
+                  {x.commodity ||
+                    "फसल"}
+                </div>
+
+                <div className="mandiMarket">
+                  📍{" "}
+                  {x.market ||
+                    "मंडी"}
+                </div>
+
+                <div className="muted">
+                  {x.district
+                    ? `${x.district}, `
+                    : ""}
+                  {x.state}
+                </div>
               </div>
 
-              <div className="mandiMarket">
-                📍 {x.market || "मंडी"}
-              </div>
-
-              <div className="muted">
-                {x.district
-                  ? `${x.district}, `
-                  : ""}
-                {x.state}
-              </div>
-            </div>
-
-            <div className="mandiPrice">
-              ₹
-              {Number(
-                x.modalPrice || 0
-              ).toLocaleString("en-IN")}
-
-              <div className="priceLabel">
-                Modal / क्विंटल
-              </div>
-            </div>
-
-          </div>
-
-          <div className="mandiDetails">
-
-            <div className="mandiDetail">
-              न्यूनतम भाव
-              <b>
+              <div className="mandiPrice">
                 ₹
                 {Number(
-                  x.minPrice || 0
-                ).toLocaleString("en-IN")}
-              </b>
+                  x.modalPrice ||
+                    0
+                ).toLocaleString(
+                  "en-IN"
+                )}
+
+                <div className="priceLabel">
+                  Modal / क्विंटल
+                </div>
+              </div>
+
             </div>
 
-            <div className="mandiDetail">
-              अधिकतम भाव
-              <b>
-                ₹
-                {Number(
-                  x.maxPrice || 0
-                ).toLocaleString("en-IN")}
-              </b>
-            </div>
+            <div className="mandiDetails">
 
-            <div className="mandiDetail">
-              Variety
-              <b>
-                {x.variety || "-"}
-              </b>
-            </div>
+              <div className="mandiDetail">
+                न्यूनतम भाव
+                <b>
+                  ₹
+                  {Number(
+                    x.minPrice ||
+                      0
+                  ).toLocaleString(
+                    "en-IN"
+                  )}
+                </b>
+              </div>
 
-            <div className="mandiDetail">
-              तारीख
-              <b>
-                {x.arrivalDate || "-"}
-              </b>
-            </div>
+              <div className="mandiDetail">
+                अधिकतम भाव
+                <b>
+                  ₹
+                  {Number(
+                    x.maxPrice ||
+                      0
+                  ).toLocaleString(
+                    "en-IN"
+                  )}
+                </b>
+              </div>
 
+              <div className="mandiDetail">
+                Variety
+                <b>
+                  {x.variety ||
+                    "-"}
+                </b>
+              </div>
+
+              <div className="mandiDetail">
+                तारीख
+                <b>
+                  {x.arrivalDate ||
+                    "-"}
+                </b>
+              </div>
+
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      )}
     </>
   );
 }
@@ -1855,7 +1852,9 @@ function WeatherPage({
     useState("");
 
   const [w, setW] =
-    useState<WeatherData | null>(null);
+    useState<WeatherData | null>(
+      null
+    );
 
   const [loc, setLoc] =
     useState("");
@@ -1885,7 +1884,8 @@ function WeatherPage({
             `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
             `&timezone=auto&forecast_days=3`;
 
-          const r = await fetch(url);
+          const r =
+            await fetch(url);
 
           if (!r.ok) {
             throw new Error();
@@ -1899,7 +1899,9 @@ function WeatherPage({
           setLoc(
             `${latitude.toFixed(
               2
-            )}°, ${longitude.toFixed(2)}°`
+            )}°, ${longitude.toFixed(
+              2
+            )}°`
           );
         } catch {
           setError(
@@ -1917,7 +1919,8 @@ function WeatherPage({
         setLoading(false);
       },
       {
-        enableHighAccuracy: true,
+        enableHighAccuracy:
+          true,
         timeout: 10000,
         maximumAge: 300000,
       }
@@ -1970,13 +1973,17 @@ function WeatherPage({
 
         <button
           style={{
-            marginLeft: "auto",
+            marginLeft:
+              "auto",
             border: 0,
-            background: "transparent",
+            background:
+              "transparent",
           }}
           onClick={load}
         >
-          <RefreshCw size={17} />
+          <RefreshCw
+            size={17}
+          />
         </button>
       </div>
 
@@ -1984,11 +1991,14 @@ function WeatherPage({
         <div
           className="section"
           style={{
-            textAlign: "center",
+            textAlign:
+              "center",
             padding: 30,
           }}
         >
-          <CloudSun size={52} />
+          <CloudSun
+            size={52}
+          />
 
           <h3>
             अपने इलाके का मौसम देखें
@@ -2023,22 +2033,29 @@ function WeatherPage({
         <>
           <div className="weatherBig">
 
-            <div style={{ fontSize: 48 }}>
+            <div
+              style={{
+                fontSize: 48,
+              }}
+            >
               {emo(
-                w.current.weather_code
+                w.current
+                  .weather_code
               )}
             </div>
 
             <div className="temperature">
               {Math.round(
-                w.current.temperature_2m
+                w.current
+                  .temperature_2m
               )}
               °C
             </div>
 
             <h3>
               {txt(
-                w.current.weather_code
+                w.current
+                  .weather_code
               )}
             </h3>
 
@@ -2118,19 +2135,25 @@ function WeatherPage({
                     <div className="forecastIcon">
                       {emo(
                         w.daily
-                          .weather_code[i]
+                          .weather_code[
+                          i
+                        ]
                       )}
                     </div>
 
                     <b>
                       {Math.round(
                         w.daily
-                          .temperature_2m_max[i]
+                          .temperature_2m_max[
+                          i
+                        ]
                       )}
                       ° /{" "}
                       {Math.round(
                         w.daily
-                          .temperature_2m_min[i]
+                          .temperature_2m_min[
+                          i
+                        ]
                       )}
                       °
                     </b>
@@ -2218,7 +2241,9 @@ function CropsPage({
           className="search"
           value={name}
           onChange={(e) =>
-            setName(e.target.value)
+            setName(
+              e.target.value
+            )
           }
           placeholder="फसल का नाम (गेहूं, धान...)"
         />
@@ -2227,7 +2252,9 @@ function CropsPage({
           className="search"
           value={area}
           onChange={(e) =>
-            setArea(e.target.value)
+            setArea(
+              e.target.value
+            )
           }
           placeholder="खेत/क्षेत्र (जैसे 2 एकड़)"
         />
@@ -2236,13 +2263,18 @@ function CropsPage({
           className="primary"
           onClick={save}
         >
-          <Plus size={16} /> फसल सेव करें
+          <Plus size={16} />{" "}
+          फसल सेव करें
         </button>
       </div>
 
       {crops.length === 0 ? (
         <div className="section empty">
-          <div style={{ fontSize: 45 }}>
+          <div
+            style={{
+              fontSize: 45,
+            }}
+          >
             🌱
           </div>
 
@@ -2277,7 +2309,9 @@ function CropsPage({
                 onClick={() =>
                   setCrops((x) =>
                     x.filter(
-                      (y) => y.id !== c.id
+                      (y) =>
+                        y.id !==
+                        c.id
                     )
                   )
                 }
@@ -2308,7 +2342,9 @@ function DoctorPage({
   setTab: (t: Tab) => void;
 }) {
   const [file, setFile] =
-    useState<File | null>(null);
+    useState<File | null>(
+      null
+    );
 
   const [url, setUrl] =
     useState("");
@@ -2384,7 +2420,9 @@ function DoctorPage({
         {file && (
           <button
             className="primary"
-            style={{ marginTop: 10 }}
+            style={{
+              marginTop: 10,
+            }}
             onClick={analyze}
           >
             🔍 जांच शुरू करें
@@ -2401,7 +2439,9 @@ function DoctorPage({
       </div>
 
       <div className="section">
-        <Stethoscope size={28} />
+        <Stethoscope
+          size={28}
+        />
 
         <h3>
           ध्यान रखें
@@ -2455,11 +2495,14 @@ function StorePage({
               style={{
                 display: "flex",
                 gap: 9,
-                alignItems: "center",
+                alignItems:
+                  "center",
               }}
             >
               <span
-                style={{ fontSize: 28 }}
+                style={{
+                  fontSize: 28,
+                }}
               >
                 {p.emoji}
               </span>
@@ -2470,7 +2513,8 @@ function StorePage({
                 </div>
 
                 <div className="muted">
-                  ₹{p.price} · {p.unit}
+                  ₹{p.price} ·{" "}
+                  {p.unit}
                 </div>
               </div>
             </div>
@@ -2488,13 +2532,17 @@ function StorePage({
 
         <button
           className="primary"
-          style={{ marginTop: 12 }}
+          style={{
+            marginTop: 12,
+          }}
           onClick={() =>
             setTab("cart")
           }
         >
           🛒 कार्ट देखें{" "}
-          {count ? `(${count})` : ""}
+          {count
+            ? `(${count})`
+            : ""}
         </button>
       </div>
 
@@ -2539,7 +2587,9 @@ function CartPage({
 
       {!ids.length ? (
         <div className="section empty">
-          <ShoppingCart size={50} />
+          <ShoppingCart
+            size={50}
+          />
 
           <h3>
             Cart खाली है
@@ -2560,7 +2610,8 @@ function CartPage({
           {ids.map((id) => {
             const p =
               products.find(
-                (x) => x.id === id
+                (x) =>
+                  x.id === id
               );
 
             if (!p) return null;
@@ -2571,7 +2622,9 @@ function CartPage({
                 key={id}
               >
                 <div>
-                  <b>{p.name}</b>
+                  <b>
+                    {p.name}
+                  </b>
 
                   <div className="muted">
                     ₹{p.price} ×{" "}
@@ -2586,7 +2639,9 @@ function CartPage({
                       remove(id)
                     }
                   >
-                    <Minus size={15} />
+                    <Minus
+                      size={15}
+                    />
                   </button>
 
                   <b>
@@ -2598,7 +2653,9 @@ function CartPage({
                       add(id)
                     }
                   >
-                    <Plus size={15} />
+                    <Plus
+                      size={15}
+                    />
                   </button>
 
                 </div>
@@ -2673,7 +2730,9 @@ function ChatPage({
 
         {!chat.length ? (
           <div className="empty">
-            <MessageCircle size={48} />
+            <MessageCircle
+              size={48}
+            />
 
             <h3>
               नमस्ते किसान भाई 👋
@@ -2696,7 +2755,8 @@ function ChatPage({
               key={i}
             >
               <b>
-                {m.from === "user"
+                {m.from ===
+                "user"
                   ? "आप"
                   : "🤖 AI Kisan"}
               </b>
@@ -2728,7 +2788,9 @@ function ChatPage({
         <input
           value={q}
           onChange={(e) =>
-            setQ(e.target.value)
+            setQ(
+              e.target.value
+            )
           }
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -2740,7 +2802,9 @@ function ChatPage({
 
         <button
           className="sendBtn"
-          onClick={() => send()}
+          onClick={() =>
+            send()
+          }
         >
           <Send size={18} />
         </button>
@@ -2803,7 +2867,9 @@ function ProfilePage({
             </div>
 
             <div
-              style={{ flex: 1 }}
+              style={{
+                flex: 1,
+              }}
             >
               <b>
                 {s.title}
@@ -2819,7 +2885,9 @@ function ProfilePage({
                 rel="noreferrer"
               >
                 आधिकारिक वेबसाइट{" "}
-                <ExternalLink size={11} />
+                <ExternalLink
+                  size={11}
+                />
               </a>
             </div>
           </div>
@@ -2856,7 +2924,9 @@ function ProfilePage({
 ========================================================= */
 
 const root =
-  document.getElementById("root");
+  document.getElementById(
+    "root"
+  );
 
 if (root) {
   createRoot(root).render(
