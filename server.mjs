@@ -49,7 +49,9 @@ to the API.
 
 async function geminiReply(message) {
   if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY backend में सेट नहीं है।");
+    throw new Error(
+      "GEMINI_API_KEY backend में सेट नहीं है।"
+    );
   }
 
   const url =
@@ -65,209 +67,499 @@ async function geminiReply(message) {
     },
     body: JSON.stringify({
       systemInstruction: {
-        parts: [{ text: KISAN_SYSTEM_INSTRUCTION }]
+        parts: [
+          {
+            text: KISAN_SYSTEM_INSTRUCTION
+          }
+        ]
       },
+
       contents: [
         {
           role: "user",
-          parts: [{ text: message }]
+          parts: [
+            {
+              text: message
+            }
+          ]
         }
       ],
+
       generationConfig: {
         maxOutputTokens: 700
       }
     })
   });
 
-  const body = await response.json().catch(() => ({}));
+  const body =
+    await response.json().catch(
+      () => ({})
+    );
 
   if (!response.ok) {
     throw new Error(
       body?.error?.message ||
-      `Gemini API HTTP ${response.status}`
+        `Gemini API HTTP ${response.status}`
     );
   }
 
   const reply =
     body?.candidates?.[0]?.content?.parts
-      ?.map(part => part?.text || "")
+      ?.map(
+        part => part?.text || ""
+      )
       .join("")
       .trim();
 
   if (!reply) {
-    throw new Error("Gemini ने कोई जवाब नहीं दिया।");
+    throw new Error(
+      "Gemini ने कोई जवाब नहीं दिया।"
+    );
   }
 
   return reply;
 }
 
+/* =========================================================
+   HEALTH
+========================================================= */
+
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
-    ai: Boolean(GEMINI_API_KEY),
-    aiMode: GEMINI_API_KEY ? "gemini" : "not-configured",
-    geminiModel: GEMINI_MODEL,
-    mandi: Boolean(DATA_GOV_API_KEY),
-    message: "KisanSaathi AI backend running"
+
+    ai: Boolean(
+      GEMINI_API_KEY
+    ),
+
+    aiMode:
+      GEMINI_API_KEY
+        ? "gemini"
+        : "not-configured",
+
+    geminiModel:
+      GEMINI_MODEL,
+
+    mandi:
+      Boolean(
+        DATA_GOV_API_KEY
+      ),
+
+    message:
+      "KisanSaathi AI backend running"
   });
 });
 
-app.post("/api/chat", async (req, res) => {
-  try {
-    const message = String(req.body?.message || "").trim();
+/* =========================================================
+   AI CHAT
+========================================================= */
 
-    if (!message) {
-      return res.status(400).json({
-        error: "सवाल खाली है।"
+app.post(
+  "/api/chat",
+  async (req, res) => {
+    try {
+      const message =
+        String(
+          req.body?.message ||
+            ""
+        ).trim();
+
+      if (!message) {
+        return res.status(400).json({
+          error:
+            "सवाल खाली है।"
+        });
+      }
+
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({
+          error:
+            "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+        });
+      }
+
+      const reply =
+        await geminiReply(
+          message
+        );
+
+      return res.json({
+        reply,
+        mode: "gemini"
       });
-    }
 
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({
+    } catch (error) {
+      console.error(
+        "CHAT ERROR:",
+        error
+      );
+
+      return res.status(500).json({
         error:
-          "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+          error instanceof Error
+            ? `Gemini AI error: ${error.message}`
+            : "Gemini AI से जवाब नहीं मिला।"
       });
     }
-
-    const reply = await geminiReply(message);
-
-    return res.json({
-      reply,
-      mode: "gemini"
-    });
-  } catch (error) {
-    console.error("CHAT ERROR:", error);
-
-    return res.status(500).json({
-      error:
-        error instanceof Error
-          ? `Gemini AI error: ${error.message}`
-          : "Gemini AI से जवाब नहीं मिला।"
-    });
   }
-});
+);
 
-/* =========================
-   MANDI DATA
-========================= */
+/* =========================================================
+   REAL MANDI DATA
+   DATA.GOV.IN / AGMARKNET
+========================================================= */
 
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
+/* Hindi crop names -> Government commodity names */
+
 const aliases = {
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
+  "गेहूँ": "Wheat",
+  "wheat": "Wheat",
+
   "धान": "Rice",
   "चावल": "Rice",
+  "rice": "Rice",
+
   "सरसों": "Mustard",
+  "सरसो": "Mustard",
+  "mustard": "Mustard",
+
   "मक्का": "Maize",
   "मकई": "Maize",
+  "maize": "Maize",
+
+  "चना": "Gram",
+  "gram": "Gram",
+
+  "बाजरा": "Bajra",
+  "bajra": "Bajra",
+
+  "जौ": "Barley",
+  "barley": "Barley",
+
   "कपास": "Cotton",
+  "cotton": "Cotton",
+
   "सोयाबीन": "Soyabean",
   "सोया": "Soyabean",
+  "soyabean": "Soyabean",
+
   "प्याज": "Onion",
-  "टमाटर": "Tomato",
+  "onion": "Onion",
+
   "आलू": "Potato",
-  "चना": "Gram",
-  "अरहर": "Arhar (Tur/Red Gram)",
-  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
-  "जौ": "Barley",
+  "potato": "Potato",
+
+  "टमाटर": "Tomato",
+  "tomato": "Tomato",
+
   "मूंग": "Green Gram (Moong)(Whole)",
   "उड़द": "Black Gram (Urd Beans)(Whole)"
 };
 
-app.get("/api/mandi", async (req, res) => {
-  try {
-    if (!DATA_GOV_API_KEY) {
-      return res.status(503).json({
+/* =========================================================
+   MANDI API
+========================================================= */
+
+app.get(
+  "/api/mandi",
+  async (req, res) => {
+    try {
+      if (!DATA_GOV_API_KEY) {
+        return res.status(503).json({
+          ok: false,
+          error:
+            "DATA_GOV_API_KEY backend में सेट नहीं है।"
+        });
+      }
+
+      const rawCrop =
+        String(
+          req.query.crop ||
+            req.query.commodity ||
+            ""
+        ).trim();
+
+      const cropKey =
+        rawCrop.toLowerCase();
+
+      const crop =
+        aliases[cropKey] ||
+        rawCrop;
+
+      const limitValue =
+        Math.min(
+          Number(
+            req.query.limit || 1000
+          ) || 1000,
+          5000
+        );
+
+      const offsetValue =
+        Math.max(
+          Number(
+            req.query.offset || 0
+          ) || 0,
+          0
+        );
+
+      const params =
+        new URLSearchParams();
+
+      params.set(
+        "api-key",
+        DATA_GOV_API_KEY
+      );
+
+      params.set(
+        "format",
+        "json"
+      );
+
+      params.set(
+        "limit",
+        String(
+          limitValue
+        )
+      );
+
+      params.set(
+        "offset",
+        String(
+          offsetValue
+        )
+      );
+
+      /*
+       * सबसे जरूरी हिस्सा:
+       * गेहूं -> Wheat
+       * धान -> Rice
+       * सरसों -> Mustard
+       */
+
+      if (crop) {
+        params.set(
+          "filters[commodity]",
+          crop
+        );
+      }
+
+      const state =
+        String(
+          req.query.state ||
+            ""
+        ).trim();
+
+      const market =
+        String(
+          req.query.market ||
+            ""
+        ).trim();
+
+      if (state) {
+        params.set(
+          "filters[state]",
+          state
+        );
+      }
+
+      if (market) {
+        params.set(
+          "filters[market]",
+          market
+        );
+      }
+
+      params.set(
+        "sort[arrival_date]",
+        "desc"
+      );
+
+      const apiUrl =
+        `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`;
+
+      console.log(
+        "MANDI REQUEST:",
+        {
+          crop,
+          state,
+          market,
+          limitValue,
+          offsetValue
+        }
+      );
+
+      const response =
+        await fetch(apiUrl);
+
+      const body =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
+
+      if (!response.ok) {
+        console.error(
+          "DATA GOV ERROR:",
+          body
+        );
+
+        throw new Error(
+          body?.error ||
+            body?.message ||
+            `data.gov.in HTTP ${response.status}`
+        );
+      }
+
+      const records =
+        Array.isArray(
+          body.records
+        )
+          ? body.records
+          : [];
+
+      const mandi =
+        records
+          .map(item => ({
+            state:
+              item.state || "",
+
+            district:
+              item.district ||
+              "",
+
+            market:
+              item.market ||
+              "",
+
+            commodity:
+              item.commodity ||
+              "",
+
+            variety:
+              item.variety ||
+              "",
+
+            grade:
+              item.grade ||
+              "",
+
+            arrivalDate:
+              item.arrival_date ||
+              "",
+
+            minPrice:
+              Number(
+                item.min_price
+              ) || 0,
+
+            maxPrice:
+              Number(
+                item.max_price
+              ) || 0,
+
+            modalPrice:
+              Number(
+                item.modal_price
+              ) || 0
+          }))
+
+          .filter(
+            item =>
+              item.modalPrice > 0 ||
+              item.maxPrice > 0 ||
+              item.minPrice > 0
+          );
+
+      return res.json({
+        ok: true,
+
+        source:
+          "Government of India - Data.gov.in / AGMARKNET",
+
+        count:
+          mandi.length,
+
+        total:
+          Number(
+            body.total
+          ) || mandi.length,
+
+        mandi
+      });
+
+    } catch (error) {
+      console.error(
+        "MANDI ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+
         error:
-          "DATA_GOV_API_KEY backend में सेट नहीं है।"
+          error instanceof Error
+            ? error.message
+            : "सरकारी मंडी डेटा नहीं मिल पाया।"
       });
     }
+  }
+);
 
-    const raw = String(req.query.crop || "").trim();
+/* =========================================================
+   ROOT
+========================================================= */
 
-    const crop =
-      aliases[raw.toLowerCase()] || raw;
-
-    const params = new URLSearchParams({
-      "api-key": DATA_GOV_API_KEY,
-      format: "json",
-      limit: "100",
-      offset: "0"
-    });
-
-    if (crop) {
-      params.set("filters[commodity]", crop);
-    }
-
-    params.set("sort[arrival_date]", "desc");
-
-    const response = await fetch(
-      `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `data.gov.in HTTP ${response.status}`
-      );
-    }
-
-    const body = await response.json();
-
-    const records =
-      Array.isArray(body.records)
-        ? body.records
-        : [];
-
-    const data = records
-      .map(item => ({
-        state: item.state || "",
-        district: item.district || "",
-        market: item.market || "",
-        commodity: item.commodity || "",
-        variety: item.variety || "",
-        grade: item.grade || "",
-        min_price: Number(item.min_price) || 0,
-        max_price: Number(item.max_price) || 0,
-        modal_price: Number(item.modal_price) || 0,
-        arrival_date: item.arrival_date || ""
-      }))
-      .filter(item => item.modal_price > 0);
-
+app.get(
+  "/",
+  (req, res) => {
     res.json({
-      data,
-      count: data.length,
-      source: "data.gov.in / AGMARKNET"
-    });
+      app:
+        "KisanSaathi AI",
 
-  } catch (error) {
-    console.error("MANDI ERROR:", error);
+      status:
+        "online",
 
-    res.status(500).json({
-      error:
-        "सरकारी मंडी डेटा नहीं मिल पाया।"
+      ai:
+        Boolean(
+          GEMINI_API_KEY
+        ),
+
+      aiMode:
+        GEMINI_API_KEY
+          ? "gemini"
+          : "not-configured",
+
+      mandi:
+        Boolean(
+          DATA_GOV_API_KEY
+        ),
+
+      geminiModel:
+        GEMINI_MODEL
     });
   }
-});
+);
 
-app.get("/", (req, res) => {
-  res.json({
-    app: "KisanSaathi AI",
-    status: "online",
-    ai: Boolean(GEMINI_API_KEY),
-    aiMode: GEMINI_API_KEY
-      ? "gemini"
-      : "not-configured",
-    mandi: Boolean(DATA_GOV_API_KEY),
-    geminiModel: GEMINI_MODEL
-  });
-});
+/* =========================================================
+   START SERVER
+========================================================= */
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `KisanSaathi AI backend running on port ${PORT} | Gemini: ${Boolean(
-      GEMINI_API_KEY
-    )} | Model: ${GEMINI_MODEL}`
-  );
-});
+app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `KisanSaathi AI backend running on port ${PORT} | Gemini: ${Boolean(
+        GEMINI_API_KEY
+      )} | Model: ${GEMINI_MODEL} | Mandi: ${Boolean(
+        DATA_GOV_API_KEY
+      )}`
+    );
+  }
+);
