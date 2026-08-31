@@ -2695,5 +2695,7 @@ const root =
 if (root) {
   createRoot(root).render(
     <React.StrictMode>
-      <App />
-    </React
+  <App />
+</React.StrictMode>
+      
+    
