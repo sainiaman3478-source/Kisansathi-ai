@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Home,
@@ -24,9 +24,10 @@ import {
    FRONTEND -> RENDER BACKEND
 ========================================================= */
 
-const API_BASE =
-  (import.meta.env.VITE_API_BASE ||
-    "https://kisansathi-ai-q9b0.onrender.com").replace(/\/$/, "");
+const API_BASE = (
+  import.meta.env.VITE_API_BASE ||
+  "https://kisansathi-ai-q9b0.onrender.com"
+).replace(/\/$/, "");
 
 type Tab =
   | "home"
@@ -391,6 +392,11 @@ main{
 
 .primary{
   width:100%;
+}
+
+.primary:disabled{
+  opacity:.65;
+  cursor:not-allowed;
 }
 
 .addBtn{
@@ -935,6 +941,12 @@ function App() {
     setQ("");
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(
+        () => controller.abort(),
+        30000
+      );
+
       const r = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: {
@@ -943,7 +955,10 @@ function App() {
         body: JSON.stringify({
           message: t,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       const data = await r.json().catch(() => ({}));
 
@@ -973,7 +988,10 @@ function App() {
       });
     } catch (e) {
       const msg =
-        e instanceof Error
+        e instanceof DOMException &&
+        e.name === "AbortError"
+          ? "AI server ने समय पर जवाब नहीं दिया।"
+          : e instanceof Error
           ? e.message
           : "AI सेवा से कनेक्शन नहीं हो पाया।";
 
@@ -1288,8 +1306,11 @@ function MandiPage({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [source, setSource] = useState("");
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const loadMandi = async () => {
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
@@ -1299,7 +1320,10 @@ function MandiPage({
       params.set("limit", "100");
 
       if (state.trim()) {
-        params.set("state", state.trim());
+        params.set(
+          "state",
+          state.trim()
+        );
       }
 
       if (commodity.trim()) {
@@ -1316,54 +1340,97 @@ function MandiPage({
         );
       }
 
-      const url = `${API_BASE}/api/mandi?${params.toString()}`;
-      console.log("KisanSaathi Mandi request:", url);
+      const url =
+        `${API_BASE}/api/mandi?${params.toString()}`;
+
+      console.log(
+        "KisanSaathi Mandi request:",
+        url
+      );
+
+      const controller =
+        new AbortController();
+
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 20000);
 
       const r = await fetch(url, {
         method: "GET",
-        headers: { Accept: "application/json" },
+        headers: {
+          Accept: "application/json",
+        },
         cache: "no-store",
+        signal: controller.signal,
       });
 
+      clearTimeout(timeout);
+
+      const contentType =
+        r.headers.get("content-type") || "";
+
       const data: MandiResponse =
-        await r.json().catch(() => ({
-          ok: false,
-          error: "Invalid server response",
-        }));
+        contentType.includes("application/json")
+          ? await r.json().catch(() => ({
+              ok: false,
+              error:
+                "Server ने गलत JSON response दिया।",
+            }))
+          : {
+              ok: false,
+              error:
+                "Mandi API ने JSON की जगह दूसरा response दिया। Render backend route जांचें।",
+            };
 
       if (!r.ok || !data.ok) {
         throw new Error(
           data.error ||
-            "सरकारी मंडी data नहीं मिला।"
+            `Mandi server error (${r.status})`
         );
       }
 
-      setRecords(
-        Array.isArray(data.mandi)
-          ? data.mandi
-          : []
-      );
+      const mandiData = Array.isArray(
+        data.mandi
+      )
+        ? data.mandi
+        : [];
 
+      setRecords(mandiData);
       setSource(data.source || "");
+      setHasLoaded(true);
+
+      if (mandiData.length === 0) {
+        setError(
+          "इस search के लिए अभी कोई mandi record नहीं मिला।"
+        );
+      }
     } catch (e) {
       setRecords([]);
+      setHasLoaded(true);
 
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Real Mandi service से connection नहीं हुआ।"
-      );
+      if (
+        e instanceof DOMException &&
+        e.name === "AbortError"
+      ) {
+        setError(
+          "Mandi server ने 20 सेकंड में जवाब नहीं दिया। Render backend/API को जांचना होगा।"
+        );
+      } else {
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Real Mandi service से connection नहीं हुआ।"
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadMandi();
-  }, []);
-
   const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
+    const s = search
+      .trim()
+      .toLowerCase();
 
     if (!s) return records;
 
@@ -1460,7 +1527,24 @@ function MandiPage({
 
       </div>
 
-      {error && (
+      {!hasLoaded && !loading && (
+        <div className="section empty">
+          <div style={{ fontSize: 45 }}>
+            🌾
+          </div>
+
+          <h3>
+            Real Mandi Bhav देखें
+          </h3>
+
+          <p>
+            राज्य, फसल या मंडी डालें
+            और ऊपर वाला बटन दबाएं।
+          </p>
+        </div>
+      )}
+
+      {error && hasLoaded && (
         <div
           className="section"
           style={{
@@ -1473,6 +1557,7 @@ function MandiPage({
       )}
 
       {!loading &&
+        hasLoaded &&
         !error &&
         filtered.length === 0 && (
           <div className="section empty">
@@ -1581,10 +1666,17 @@ function WeatherPage({
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [w, setW] = useState<WeatherData | null>(null);
-  const [loc, setLoc] = useState("");
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [w, setW] =
+    useState<WeatherData | null>(null);
+
+  const [loc, setLoc] =
+    useState("");
 
   const load = () => {
     if (!navigator.geolocation) {
@@ -1690,7 +1782,8 @@ function WeatherPage({
         <MapPin size={17} />
 
         <span>
-          {loc || "Location अभी नहीं ली गई"}
+          {loc ||
+            "Location अभी नहीं ली गई"}
         </span>
 
         <button
@@ -1903,8 +1996,11 @@ function CropsPage({
     React.SetStateAction<Crop[]>
   >;
 }) {
-  const [name, setName] = useState("");
-  const [area, setArea] = useState("");
+  const [name, setName] =
+    useState("");
+
+  const [area, setArea] =
+    useState("");
 
   const save = () => {
     if (!name.trim()) return;
@@ -2005,7 +2101,8 @@ function CropsPage({
                 }
                 style={{
                   border: 0,
-                  background: "transparent",
+                  background:
+                    "transparent",
                   color: "#a33",
                 }}
               >
@@ -2031,10 +2128,15 @@ function DoctorPage({
   const [file, setFile] =
     useState<File | null>(null);
 
-  const [url, setUrl] = useState("");
-  const [result, setResult] = useState("");
+  const [url, setUrl] =
+    useState("");
 
-  const choose = (f: File | null) => {
+  const [result, setResult] =
+    useState("");
+
+  const choose = (
+    f: File | null
+  ) => {
     setFile(f);
     setResult("");
 
@@ -2082,7 +2184,8 @@ function DoctorPage({
             capture="environment"
             onChange={(e) =>
               choose(
-                e.target.files?.[0] || null
+                e.target.files?.[0] ||
+                  null
               )
             }
           />
@@ -2146,10 +2249,11 @@ function StorePage({
   cart: Record<number, number>;
   add: (id: number) => void;
 }) {
-  const count = Object.values(cart).reduce(
-    (a, b) => a + b,
-    0
-  );
+  const count =
+    Object.values(cart).reduce(
+      (a, b) => a + b,
+      0
+    );
 
   return (
     <>
@@ -2191,7 +2295,9 @@ function StorePage({
 
             <button
               className="addBtn"
-              onClick={() => add(p.id)}
+              onClick={() =>
+                add(p.id)
+              }
             >
               कार्ट में डालें
             </button>
@@ -2201,7 +2307,9 @@ function StorePage({
         <button
           className="primary"
           style={{ marginTop: 12 }}
-          onClick={() => setTab("cart")}
+          onClick={() =>
+            setTab("cart")
+          }
         >
           🛒 कार्ट देखें{" "}
           {count ? `(${count})` : ""}
@@ -2236,7 +2344,8 @@ function CartPage({
   remove: (id: number) => void;
   total: number;
 }) {
-  const ids = Object.keys(cart).map(Number);
+  const ids =
+    Object.keys(cart).map(Number);
 
   return (
     <>
@@ -2256,7 +2365,9 @@ function CartPage({
 
           <button
             className="addBtn"
-            onClick={() => setTab("store")}
+            onClick={() =>
+              setTab("store")
+            }
           >
             Store देखें
           </button>
@@ -2421,7 +2532,9 @@ function ChatPage({
         {quick.map((x) => (
           <button
             key={x}
-            onClick={() => send(x)}
+            onClick={() =>
+              send(x)
+            }
           >
             {x}
           </button>
