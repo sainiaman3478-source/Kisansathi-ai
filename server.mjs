@@ -70,10 +70,12 @@ async function geminiReply(message) {
 
   const response = await fetch(url, {
     method: "POST",
+
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": GEMINI_API_KEY,
     },
+
     body: JSON.stringify({
       systemInstruction: {
         parts: [
@@ -100,9 +102,7 @@ async function geminiReply(message) {
     }),
   });
 
-  const body = await response
-    .json()
-    .catch(() => ({}));
+  const body = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     console.error(
@@ -139,12 +139,17 @@ async function geminiReply(message) {
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
+
     ai: Boolean(GEMINI_API_KEY),
+
     aiMode: GEMINI_API_KEY
       ? "gemini"
       : "not-configured",
+
     geminiModel: GEMINI_MODEL,
+
     mandi: Boolean(DATA_GOV_API_KEY),
+
     message:
       "KisanSaathi AI backend running",
   });
@@ -201,27 +206,50 @@ app.post("/api/chat", async (req, res) => {
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
+/* Hindi -> Government commodity names */
+
 const aliases = {
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
+
   "धान": "Rice",
   "चावल": "Rice",
+
   "सरसों": "Mustard",
+
   "मक्का": "Maize",
   "मकई": "Maize",
+
   "कपास": "Cotton",
+
   "सोयाबीन": "Soyabean",
   "सोया": "Soyabean",
+
   "प्याज": "Onion",
+
   "टमाटर": "Tomato",
+
   "आलू": "Potato",
+
   "चना": "Gram",
+
   "अरहर": "Arhar (Tur/Red Gram)",
-  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
+
+  "बाजरा":
+    "Bajra (Pearl Millet/Cumbu)",
+
   "जौ": "Barley",
-  "मूंग": "Green Gram (Moong)(Whole)",
-  "उड़द": "Black Gram (Urd Beans)(Whole)",
+
+  "मूंग":
+    "Green Gram (Moong)(Whole)",
+
+  "उड़द":
+    "Black Gram (Urd Beans)(Whole)",
 };
+
+/* =========================================================
+   MANDI API
+========================================================= */
 
 app.get("/api/mandi", async (req, res) => {
   try {
@@ -229,32 +257,39 @@ app.get("/api/mandi", async (req, res) => {
       return res.status(503).json({
         ok: false,
         error:
-          "DATA_GOV_API_KEY Render Environment में सेट नहीं है।",
+          "DATA_GOV_API_KEY backend में सेट नहीं है। Render Environment में key डालें।",
       });
     }
 
-    const state = String(
+    /* -------------------------------------------------------
+       FRONTEND FILTERS
+       state
+       commodity
+       market
+    ------------------------------------------------------- */
+
+    const rawState = String(
       req.query.state || ""
     ).trim();
 
-    const commodityRaw = String(
+    const rawCommodity = String(
       req.query.commodity ||
         req.query.crop ||
         ""
     ).trim();
 
-    const market = String(
+    const rawMarket = String(
       req.query.market || ""
     ).trim();
 
     const commodity =
-      aliases[commodityRaw.toLowerCase()] ||
-      commodityRaw;
+      aliases[
+        rawCommodity.toLowerCase()
+      ] || rawCommodity;
 
-    const limit = Math.min(
-      Number(req.query.limit) || 100,
-      100
-    );
+    /* -------------------------------------------------------
+       DATA.GOV REQUEST
+    ------------------------------------------------------- */
 
     const params = new URLSearchParams();
 
@@ -263,19 +298,22 @@ app.get("/api/mandi", async (req, res) => {
       DATA_GOV_API_KEY
     );
 
-    params.set("format", "json");
+    params.set(
+      "format",
+      "json"
+    );
+
     params.set(
       "limit",
-      String(limit)
+      "100"
     );
-    params.set("offset", "0");
 
-    if (state) {
-      params.set(
-        "filters[state]",
-        state
-      );
-    }
+    params.set(
+      "offset",
+      "0"
+    );
+
+    /* Commodity filter */
 
     if (commodity) {
       params.set(
@@ -284,10 +322,21 @@ app.get("/api/mandi", async (req, res) => {
       );
     }
 
-    if (market) {
+    /* State filter */
+
+    if (rawState) {
+      params.set(
+        "filters[state]",
+        rawState
+      );
+    }
+
+    /* Market filter */
+
+    if (rawMarket) {
       params.set(
         "filters[market]",
-        market
+        rawMarket
       );
     }
 
@@ -297,22 +346,36 @@ app.get("/api/mandi", async (req, res) => {
     );
 
     const url =
-      `https://api.data.gov.in/resource/` +
-      `${RESOURCE}?${params.toString()}`;
+      `https://api.data.gov.in/resource/${RESOURCE}?` +
+      params.toString();
 
     console.log(
       "MANDI REQUEST:",
       url.replace(
         DATA_GOV_API_KEY,
-        "***"
+        "HIDDEN_KEY"
       )
     );
 
-    const response = await fetch(url);
+    /* -------------------------------------------------------
+       FETCH GOVERNMENT DATA
+    ------------------------------------------------------- */
 
-    const body = await response
-      .json()
-      .catch(() => ({}));
+    const response = await fetch(
+      url,
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "application/json",
+        },
+      }
+    );
+
+    const body =
+      await response
+        .json()
+        .catch(() => ({}));
 
     if (!response.ok) {
       console.error(
@@ -326,12 +389,20 @@ app.get("/api/mandi", async (req, res) => {
       );
     }
 
+    /* -------------------------------------------------------
+       RECORDS
+    ------------------------------------------------------- */
+
     const records =
       Array.isArray(body.records)
         ? body.records
         : [];
 
-    const mandi = records
+    /* -------------------------------------------------------
+       NORMALIZE DATA FOR FRONTEND
+    ------------------------------------------------------- */
+
+    const data = records
       .map((item) => ({
         state:
           item.state || "",
@@ -355,24 +426,86 @@ app.get("/api/mandi", async (req, res) => {
           item.arrival_date || "",
 
         minPrice:
-          Number(item.min_price) || 0,
+          Number(
+            item.min_price
+          ) || 0,
 
         maxPrice:
-          Number(item.max_price) || 0,
+          Number(
+            item.max_price
+          ) || 0,
 
         modalPrice:
-          Number(item.modal_price) || 0,
+          Number(
+            item.modal_price
+          ) || 0,
       }))
       .filter(
-        (item) => item.modalPrice > 0
+        (item) =>
+          item.modalPrice > 0
       );
+
+    /* -------------------------------------------------------
+       EXTRA LOCAL FILTER
+       Government API कभी-कभी filters ignore/loosely match
+       कर सकता है, इसलिए frontend को साफ result देंगे।
+    ------------------------------------------------------- */
+
+    const stateSearch =
+      rawState.toLowerCase();
+
+    const marketSearch =
+      rawMarket.toLowerCase();
+
+    const commoditySearch =
+      commodity.toLowerCase();
+
+    const filteredData =
+      data.filter((item) => {
+        const stateOK =
+          !stateSearch ||
+          String(item.state)
+            .toLowerCase()
+            .includes(stateSearch);
+
+        const marketOK =
+          !marketSearch ||
+          String(item.market)
+            .toLowerCase()
+            .includes(marketSearch);
+
+        const commodityOK =
+          !commoditySearch ||
+          String(item.commodity)
+            .toLowerCase()
+            .includes(
+              commoditySearch
+            );
+
+        return (
+          stateOK &&
+          marketOK &&
+          commodityOK
+        );
+      });
+
+    /* -------------------------------------------------------
+       RESPONSE
+       IMPORTANT:
+       frontend data.mandi पढ़ रहा है
+    ------------------------------------------------------- */
 
     return res.json({
       ok: true,
-      count: mandi.length,
-      mandi,
+
       source:
-        "Government of India - Data.gov.in / AGMARKNET",
+        "Government of India - data.gov.in / AGMARKNET",
+
+      count:
+        filteredData.length,
+
+      mandi:
+        filteredData,
     });
   } catch (error) {
     console.error(
@@ -382,6 +515,7 @@ app.get("/api/mandi", async (req, res) => {
 
     return res.status(500).json({
       ok: false,
+
       error:
         error instanceof Error
           ? error.message
@@ -397,13 +531,24 @@ app.get("/api/mandi", async (req, res) => {
 app.get("/", (req, res) => {
   res.json({
     app: "KisanSaathi AI",
+
     status: "online",
-    ai: Boolean(GEMINI_API_KEY),
-    aiMode: GEMINI_API_KEY
-      ? "gemini"
-      : "not-configured",
-    mandi: Boolean(DATA_GOV_API_KEY),
-    geminiModel: GEMINI_MODEL,
+
+    ai: Boolean(
+      GEMINI_API_KEY
+    ),
+
+    aiMode:
+      GEMINI_API_KEY
+        ? "gemini"
+        : "not-configured",
+
+    mandi: Boolean(
+      DATA_GOV_API_KEY
+    ),
+
+    geminiModel:
+      GEMINI_MODEL,
   });
 });
 
@@ -411,11 +556,16 @@ app.get("/", (req, res) => {
    START SERVER
 ========================================================= */
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `KisanSaathi AI backend running on port ${PORT} | ` +
-      `Gemini: ${Boolean(GEMINI_API_KEY)} | ` +
-      `Mandi: ${Boolean(DATA_GOV_API_KEY)} | ` +
-      `Model: ${GEMINI_MODEL}`
-  );
-});
+app.listen(
+  PORT,
+  "0.0.0.0",
+  () => {
+    console.log(
+      `KisanSaathi AI backend running on port ${PORT} | Gemini: ${Boolean(
+        GEMINI_API_KEY
+      )} | Model: ${GEMINI_MODEL} | Mandi: ${Boolean(
+        DATA_GOV_API_KEY
+      )}`
+    );
+  }
+);
