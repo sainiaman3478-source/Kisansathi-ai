@@ -1,30 +1,14 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 
 const app = express();
 
-/* =========================================================
-   PATH
-========================================================= */
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DIST_DIR = path.join(__dirname, "dist");
-
-/* =========================================================
-   MIDDLEWARE
-========================================================= */
-
-app.use(
-  cors({
-    origin: true,
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-);
+app.use(cors({
+  origin: true,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(express.json({ limit: "1mb" }));
 
@@ -32,13 +16,8 @@ const PORT = process.env.PORT || 10000;
 
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
 const GEMINI_MODEL =
   process.env.GEMINI_MODEL || "gemini-3.6-flash";
-
-/* =========================================================
-   KISANSAATHI AI INSTRUCTION
-========================================================= */
 
 const KISAN_SYSTEM_INSTRUCTION = `
 You are KisanSaathi AI, a helpful farming assistant for Indian farmers.
@@ -67,15 +46,9 @@ Do not claim you saw a crop photo unless an image was actually provided
 to the API.
 `;
 
-/* =========================================================
-   GEMINI
-========================================================= */
-
 async function geminiReply(message) {
   if (!GEMINI_API_KEY) {
-    throw new Error(
-      "GEMINI_API_KEY backend में सेट नहीं है।"
-    );
+    throw new Error("GEMINI_API_KEY backend में सेट नहीं है।");
   }
 
   const url =
@@ -91,34 +64,25 @@ async function geminiReply(message) {
     },
     body: JSON.stringify({
       systemInstruction: {
-        parts: [
-          {
-            text: KISAN_SYSTEM_INSTRUCTION
-          }
-        ]
+        parts: [{ text: KISAN_SYSTEM_INSTRUCTION }]
       },
-
       contents: [
         {
           role: "user",
-          parts: [
-            {
-              text: message
-            }
-          ]
+          parts: [{ text: message }]
         }
       ],
-
       generationConfig: {
         maxOutputTokens: 700
       }
     })
   });
 
-  const body =
-    await response.json().catch(() => ({}));
+  const body = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    console.error("GEMINI API ERROR:", response.status, body);
+
     throw new Error(
       body?.error?.message ||
       `Gemini API HTTP ${response.status}`
@@ -132,45 +96,36 @@ async function geminiReply(message) {
       .trim();
 
   if (!reply) {
-    throw new Error(
-      "Gemini ने कोई जवाब नहीं दिया।"
-    );
+    throw new Error("Gemini ने कोई जवाब नहीं दिया।");
   }
 
   return reply;
 }
 
-/* =========================================================
-   HEALTH
-========================================================= */
+
+/* =========================
+   HEALTH CHECK
+========================= */
 
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
-
     ai: Boolean(GEMINI_API_KEY),
-
-    aiMode: GEMINI_API_KEY
-      ? "gemini"
-      : "not-configured",
-
+    aiMode: GEMINI_API_KEY ? "gemini" : "not-configured",
     geminiModel: GEMINI_MODEL,
-
     mandi: Boolean(DATA_GOV_API_KEY),
-
-    message:
-      "KisanSaathi AI backend running"
+    message: "KisanSaathi AI backend running"
   });
 });
 
-/* =========================================================
+
+/* =========================
    AI CHAT
-========================================================= */
+========================= */
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const message =
-      String(req.body?.message || "").trim();
+    const message = String(req.body?.message || "").trim();
 
     if (!message) {
       return res.status(400).json({
@@ -185,8 +140,7 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    const reply =
-      await geminiReply(message);
+    const reply = await geminiReply(message);
 
     return res.json({
       reply,
@@ -205,9 +159,10 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-/* =========================================================
-   REAL MANDI DATA
-========================================================= */
+
+/* =========================
+   MANDI DATA
+========================= */
 
 const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
@@ -215,112 +170,47 @@ const RESOURCE =
 const aliases = {
   "गेहूं": "Wheat",
   "गेंहू": "Wheat",
-  "गेहूँ": "Wheat",
-  "wheat": "Wheat",
-
   "धान": "Rice",
   "चावल": "Rice",
-  "rice": "Rice",
-
   "सरसों": "Mustard",
-  "सरसो": "Mustard",
-  "mustard": "Mustard",
-
   "मक्का": "Maize",
   "मकई": "Maize",
-  "maize": "Maize",
-
-  "चना": "Gram",
-  "gram": "Gram",
-
-  "बाजरा": "Bajra",
-  "bajra": "Bajra",
-
-  "जौ": "Barley",
-  "barley": "Barley",
-
   "कपास": "Cotton",
-  "cotton": "Cotton",
-
   "सोयाबीन": "Soyabean",
   "सोया": "Soyabean",
-  "soyabean": "Soyabean",
-
   "प्याज": "Onion",
-  "onion": "Onion",
-
-  "आलू": "Potato",
-  "potato": "Potato",
-
   "टमाटर": "Tomato",
-  "tomato": "Tomato",
-
+  "आलू": "Potato",
+  "चना": "Gram",
+  "अरहर": "Arhar (Tur/Red Gram)",
+  "बाजरा": "Bajra (Pearl Millet/Cumbu)",
+  "जौ": "Barley",
   "मूंग": "Green Gram (Moong)(Whole)",
   "उड़द": "Black Gram (Urd Beans)(Whole)"
 };
 
-/* =========================================================
-   MANDI API
-========================================================= */
 
 app.get("/api/mandi", async (req, res) => {
   try {
+
     if (!DATA_GOV_API_KEY) {
       return res.status(503).json({
-        ok: false,
         error:
           "DATA_GOV_API_KEY backend में सेट नहीं है।"
       });
     }
 
-    const rawCrop =
-      String(
-        req.query.crop ||
-        req.query.commodity ||
-        ""
-      ).trim();
-
-    const cropKey =
-      rawCrop.toLowerCase();
+    const raw = String(req.query.crop || "").trim();
 
     const crop =
-      aliases[cropKey] ||
-      rawCrop;
+      aliases[raw.toLowerCase()] || raw;
 
-    const limitValue =
-      Math.min(
-        Number(req.query.limit || 1000) || 1000,
-        5000
-      );
-
-    const offsetValue =
-      Math.max(
-        Number(req.query.offset || 0) || 0,
-        0
-      );
-
-    const params =
-      new URLSearchParams();
-
-    params.set(
-      "api-key",
-      DATA_GOV_API_KEY
-    );
-
-    params.set(
-      "format",
-      "json"
-    );
-
-    params.set(
-      "limit",
-      String(limitValue)
-    );
-
-    params.set(
-      "offset",
-      String(offsetValue)
-    );
+    const params = new URLSearchParams({
+      "api-key": DATA_GOV_API_KEY,
+      format: "json",
+      limit: "100",
+      offset: "0"
+    });
 
     if (crop) {
       params.set(
@@ -329,203 +219,159 @@ app.get("/api/mandi", async (req, res) => {
       );
     }
 
-    const state =
-      String(req.query.state || "").trim();
-
-    const market =
-      String(req.query.market || "").trim();
-
-    if (state) {
-      params.set(
-        "filters[state]",
-        state
-      );
-    }
-
-    if (market) {
-      params.set(
-        "filters[market]",
-        market
-      );
-    }
-
     params.set(
       "sort[arrival_date]",
       "desc"
     );
 
-    const apiUrl =
-      `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`;
-
-    console.log("MANDI REQUEST:", {
-      crop,
-      state,
-      market,
-      limitValue,
-      offsetValue
-    });
-
-    const response =
-      await fetch(apiUrl);
-
-    const body =
-      await response
-        .json()
-        .catch(() => ({}));
+    const response = await fetch(
+      `https://api.data.gov.in/resource/${RESOURCE}?${params.toString()}`
+    );
 
     if (!response.ok) {
-      console.error(
-        "DATA GOV ERROR:",
-        body
-      );
-
       throw new Error(
-        body?.error ||
-        body?.message ||
         `data.gov.in HTTP ${response.status}`
       );
     }
+
+    const body =
+      await response.json();
 
     const records =
       Array.isArray(body.records)
         ? body.records
         : [];
 
-    const mandi =
-      records
-        .map(item => ({
-          state: item.state || "",
 
-          district:
-            item.district || "",
+    /* =========================
+       NORMALIZE MANDI DATA
+    ========================= */
 
-          market:
-            item.market || "",
+    const data = records
+      .map(item => ({
 
-          commodity:
-            item.commodity || "",
+        state:
+          item.state ||
+          item.State ||
+          "",
 
-          variety:
-            item.variety || "",
+        district:
+          item.district ||
+          item.District ||
+          "",
 
-          grade:
-            item.grade || "",
+        market:
+          item.market ||
+          item.Market ||
+          "",
 
-          arrivalDate:
-            item.arrival_date || "",
+        commodity:
+          item.commodity ||
+          item.Commodity ||
+          "",
 
-          minPrice:
-            Number(item.min_price) || 0,
+        variety:
+          item.variety ||
+          item.Variety ||
+          "",
 
-          maxPrice:
-            Number(item.max_price) || 0,
+        grade:
+          item.grade ||
+          item.Grade ||
+          "",
 
-          modalPrice:
-            Number(item.modal_price) || 0
-        }))
+        min_price:
+          Number(
+            item.min_price ??
+            item.Min_Price ??
+            item.MinPrice ??
+            0
+          ),
 
-        .filter(
-          item =>
-            item.modalPrice > 0 ||
-            item.maxPrice > 0 ||
-            item.minPrice > 0
-        );
+        max_price:
+          Number(
+            item.max_price ??
+            item.Max_Price ??
+            item.MaxPrice ??
+            0
+          ),
+
+        modal_price:
+          Number(
+            item.modal_price ??
+            item.Modal_Price ??
+            item.ModalPrice ??
+            0
+          ),
+
+        arrival_date:
+          item.arrival_date ||
+          item.Arrival_Date ||
+          item.ArrivalDate ||
+          ""
+
+      }))
+      .filter(
+        item => item.modal_price > 0
+      );
+
 
     return res.json({
-      ok: true,
-
-      source:
-        "Government of India - Data.gov.in / AGMARKNET",
-
-      count:
-        mandi.length,
-
-      total:
-        Number(body.total) ||
-        mandi.length,
-
-      mandi
+      data,
+      count: data.length,
+      source: "data.gov.in / AGMARKNET"
     });
 
   } catch (error) {
+
     console.error(
       "MANDI ERROR:",
       error
     );
 
     return res.status(500).json({
-      ok: false,
-
       error:
-        error instanceof Error
-          ? error.message
-          : "सरकारी मंडी डेटा नहीं मिल पाया।"
+        "सरकारी मंडी डेटा नहीं मिल पाया।"
     });
   }
 });
 
-/* =========================================================
-   FRONTEND
-   IMPORTANT: API routes ऊपर हैं.
-   अब React/Vite का dist serve होगा.
-========================================================= */
 
-app.use(
-  express.static(DIST_DIR)
-);
+/* =========================
+   ROOT
+========================= */
 
-/* =========================================================
-   REACT SPA FALLBACK
-========================================================= */
+app.get("/", (req, res) => {
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(
-    path.join(DIST_DIR, "index.html"),
-    err => {
-      if (err) {
-        console.error(
-          "FRONTEND ERROR:",
-          err
-        );
+  res.json({
+    app: "KisanSaathi AI",
+    status: "online",
+    ai: Boolean(GEMINI_API_KEY),
+    aiMode:
+      GEMINI_API_KEY
+        ? "gemini"
+        : "not-configured",
+    mandi: Boolean(DATA_GOV_API_KEY),
+    geminiModel: GEMINI_MODEL
+  });
 
-        res.status(500).send(
-          "KisanSaathi frontend build नहीं मिला।"
-        );
-      }
-    }
-  );
 });
 
-/* =========================================================
+
+/* =========================
    START SERVER
-========================================================= */
+========================= */
 
 app.listen(
   PORT,
   "0.0.0.0",
   () => {
-    console.log(
-      `KisanSaathi AI backend running on port ${PORT}`
-    );
 
     console.log(
-      `Gemini enabled: ${Boolean(
+      `KisanSaathi AI backend running on port ${PORT} | Gemini: ${Boolean(
         GEMINI_API_KEY
-      )}`
+      )} | Model: ${GEMINI_MODEL}`
     );
 
-    console.log(
-      `Gemini model: ${GEMINI_MODEL}`
-    );
-
-    console.log(
-      `Mandi enabled: ${Boolean(
-        DATA_GOV_API_KEY
-      )}`
-    );
-
-    console.log(
-      `Frontend directory: ${DIST_DIR}`
-    );
   }
 );
