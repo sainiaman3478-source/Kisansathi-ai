@@ -25,20 +25,24 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 /*
   Primary model.
-  Render Environment में GEMINI_MODEL डाल सकते हैं,
-  लेकिन नहीं डालेंगे तो यही चलेगा.
+  Render Environment में GEMINI_MODEL डाल सकते हैं।
+
+  अगर Render में GEMINI_MODEL नहीं है,
+  तो gemini-3.6-flash चलेगा।
 */
 const GEMINI_MODEL =
-  process.env.GEMINI_MODEL || "gemini-3.7-flash";
+  process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 /*
-  अगर primary model busy/high-demand हो,
-  तो इन models पर retry करेंगे.
+  मजबूत fallback chain.
 */
 const GEMINI_FALLBACK_MODELS = [
   GEMINI_MODEL,
-  "gemini-3.5-flash-lite",
   "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite",
+  "gemini-2.5-flash",
 ].filter(
   (model, index, array) =>
     model && array.indexOf(model) === index
@@ -97,8 +101,149 @@ If the question is simple, give a simple answer.
 ========================================================= */
 
 function sleep(ms) {
-  return new Promise((resolve) =>
-    setTimeout(resolve, ms)
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/* =========================================================
+   LOCAL FALLBACK AI
+   Gemini unavailable होने पर basic useful response
+========================================================= */
+
+function localKisanFallback(message) {
+  const text = String(message || "").trim().toLowerCase();
+
+  /*
+    गेहूं + खाद
+  */
+  if (
+    (text.includes("गेहूं") || text.includes("गेंहू") || text.includes("wheat")) &&
+    (text.includes("खाद") ||
+      text.includes("fertilizer") ||
+      text.includes("उर्वरक"))
+  ) {
+    return (
+      "गेहूं में खाद डालने का सही समय फसल की उम्र और पहले दी गई खाद पर निर्भर करता है। " +
+      "आम तौर पर पहली सिंचाई के आसपास नाइट्रोजन की जरूरत होती है। " +
+      "आपकी फसल कितने दिन की है और पहली खाद/सिंचाई कब हुई थी, यह बताएं तो मैं बेहतर सलाह दूंगा।"
+    );
+  }
+
+  /*
+    धान में पीली पत्तियां
+  */
+  if (
+    (text.includes("धान") || text.includes("चावल")) &&
+    (text.includes("पीली") ||
+      text.includes("पीला") ||
+      text.includes("yellow"))
+  ) {
+    return (
+      "धान की पत्तियां पीली होने के कई कारण हो सकते हैं, जैसे नाइट्रोजन की कमी, " +
+      "पानी की समस्या या जड़ से जुड़ी परेशानी। पहले खेत में पानी की स्थिति देखें। " +
+      "फसल कितने दिन की है और पीली पत्तियां नीचे से शुरू हुई हैं या ऊपर से, यह बताएं।"
+    );
+  }
+
+  /*
+    सरसों में कीड़ा
+  */
+  if (
+    text.includes("सरसों") &&
+    (text.includes("कीड़ा") ||
+      text.includes("कीड़े") ||
+      text.includes("कीट") ||
+      text.includes("pest"))
+  ) {
+    return (
+      "सरसों में कीड़ा दिखाई दे रहा है तो पहले कीड़े की पहचान जरूरी है। " +
+      "पत्तियों और फूलों पर छोटे कीड़े, चिपचिपापन या मुड़ना दिखाई दे रहा है या नहीं देखें। " +
+      "फसल की फोटो भेजेंगे तो पहचान में ज्यादा मदद मिलेगी।"
+    );
+  }
+
+  /*
+    बारिश / मौसम
+  */
+  if (
+    text.includes("बारिश") ||
+    text.includes("मौसम") ||
+    text.includes("weather") ||
+    text.includes("rain")
+  ) {
+    return (
+      "मैं यहां से लाइव मौसम का अनुमान बनाकर नहीं बताऊंगा। " +
+      "KisanSaathi के Weather section में अपना स्थान चुनकर आज और आने वाले दिनों का लाइव मौसम देखें।"
+    );
+  }
+
+  /*
+    मंडी
+  */
+  if (
+    text.includes("मंडी") ||
+    text.includes("भाव") ||
+    text.includes("रेट") ||
+    text.includes("price")
+  ) {
+    return (
+      "लाइव मंडी भाव देखने के लिए KisanSaathi के Real Mandi Bhav section में फसल, राज्य और मंडी चुनें। " +
+      "वहां सरकारी data.gov.in/AGMARKNET से उपलब्ध मंडी डेटा दिखाया जाता है।"
+    );
+  }
+
+  /*
+    सिंचाई
+  */
+  if (
+    text.includes("सिंचाई") ||
+    text.includes("पानी कब") ||
+    text.includes("पानी देना")
+  ) {
+    return (
+      "सिंचाई का सही समय फसल, मिट्टी और मौसम पर निर्भर करता है। " +
+      "बहुत ज्यादा पानी से जड़ों को नुकसान हो सकता है। फसल का नाम और उसकी उम्र बताएं, " +
+      "मैं सामान्य सिंचाई सलाह दूंगा।"
+    );
+  }
+
+  /*
+    खाद सामान्य
+  */
+  if (
+    text.includes("खाद") ||
+    text.includes("उर्वरक") ||
+    text.includes("fertilizer")
+  ) {
+    return (
+      "खाद की सही मात्रा फसल, मिट्टी और फसल की अवस्था पर निर्भर करती है। " +
+      "बिना जानकारी के ज्यादा खाद न डालें। फसल का नाम और कितने दिन की है यह बताएं।"
+    );
+  }
+
+  /*
+    कीट / रोग
+  */
+  if (
+    text.includes("रोग") ||
+    text.includes("बीमारी") ||
+    text.includes("कीट") ||
+    text.includes("कीड़ा") ||
+    text.includes("दाग")
+  ) {
+    return (
+      "फसल में रोग या कीट की पहचान के लिए फसल का नाम, उम्र और लक्षण बताएं। " +
+      "अगर संभव हो तो प्रभावित पत्ते/फसल की साफ फोटो भेजें। " +
+      "बिना पहचान के कोई दवा न डालें।"
+    );
+  }
+
+  /*
+    Default fallback
+  */
+  return (
+    "अभी AI सेवा व्यस्त है, लेकिन मैं आपकी मदद करना चाहता हूं। " +
+    "फसल का नाम और समस्या थोड़े शब्दों में बताएं, जैसे: " +
+    "\"गेहूं में पत्तियां पीली हैं\" या \"सरसों में कीड़ा लग गया है\"।"
   );
 }
 
@@ -106,10 +251,7 @@ function sleep(ms) {
    GEMINI SINGLE REQUEST
 ========================================================= */
 
-async function callGeminiModel(
-  model,
-  message
-) {
+async function callGeminiModel(model, message) {
   if (!GEMINI_API_KEY) {
     throw new Error(
       "GEMINI_API_KEY Render Environment में सेट नहीं है।"
@@ -120,74 +262,67 @@ async function callGeminiModel(
     `https://generativelanguage.googleapis.com/v1beta/models/` +
     `${encodeURIComponent(model)}:generateContent`;
 
-  console.log(
-    "GEMINI REQUEST MODEL:",
-    model
-  );
+  console.log("GEMINI REQUEST MODEL:", model);
 
-  const controller =
-    new AbortController();
+  const controller = new AbortController();
 
-  const timeout =
-    setTimeout(() => {
-      controller.abort();
-    }, 30000);
+  /*
+    12 seconds timeout.
+    पहले 30 sec की वजह से app बहुत देर तक अटक सकता था।
+  */
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 12000);
 
   try {
-    const response =
-      await fetch(url, {
-        method: "POST",
+    const response = await fetch(url, {
+      method: "POST",
 
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": GEMINI_API_KEY,
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
+      },
+
+      signal: controller.signal,
+
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: KISAN_SYSTEM_INSTRUCTION,
+            },
+          ],
         },
 
-        signal: controller.signal,
-
-        body: JSON.stringify({
-          systemInstruction: {
+        contents: [
+          {
+            role: "user",
             parts: [
               {
-                text:
-                  KISAN_SYSTEM_INSTRUCTION,
+                text: message,
               },
             ],
           },
+        ],
 
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: message,
-                },
-              ],
-            },
-          ],
+        generationConfig: {
+          maxOutputTokens: 700,
+        },
+      }),
+    });
 
-          generationConfig: {
-            maxOutputTokens: 700,
-          },
-        }),
-      });
-
-    const body =
-      await response
-        .json()
-        .catch(() => ({}));
+    const body = await response
+      .json()
+      .catch(() => ({}));
 
     if (!response.ok) {
       const errorMessage =
         body?.error?.message ||
         `Gemini HTTP ${response.status}`;
 
-      const error =
-        new Error(errorMessage);
+      const error = new Error(errorMessage);
 
-      error.status =
-        response.status;
-
+      error.status = response.status;
       error.body = body;
 
       throw error;
@@ -195,10 +330,7 @@ async function callGeminiModel(
 
     const reply =
       body?.candidates?.[0]?.content?.parts
-        ?.map(
-          (part) =>
-            part?.text || ""
-        )
+        ?.map((part) => part?.text || "")
         .join("")
         .trim();
 
@@ -212,6 +344,34 @@ async function callGeminiModel(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/* =========================================================
+   CHECK TEMPORARY GEMINI ERROR
+========================================================= */
+
+function isTemporaryGeminiError(error) {
+  const status =
+    Number(error?.status || 0);
+
+  const text =
+    String(error?.message || "").toLowerCase();
+
+  return (
+    status === 408 ||
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    text.includes("high demand") ||
+    text.includes("temporarily") ||
+    text.includes("try again later") ||
+    text.includes("overloaded") ||
+    text.includes("timeout") ||
+    text.includes("deadline") ||
+    text.includes("aborted")
+  );
 }
 
 /* =========================================================
@@ -229,99 +389,60 @@ async function geminiReply(message) {
 
   for (
     let modelIndex = 0;
-    modelIndex <
-    GEMINI_FALLBACK_MODELS.length;
+    modelIndex < GEMINI_FALLBACK_MODELS.length;
     modelIndex++
   ) {
     const model =
-      GEMINI_FALLBACK_MODELS[
-        modelIndex
-      ];
+      GEMINI_FALLBACK_MODELS[modelIndex];
 
     /*
-      Primary model को एक extra retry देंगे.
+      हर model को सिर्फ 1 बार।
+      इससे response जल्दी आएगा।
     */
+    try {
+      console.log(
+        `GEMINI TRY: model=${model}`
+      );
 
-    const attempts =
-      modelIndex === 0 ? 2 : 1;
-
-    for (
-      let attempt = 1;
-      attempt <= attempts;
-      attempt++
-    ) {
-      try {
-        console.log(
-          `GEMINI TRY: model=${model}, attempt=${attempt}`
-        );
-
-        const reply =
-          await callGeminiModel(
-            model,
-            message
-          );
-
-        console.log(
-          "GEMINI SUCCESS:",
-          model
-        );
-
-        return {
-          reply,
+      const reply =
+        await callGeminiModel(
           model,
-        };
-      } catch (error) {
-        lastError = error;
-
-        console.error(
-          `GEMINI ERROR: model=${model}, attempt=${attempt}`,
-          error?.message
+          message
         );
 
-        /*
-          अगर temporary error है,
-          थोड़ी देर बाद retry.
-        */
+      console.log(
+        "GEMINI SUCCESS:",
+        model
+      );
 
-        const status =
-          Number(
-            error?.status || 0
-          );
+      return {
+        reply,
+        model,
+      };
+    } catch (error) {
+      lastError = error;
 
-        const text =
-          String(
-            error?.message || ""
-          ).toLowerCase();
+      console.error(
+        `GEMINI ERROR: model=${model}`,
+        error?.message
+      );
 
-        const temporary =
-          status === 429 ||
-          status === 500 ||
-          status === 502 ||
-          status === 503 ||
-          status === 504 ||
-          text.includes(
-            "high demand"
-          ) ||
-          text.includes(
-            "temporarily"
-          ) ||
-          text.includes(
-            "try again later"
-          ) ||
-          text.includes(
-            "overloaded"
-          );
-
-        if (
-          temporary &&
-          attempt < attempts
-        ) {
-          await sleep(1500);
-          continue;
-        }
-
-        break;
+      /*
+        अगर temporary error है,
+        अगले model पर जाएं।
+      */
+      if (
+        isTemporaryGeminiError(error)
+      ) {
+        await sleep(300);
+        continue;
       }
+
+      /*
+        Invalid model/key जैसी समस्या में भी
+        अगला fallback try करेंगे।
+      */
+      await sleep(200);
     }
   }
 
@@ -350,8 +471,8 @@ app.get(
 
       aiMode:
         GEMINI_API_KEY
-          ? "gemini"
-          : "not-configured",
+          ? "gemini-with-local-fallback"
+          : "local-fallback",
 
       geminiModel:
         GEMINI_MODEL,
@@ -377,56 +498,68 @@ app.get(
 app.post(
   "/api/chat",
   async (req, res) => {
-    try {
-      const message =
-        String(
-          req.body?.message || ""
-        ).trim();
+    const message =
+      String(
+        req.body?.message || ""
+      ).trim();
 
-      if (!message) {
-        return res.status(400).json({
-          error:
-            "सवाल खाली है।",
-        });
-      }
-
-      if (!GEMINI_API_KEY) {
-        return res.status(503).json({
-          error:
-            "GEMINI_API_KEY Render Environment में सेट नहीं है।",
-        });
-      }
-
-      const result =
-        await geminiReply(
-          message
-        );
-
-      return res.json({
-        reply:
-          result.reply,
-
-        mode: "gemini",
-
-        model:
-          result.model,
-      });
-    } catch (error) {
-      console.error(
-        "CHAT ERROR:",
-        error
-      );
-
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Gemini AI से जवाब नहीं मिला।";
-
-      return res.status(503).json({
+    if (!message) {
+      return res.status(400).json({
         error:
-          `AI अभी व्यस्त है। थोड़ी देर बाद फिर कोशिश करें। (${message})`,
+          "सवाल खाली है।",
       });
     }
+
+    /*
+      पहले Gemini चलाएंगे।
+    */
+    if (GEMINI_API_KEY) {
+      try {
+        const result =
+          await geminiReply(
+            message
+          );
+
+        return res.json({
+          reply:
+            result.reply,
+
+          mode: "gemini",
+
+          model:
+            result.model,
+        });
+      } catch (error) {
+        console.error(
+          "ALL GEMINI MODELS FAILED:",
+          error?.message
+        );
+
+        /*
+          Gemini fail होने पर
+          local किसान fallback.
+        */
+      }
+    }
+
+    /*
+      FINAL FALLBACK
+    */
+    const fallbackReply =
+      localKisanFallback(
+        message
+      );
+
+    return res.json({
+      reply:
+        fallbackReply,
+
+      mode:
+        "local-fallback",
+
+      model:
+        "kisansathi-local-fallback",
+    });
   }
 );
 
@@ -1158,8 +1291,8 @@ app.get(
 
       aiMode:
         GEMINI_API_KEY
-          ? "gemini"
-          : "not-configured",
+          ? "gemini-with-local-fallback"
+          : "local-fallback",
 
       mandi:
         Boolean(
