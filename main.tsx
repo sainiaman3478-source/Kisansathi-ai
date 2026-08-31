@@ -180,7 +180,8 @@ body,
 
 button,
 input,
-select{
+select,
+textarea{
   font:inherit;
 }
 
@@ -670,7 +671,7 @@ main{
 
 .preview{
   max-width:100%;
-  max-height:220px;
+  max-height:240px;
   border-radius:12px;
   margin-top:10px;
 }
@@ -682,6 +683,15 @@ main{
   margin-top:10px;
   font-size:12px;
   line-height:1.6;
+}
+
+.doctorTip{
+  background:#fff8df;
+  border-radius:12px;
+  padding:11px;
+  margin-top:10px;
+  font-size:11px;
+  line-height:1.5;
 }
 
 .profileCard{
@@ -1051,8 +1061,7 @@ function App() {
             className="brand"
             style={{
               border: 0,
-              background:
-                "transparent",
+              background: "transparent",
               padding: 0,
             }}
             onClick={() =>
@@ -1167,43 +1176,23 @@ function App() {
         <nav className="bottomNav">
 
           <Nav
-            active={
-              tab === "home"
-            }
-            on={() =>
-              setTab("home")
-            }
-            icon={
-              <Home size={19} />
-            }
+            active={tab === "home"}
+            on={() => setTab("home")}
+            icon={<Home size={19} />}
             text="Home"
           />
 
           <Nav
-            active={
-              tab === "crops"
-            }
-            on={() =>
-              setTab("crops")
-            }
-            icon={
-              <Leaf size={19} />
-            }
+            active={tab === "crops"}
+            on={() => setTab("crops")}
+            icon={<Leaf size={19} />}
             text="मेरी फसल"
           />
 
           <Nav
-            active={
-              tab === "store"
-            }
-            on={() =>
-              setTab("store")
-            }
-            icon={
-              <ShoppingCart
-                size={19}
-              />
-            }
+            active={tab === "store"}
+            on={() => setTab("store")}
+            icon={<ShoppingCart size={19} />}
             text={
               count
                 ? `Store (${count})`
@@ -1212,15 +1201,9 @@ function App() {
           />
 
           <Nav
-            active={
-              tab === "profile"
-            }
-            on={() =>
-              setTab("profile")
-            }
-            icon={
-              <User size={19} />
-            }
+            active={tab === "profile"}
+            on={() => setTab("profile")}
+            icon={<User size={19} />}
             text="Profile"
           />
 
@@ -1249,9 +1232,7 @@ function Nav({
     <button
       className={
         "navBtn " +
-        (active
-          ? "active"
-          : "")
+        (active ? "active" : "")
       }
       onClick={on}
     >
@@ -1981,9 +1962,7 @@ function WeatherPage({
           }}
           onClick={load}
         >
-          <RefreshCw
-            size={17}
-          />
+          <RefreshCw size={17} />
         </button>
       </div>
 
@@ -1996,9 +1975,7 @@ function WeatherPage({
             padding: 30,
           }}
         >
-          <CloudSun
-            size={52}
-          />
+          <CloudSun size={52} />
 
           <h3>
             अपने इलाके का मौसम देखें
@@ -2114,7 +2091,7 @@ function WeatherPage({
 
           <div className="section">
             <h3>
-             अगले 3 दिन
+              अगले 3 दिन
             </h3>
 
             <div className="forecast">
@@ -2333,7 +2310,7 @@ function CropsPage({
 }
 
 /* =========================================================
-   CROP DOCTOR
+   CROP DOCTOR - AI PHOTO ANALYSIS
 ========================================================= */
 
 function DoctorPage({
@@ -2342,9 +2319,7 @@ function DoctorPage({
   setTab: (t: Tab) => void;
 }) {
   const [file, setFile] =
-    useState<File | null>(
-      null
-    );
+    useState<File | null>(null);
 
   const [url, setUrl] =
     useState("");
@@ -2352,9 +2327,20 @@ function DoctorPage({
   const [result, setResult] =
     useState("");
 
-  const choose = (
-    f: File | null
-  ) => {
+  const [loading, setLoading] =
+    useState(false);
+
+  const [crop, setCrop] =
+    useState("");
+
+  const [symptoms, setSymptoms] =
+    useState("");
+
+  const choose = (f: File | null) => {
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+
     setFile(f);
     setResult("");
 
@@ -2367,12 +2353,99 @@ function DoctorPage({
     }
   };
 
-  const analyze = () => {
-    if (!file) return;
+  const analyze = async () => {
+    if (!file || loading) return;
 
-    setResult(
-      "फोटो देखी गई है। इस version में automatic disease diagnosis उपलब्ध नहीं है। पत्तियों के दाग, कीड़े, पीला पड़ना और मिट्टी की स्थिति देखकर पहले समस्या का प्रकार नोट करें। दवा छिड़कने से पहले कृषि विशेषज्ञ से पुष्टि करें।"
-    );
+    setLoading(true);
+    setResult("");
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "image",
+        file
+      );
+
+      formData.append(
+        "crop",
+        crop.trim() ||
+          "फसल का नाम नहीं बताया गया"
+      );
+
+      formData.append(
+        "symptoms",
+        symptoms.trim() ||
+          "कोई अतिरिक्त लक्षण नहीं बताया गया"
+      );
+
+      const controller =
+        new AbortController();
+
+      const timeout =
+        setTimeout(
+          () =>
+            controller.abort(),
+          30000
+        );
+
+      const response =
+        await fetch(
+          `${API_BASE}/api/crop-doctor`,
+          {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          }
+        );
+
+      clearTimeout(timeout);
+
+      const contentType =
+        response.headers.get(
+          "content-type"
+        ) || "";
+
+      const data =
+        contentType.includes(
+          "application/json"
+        )
+          ? await response
+              .json()
+              .catch(() => ({}))
+          : {};
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            `Crop Doctor server error (${response.status})`
+        );
+      }
+
+      setResult(
+        data.reply ||
+          data.result ||
+          "AI ने फोटो का विश्लेषण किया, लेकिन रिपोर्ट नहीं मिली।"
+      );
+    } catch (e) {
+      if (
+        e instanceof DOMException &&
+        e.name === "AbortError"
+      ) {
+        setResult(
+          "❌ Crop Doctor server ने 30 सेकंड में जवाब नहीं दिया।"
+        );
+      } else {
+        setResult(
+          e instanceof Error
+            ? "❌ " + e.message
+            : "❌ Crop Doctor से connection नहीं हो पाया।"
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -2380,20 +2453,22 @@ function DoctorPage({
       <PageTitle
         setTab={setTab}
         title="फसल जाँचें"
-        sub="Crop Doctor"
+        sub="AI Crop Doctor"
       />
 
       <div className="section">
+
         <div className="upload">
+
           <Camera size={48} />
 
           <h3>
-            अपनी फसल की साफ फोटो चुनें
+            🌱 फसल की फोटो लें
           </h3>
 
           <p className="muted">
-            अच्छी रोशनी में पत्ती/फल की
-            नज़दीकी फोटो लें।
+            पत्ती या पौधे की साफ और
+            अच्छी रोशनी वाली फोटो लें।
           </p>
 
           <input
@@ -2415,7 +2490,43 @@ function DoctorPage({
               alt="फसल preview"
             />
           )}
+
         </div>
+
+        <input
+          className="search"
+          style={{
+            marginTop: 10,
+          }}
+          value={crop}
+          onChange={(e) =>
+            setCrop(
+              e.target.value
+            )
+          }
+          placeholder="🌾 फसल का नाम (गेहूं, धान, कपास...)"
+        />
+
+        <textarea
+          value={symptoms}
+          onChange={(e) =>
+            setSymptoms(
+              e.target.value
+            )
+          }
+          placeholder="📝 क्या समस्या दिख रही है? जैसे पत्तियां पीली हैं, दाग हैं, कीड़े हैं..."
+          style={{
+            width: "100%",
+            minHeight: 90,
+            border:
+              "1px solid #ddd",
+            borderRadius: 11,
+            padding: 11,
+            resize: "vertical",
+            outline: "none",
+            background: "#fff",
+          }}
+        />
 
         {file && (
           <button
@@ -2424,35 +2535,58 @@ function DoctorPage({
               marginTop: 10,
             }}
             onClick={analyze}
+            disabled={loading}
           >
-            🔍 जांच शुरू करें
+            {loading
+              ? "🤖 AI फसल की जांच कर रहा है..."
+              : "🔍 AI से फसल की जांच करें"}
           </button>
         )}
 
         {result && (
           <div className="result">
-            <b>जांच रिपोर्ट</b>
-            <br />
-            {result}
+            <b>
+              🤖 AI Crop Doctor रिपोर्ट
+            </b>
+
+            <div
+              style={{
+                marginTop: 7,
+                whiteSpace:
+                  "pre-wrap",
+              }}
+            >
+              {result}
+            </div>
           </div>
         )}
+
       </div>
 
       <div className="section">
-        <Stethoscope
-          size={28}
-        />
+
+        <Stethoscope size={28} />
 
         <h3>
-          ध्यान रखें
+          ⚠️ जरूरी सावधानी
         </h3>
 
         <p className="muted">
-          सिर्फ फोटो के आधार पर दवा
-          तय करना सुरक्षित नहीं है।
-          फसल, उम्र, खेत, मौसम और
-          लक्षण भी जरूरी हैं।
+          AI की फोटो पहचान शुरुआती
+          सहायता के लिए है। दवा की
+          मात्रा और अंतिम उपचार तय
+          करने से पहले स्थानीय कृषि
+          विशेषज्ञ से पुष्टि करें।
         </p>
+
+        <div className="doctorTip">
+          💡 बेहतर परिणाम के लिए:
+          पूरी पत्ती, प्रभावित हिस्सा,
+          पौधे का आकार और खेत की
+          स्थिति साफ दिखाई देने वाली
+          फोटो भेजें।
+        </div>
+
       </div>
     </>
   );
@@ -2910,8 +3044,8 @@ function ProfilePage({
           <br />
           ✅ Weather - live forecast
           <br />
-          🌱 Crop Doctor - safe guidance
-          mode
+          ✅ Crop Doctor - AI photo
+          analysis
         </p>
 
       </div>
