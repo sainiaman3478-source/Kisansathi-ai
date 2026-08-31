@@ -12,7 +12,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "10mb" }));
 
 const PORT = process.env.PORT || 10000;
 
@@ -23,19 +23,9 @@ const PORT = process.env.PORT || 10000;
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-/*
-  Primary model.
-  Render Environment में GEMINI_MODEL डाल सकते हैं।
-
-  अगर Render में GEMINI_MODEL नहीं है,
-  तो gemini-3.6-flash चलेगा।
-*/
 const GEMINI_MODEL =
   process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
-/*
-  मजबूत fallback chain.
-*/
 const GEMINI_FALLBACK_MODELS = [
   GEMINI_MODEL,
   "gemini-3.6-flash",
@@ -56,7 +46,7 @@ const RESOURCE =
   "9ef84268-d588-465a-a308-a864a43d0070";
 
 /* =========================================================
-   KISANSAATHI AI SYSTEM INSTRUCTION
+   KISANSAATHI AI SYSTEM
 ========================================================= */
 
 const KISAN_SYSTEM_INSTRUCTION = `
@@ -87,13 +77,49 @@ If the user asks for live mandi prices, tell them to use the app's Real Mandi Bh
 
 If the user asks for live weather, tell them to use the app's weather section.
 
-Do not claim that you saw a crop photo unless an image was actually provided to the API.
+Do not claim that you saw a crop photo unless an image was actually provided.
 
 Answer the farmer's actual question directly.
 
 Do not repeatedly ask unnecessary questions.
 
 If the question is simple, give a simple answer.
+`;
+
+/* =========================================================
+   CROP DOCTOR SYSTEM
+========================================================= */
+
+const CROP_DOCTOR_INSTRUCTION = `
+You are KisanSaathi Crop Doctor, an agricultural crop-image assistant for Indian farmers.
+
+Analyze the uploaded crop image carefully.
+
+Reply in simple Hindi or easy Hinglish.
+
+Give the result in this structure:
+
+1. संभावित समस्या
+2. दिखाई देने वाले लक्षण
+3. संभावित कारण
+4. अभी क्या करें
+5. क्या न करें
+6. कब कृषि विशेषज्ञ से संपर्क करें
+
+Important safety rules:
+
+- Do not claim certainty from an image alone.
+- Say "संभावित" or "लगता है" when diagnosis is uncertain.
+- Do not invent exact pesticide/fungicide dosage.
+- Do not recommend dangerous chemical mixing.
+- If a chemical is suggested, tell the farmer to follow the registered product label and local agriculture expert advice.
+- If the image quality is poor, clearly say that a clearer photo is needed.
+- If the image does not show a crop, say that clearly.
+- Consider common causes such as nutrient deficiency, insects, fungal/bacterial disease, water stress, weather damage and physical damage.
+- Ask for crop name, crop age and location only when these details are needed.
+- Do not pretend to know the exact disease if the evidence is insufficient.
+
+Keep the answer useful but reasonably concise.
 `;
 
 /* =========================================================
@@ -106,17 +132,15 @@ function sleep(ms) {
 
 /* =========================================================
    LOCAL FALLBACK AI
-   Gemini unavailable होने पर basic useful response
 ========================================================= */
 
 function localKisanFallback(message) {
   const text = String(message || "").trim().toLowerCase();
 
-  /*
-    गेहूं + खाद
-  */
   if (
-    (text.includes("गेहूं") || text.includes("गेंहू") || text.includes("wheat")) &&
+    (text.includes("गेहूं") ||
+      text.includes("गेंहू") ||
+      text.includes("wheat")) &&
     (text.includes("खाद") ||
       text.includes("fertilizer") ||
       text.includes("उर्वरक"))
@@ -124,13 +148,10 @@ function localKisanFallback(message) {
     return (
       "गेहूं में खाद डालने का सही समय फसल की उम्र और पहले दी गई खाद पर निर्भर करता है। " +
       "आम तौर पर पहली सिंचाई के आसपास नाइट्रोजन की जरूरत होती है। " +
-      "आपकी फसल कितने दिन की है और पहली खाद/सिंचाई कब हुई थी, यह बताएं तो मैं बेहतर सलाह दूंगा।"
+      "फसल कितने दिन की है और पहली खाद/सिंचाई कब हुई थी, यह बताएं तो बेहतर सलाह दी जा सकती है।"
     );
   }
 
-  /*
-    धान में पीली पत्तियां
-  */
   if (
     (text.includes("धान") || text.includes("चावल")) &&
     (text.includes("पीली") ||
@@ -144,9 +165,6 @@ function localKisanFallback(message) {
     );
   }
 
-  /*
-    सरसों में कीड़ा
-  */
   if (
     text.includes("सरसों") &&
     (text.includes("कीड़ा") ||
@@ -157,13 +175,10 @@ function localKisanFallback(message) {
     return (
       "सरसों में कीड़ा दिखाई दे रहा है तो पहले कीड़े की पहचान जरूरी है। " +
       "पत्तियों और फूलों पर छोटे कीड़े, चिपचिपापन या मुड़ना दिखाई दे रहा है या नहीं देखें। " +
-      "फसल की फोटो भेजेंगे तो पहचान में ज्यादा मदद मिलेगी।"
+      "फसल की साफ फोटो भेजेंगे तो पहचान में ज्यादा मदद मिलेगी।"
     );
   }
 
-  /*
-    बारिश / मौसम
-  */
   if (
     text.includes("बारिश") ||
     text.includes("मौसम") ||
@@ -171,14 +186,10 @@ function localKisanFallback(message) {
     text.includes("rain")
   ) {
     return (
-      "मैं यहां से लाइव मौसम का अनुमान बनाकर नहीं बताऊंगा। " +
-      "KisanSaathi के Weather section में अपना स्थान चुनकर आज और आने वाले दिनों का लाइव मौसम देखें।"
+      "लाइव मौसम देखने के लिए KisanSaathi के Weather section में अपना स्थान चुनें।"
     );
   }
 
-  /*
-    मंडी
-  */
   if (
     text.includes("मंडी") ||
     text.includes("भाव") ||
@@ -186,14 +197,10 @@ function localKisanFallback(message) {
     text.includes("price")
   ) {
     return (
-      "लाइव मंडी भाव देखने के लिए KisanSaathi के Real Mandi Bhav section में फसल, राज्य और मंडी चुनें। " +
-      "वहां सरकारी data.gov.in/AGMARKNET से उपलब्ध मंडी डेटा दिखाया जाता है।"
+      "लाइव मंडी भाव देखने के लिए KisanSaathi के Real Mandi Bhav section में फसल, राज्य और मंडी चुनें।"
     );
   }
 
-  /*
-    सिंचाई
-  */
   if (
     text.includes("सिंचाई") ||
     text.includes("पानी कब") ||
@@ -201,14 +208,10 @@ function localKisanFallback(message) {
   ) {
     return (
       "सिंचाई का सही समय फसल, मिट्टी और मौसम पर निर्भर करता है। " +
-      "बहुत ज्यादा पानी से जड़ों को नुकसान हो सकता है। फसल का नाम और उसकी उम्र बताएं, " +
-      "मैं सामान्य सिंचाई सलाह दूंगा।"
+      "फसल का नाम और उसकी उम्र बताएं, मैं सामान्य सिंचाई सलाह दूंगा।"
     );
   }
 
-  /*
-    खाद सामान्य
-  */
   if (
     text.includes("खाद") ||
     text.includes("उर्वरक") ||
@@ -220,9 +223,6 @@ function localKisanFallback(message) {
     );
   }
 
-  /*
-    कीट / रोग
-  */
   if (
     text.includes("रोग") ||
     text.includes("बीमारी") ||
@@ -232,23 +232,18 @@ function localKisanFallback(message) {
   ) {
     return (
       "फसल में रोग या कीट की पहचान के लिए फसल का नाम, उम्र और लक्षण बताएं। " +
-      "अगर संभव हो तो प्रभावित पत्ते/फसल की साफ फोटो भेजें। " +
-      "बिना पहचान के कोई दवा न डालें।"
+      "अगर संभव हो तो प्रभावित पत्ते/फसल की साफ फोटो भेजें। बिना पहचान के कोई दवा न डालें।"
     );
   }
 
-  /*
-    Default fallback
-  */
   return (
     "अभी AI सेवा व्यस्त है, लेकिन मैं आपकी मदद करना चाहता हूं। " +
-    "फसल का नाम और समस्या थोड़े शब्दों में बताएं, जैसे: " +
-    "\"गेहूं में पत्तियां पीली हैं\" या \"सरसों में कीड़ा लग गया है\"।"
+    "फसल का नाम और समस्या थोड़े शब्दों में बताएं।"
   );
 }
 
 /* =========================================================
-   GEMINI SINGLE REQUEST
+   GEMINI GENERIC REQUEST
 ========================================================= */
 
 async function callGeminiModel(model, message) {
@@ -266,10 +261,6 @@ async function callGeminiModel(model, message) {
 
   const controller = new AbortController();
 
-  /*
-    12 seconds timeout.
-    पहले 30 sec की वजह से app बहुत देर तक अटक सकता था।
-  */
   const timeout = setTimeout(() => {
     controller.abort();
   }, 12000);
@@ -347,7 +338,124 @@ async function callGeminiModel(model, message) {
 }
 
 /* =========================================================
-   CHECK TEMPORARY GEMINI ERROR
+   GEMINI CROP DOCTOR IMAGE REQUEST
+========================================================= */
+
+async function callGeminiVisionModel(
+  model,
+  imageBase64,
+  mimeType,
+  cropName,
+  cropAge,
+  location
+) {
+  if (!GEMINI_API_KEY) {
+    throw new Error(
+      "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+    );
+  }
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/` +
+    `${encodeURIComponent(model)}:generateContent`;
+
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 30000);
+
+  try {
+    const farmerInfo = `
+Crop name: ${cropName || "not provided"}
+Crop age: ${cropAge || "not provided"}
+Location: ${location || "not provided"}
+`;
+
+    const response = await fetch(url, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
+      },
+
+      signal: controller.signal,
+
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [
+            {
+              text: CROP_DOCTOR_INSTRUCTION,
+            },
+          ],
+        },
+
+        contents: [
+          {
+            role: "user",
+
+            parts: [
+              {
+                text:
+                  `किसान की जानकारी:\n${farmerInfo}\n\n` +
+                  "इस फसल की फोटो का विश्लेषण करके Crop Doctor report दें।",
+              },
+
+              {
+                inlineData: {
+                  mimeType,
+                  data: imageBase64,
+                },
+              },
+            ],
+          },
+        ],
+
+        generationConfig: {
+          maxOutputTokens: 900,
+          temperature: 0.2,
+        },
+      }),
+    });
+
+    const body = await response
+      .json()
+      .catch(() => ({}));
+
+    if (!response.ok) {
+      const errorMessage =
+        body?.error?.message ||
+        `Gemini Vision HTTP ${response.status}`;
+
+      const error = new Error(errorMessage);
+
+      error.status = response.status;
+      error.body = body;
+
+      throw error;
+    }
+
+    const reply =
+      body?.candidates?.[0]?.content?.parts
+        ?.map((part) => part?.text || "")
+        .join("")
+        .trim();
+
+    if (!reply) {
+      throw new Error(
+        "Crop Doctor को Gemini से कोई analysis नहीं मिला।"
+      );
+    }
+
+    return reply;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/* =========================================================
+   GEMINI TEMPORARY ERROR
 ========================================================= */
 
 function isTemporaryGeminiError(error) {
@@ -395,10 +503,6 @@ async function geminiReply(message) {
     const model =
       GEMINI_FALLBACK_MODELS[modelIndex];
 
-    /*
-      हर model को सिर्फ 1 बार।
-      इससे response जल्दी आएगा।
-    */
     try {
       console.log(
         `GEMINI TRY: model=${model}`
@@ -427,22 +531,11 @@ async function geminiReply(message) {
         error?.message
       );
 
-      /*
-        अगर temporary error है,
-        अगले model पर जाएं।
-      */
-      if (
+      await sleep(
         isTemporaryGeminiError(error)
-      ) {
-        await sleep(300);
-        continue;
-      }
-
-      /*
-        Invalid model/key जैसी समस्या में भी
-        अगला fallback try करेंगे।
-      */
-      await sleep(200);
+          ? 300
+          : 200
+      );
     }
   }
 
@@ -450,6 +543,81 @@ async function geminiReply(message) {
     lastError ||
     new Error(
       "Gemini AI से जवाब नहीं मिला।"
+    )
+  );
+}
+
+/* =========================================================
+   CROP DOCTOR SMART RETRY
+========================================================= */
+
+async function cropDoctorReply({
+  imageBase64,
+  mimeType,
+  cropName,
+  cropAge,
+  location,
+}) {
+  if (!GEMINI_API_KEY) {
+    throw new Error(
+      "GEMINI_API_KEY backend में सेट नहीं है।"
+    );
+  }
+
+  let lastError = null;
+
+  for (
+    let modelIndex = 0;
+    modelIndex < GEMINI_FALLBACK_MODELS.length;
+    modelIndex++
+  ) {
+    const model =
+      GEMINI_FALLBACK_MODELS[modelIndex];
+
+    try {
+      console.log(
+        `CROP DOCTOR TRY: model=${model}`
+      );
+
+      const reply =
+        await callGeminiVisionModel(
+          model,
+          imageBase64,
+          mimeType,
+          cropName,
+          cropAge,
+          location
+        );
+
+      console.log(
+        "CROP DOCTOR SUCCESS:",
+        model
+      );
+
+      return {
+        reply,
+        model,
+      };
+    } catch (error) {
+      lastError = error;
+
+      console.error(
+        `CROP DOCTOR ERROR: model=${model}`,
+        error?.message
+      );
+
+      await sleep(
+        isTemporaryGeminiError(error)
+          ? 300
+          : 200
+      );
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(
+      "Crop Doctor AI से analysis नहीं मिला।"
     )
   );
 }
@@ -473,6 +641,16 @@ app.get(
         GEMINI_API_KEY
           ? "gemini-with-local-fallback"
           : "local-fallback",
+
+      cropDoctor:
+        Boolean(
+          GEMINI_API_KEY
+        ),
+
+      cropDoctorMode:
+        GEMINI_API_KEY
+          ? "gemini-vision"
+          : "unavailable",
 
       geminiModel:
         GEMINI_MODEL,
@@ -510,9 +688,6 @@ app.post(
       });
     }
 
-    /*
-      पहले Gemini चलाएंगे।
-    */
     if (GEMINI_API_KEY) {
       try {
         const result =
@@ -534,17 +709,9 @@ app.post(
           "ALL GEMINI MODELS FAILED:",
           error?.message
         );
-
-        /*
-          Gemini fail होने पर
-          local किसान fallback.
-        */
       }
     }
 
-    /*
-      FINAL FALLBACK
-    */
     const fallbackReply =
       localKisanFallback(
         message
@@ -560,6 +727,172 @@ app.post(
       model:
         "kisansathi-local-fallback",
     });
+  }
+);
+
+/* =========================================================
+   CROP DOCTOR ENDPOINT
+========================================================= */
+
+app.post(
+  "/api/crop-doctor",
+  async (req, res) => {
+    try {
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({
+          ok: false,
+          error:
+            "GEMINI_API_KEY backend में सेट नहीं है। Render Environment में Gemini key डालें।",
+        });
+      }
+
+      const image =
+        String(
+          req.body?.image || ""
+        ).trim();
+
+      const mimeType =
+        String(
+          req.body?.mimeType ||
+            "image/jpeg"
+        ).trim();
+
+      const cropName =
+        String(
+          req.body?.cropName || ""
+        ).trim();
+
+      const cropAge =
+        String(
+          req.body?.cropAge || ""
+        ).trim();
+
+      const location =
+        String(
+          req.body?.location || ""
+        ).trim();
+
+      if (!image) {
+        return res.status(400).json({
+          ok: false,
+          error:
+            "फसल की फोटो नहीं मिली।",
+        });
+      }
+
+      /*
+        Frontend data URL भेज सकता है:
+        data:image/jpeg;base64,xxxxx
+
+        इसलिए prefix हटाया जा रहा है।
+      */
+
+      let imageBase64 =
+        image;
+
+      if (
+        imageBase64.includes(
+          "base64,"
+        )
+      ) {
+        imageBase64 =
+          imageBase64.split(
+            "base64,"
+          )[1];
+      }
+
+      imageBase64 =
+        imageBase64
+          .replace(/\s/g, "");
+
+      /*
+        लगभग 10MB limit protection.
+      */
+      if (
+        imageBase64.length >
+        8 * 1024 * 1024
+      ) {
+        return res.status(413).json({
+          ok: false,
+          error:
+            "फोटो बहुत बड़ी है। कृपया छोटी/Compressed फोटो भेजें।",
+        });
+      }
+
+      /*
+        Allowed image types.
+      */
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+
+      const safeMimeType =
+        allowedTypes.includes(
+          mimeType.toLowerCase()
+        )
+          ? mimeType.toLowerCase()
+          : "image/jpeg";
+
+      console.log(
+        "================================================"
+      );
+
+      console.log(
+        "CROP DOCTOR REQUEST:",
+        {
+          cropName,
+          cropAge,
+          location,
+          mimeType: safeMimeType,
+          imageSize:
+            imageBase64.length,
+        }
+      );
+
+      const result =
+        await cropDoctorReply({
+          imageBase64,
+          mimeType:
+            safeMimeType,
+          cropName,
+          cropAge,
+          location,
+        });
+
+      console.log(
+        "================================================"
+      );
+
+      return res.json({
+        ok: true,
+
+        reply:
+          result.reply,
+
+        mode:
+          "gemini-vision",
+
+        model:
+          result.model,
+      });
+    } catch (error) {
+      console.error(
+        "CROP DOCTOR ERROR:",
+        error
+      );
+
+      return res.status(500).json({
+        ok: false,
+
+        error:
+          error instanceof Error
+            ? error.message
+            : "Crop Doctor analysis नहीं हो पाया।",
+      });
+    }
   }
 );
 
@@ -915,11 +1248,6 @@ async function searchMandi({
   commodity,
   market,
 }) {
-  /* -------------------------------------------------------
-     ATTEMPT 1
-     State + Commodity + Market
-  ------------------------------------------------------- */
-
   console.log(
     "MANDI SEARCH ATTEMPT 1:",
     {
@@ -966,11 +1294,6 @@ async function searchMandi({
     );
   }
 
-  /* -------------------------------------------------------
-     ATTEMPT 2
-     State + Commodity
-  ------------------------------------------------------- */
-
   console.log(
     "MANDI SEARCH ATTEMPT 2: state + commodity"
   );
@@ -1012,11 +1335,6 @@ async function searchMandi({
     );
   }
 
-  /* -------------------------------------------------------
-     ATTEMPT 3
-     State only
-  ------------------------------------------------------- */
-
   console.log(
     "MANDI SEARCH ATTEMPT 3: state only"
   );
@@ -1057,11 +1375,6 @@ async function searchMandi({
       error
     );
   }
-
-  /* -------------------------------------------------------
-     ATTEMPT 4
-     No API filters
-  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 4: no API filters"
@@ -1294,6 +1607,11 @@ app.get(
           ? "gemini-with-local-fallback"
           : "local-fallback",
 
+      cropDoctor:
+        Boolean(
+          GEMINI_API_KEY
+        ),
+
       mandi:
         Boolean(
           DATA_GOV_API_KEY
@@ -1336,6 +1654,12 @@ app.listen(
     console.log(
       `Gemini fallback models: ${GEMINI_FALLBACK_MODELS.join(
         ", "
+      )}`
+    );
+
+    console.log(
+      `Crop Doctor configured: ${Boolean(
+        GEMINI_API_KEY
       )}`
     );
 
