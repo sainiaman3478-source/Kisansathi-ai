@@ -4,6 +4,10 @@ import cors from "cors";
 
 const app = express();
 
+/* =========================================================
+   CORS
+========================================================= */
+
 app.use(
   cors({
     origin: true,
@@ -24,15 +28,13 @@ const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const GEMINI_MODEL =
-  process.env.GEMINI_MODEL || "gemini-3.6-flash";
+  process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const GEMINI_FALLBACK_MODELS = [
   GEMINI_MODEL,
-  "gemini-3.6-flash",
-  "gemini-3.5-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3.1-flash-lite",
   "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
 ].filter(
   (model, index, array) =>
     model && array.indexOf(model) === index
@@ -626,109 +628,78 @@ async function cropDoctorReply({
    HEALTH
 ========================================================= */
 
-app.get(
-  "/api/health",
-  (req, res) => {
-    res.json({
-      ok: true,
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
 
-      ai:
-        Boolean(
-          GEMINI_API_KEY
-        ),
+    ai: Boolean(GEMINI_API_KEY),
 
-      aiMode:
-        GEMINI_API_KEY
-          ? "gemini-with-local-fallback"
-          : "local-fallback",
+    aiMode: GEMINI_API_KEY
+      ? "gemini-with-local-fallback"
+      : "local-fallback",
 
-      cropDoctor:
-        Boolean(
-          GEMINI_API_KEY
-        ),
+    cropDoctor: Boolean(GEMINI_API_KEY),
 
-      cropDoctorMode:
-        GEMINI_API_KEY
-          ? "gemini-vision"
-          : "unavailable",
+    cropDoctorMode: GEMINI_API_KEY
+      ? "gemini-vision"
+      : "unavailable",
 
-      geminiModel:
-        GEMINI_MODEL,
+    geminiModel: GEMINI_MODEL,
 
-      fallbackModels:
-        GEMINI_FALLBACK_MODELS,
+    fallbackModels: GEMINI_FALLBACK_MODELS,
 
-      mandi:
-        Boolean(
-          DATA_GOV_API_KEY
-        ),
+    mandi: Boolean(DATA_GOV_API_KEY),
 
-      message:
-        "KisanSaathi AI backend running",
-    });
-  }
-);
+    message: "KisanSaathi AI backend running",
+  });
+});
 
 /* =========================================================
    AI CHAT
 ========================================================= */
 
-app.post(
-  "/api/chat",
-  async (req, res) => {
-    const message =
-      String(
-        req.body?.message || ""
-      ).trim();
+app.post("/api/chat", async (req, res) => {
+  const message =
+    String(
+      req.body?.message || ""
+    ).trim();
 
-    if (!message) {
-      return res.status(400).json({
-        error:
-          "सवाल खाली है।",
-      });
-    }
-
-    if (GEMINI_API_KEY) {
-      try {
-        const result =
-          await geminiReply(
-            message
-          );
-
-        return res.json({
-          reply:
-            result.reply,
-
-          mode: "gemini",
-
-          model:
-            result.model,
-        });
-      } catch (error) {
-        console.error(
-          "ALL GEMINI MODELS FAILED:",
-          error?.message
-        );
-      }
-    }
-
-    const fallbackReply =
-      localKisanFallback(
-        message
-      );
-
-    return res.json({
-      reply:
-        fallbackReply,
-
-      mode:
-        "local-fallback",
-
-      model:
-        "kisansathi-local-fallback",
+  if (!message) {
+    return res.status(400).json({
+      error: "सवाल खाली है।",
     });
   }
-);
+
+  if (GEMINI_API_KEY) {
+    try {
+      const result =
+        await geminiReply(message);
+
+      return res.json({
+        reply: result.reply,
+        mode: "gemini",
+        model: result.model,
+      });
+    } catch (error) {
+      console.error(
+        "ALL GEMINI MODELS FAILED:",
+        error?.message
+      );
+    }
+  }
+
+  const fallbackReply =
+    localKisanFallback(message);
+
+  return res.json({
+    reply: fallbackReply,
+
+    mode: "local-fallback",
+
+    model:
+      "kisansathi-local-fallback",
+  });
+});
 
 /* =========================================================
    CROP DOCTOR ENDPOINT
@@ -741,6 +712,7 @@ app.post(
       if (!GEMINI_API_KEY) {
         return res.status(503).json({
           ok: false,
+
           error:
             "GEMINI_API_KEY backend में सेट नहीं है। Render Environment में Gemini key डालें।",
         });
@@ -775,20 +747,13 @@ app.post(
       if (!image) {
         return res.status(400).json({
           ok: false,
+
           error:
             "फसल की फोटो नहीं मिली।",
         });
       }
 
-      /*
-        Frontend data URL भेज सकता है:
-        data:image/jpeg;base64,xxxxx
-
-        इसलिए prefix हटाया जा रहा है।
-      */
-
-      let imageBase64 =
-        image;
+      let imageBase64 = image;
 
       if (
         imageBase64.includes(
@@ -805,23 +770,18 @@ app.post(
         imageBase64
           .replace(/\s/g, "");
 
-      /*
-        लगभग 10MB limit protection.
-      */
       if (
         imageBase64.length >
         8 * 1024 * 1024
       ) {
         return res.status(413).json({
           ok: false,
+
           error:
             "फोटो बहुत बड़ी है। कृपया छोटी/Compressed फोटो भेजें।",
         });
       }
 
-      /*
-        Allowed image types.
-      */
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
@@ -861,6 +821,11 @@ app.post(
           cropAge,
           location,
         });
+
+      console.log(
+        "CROP DOCTOR SUCCESS:",
+        result.model
+      );
 
       console.log(
         "================================================"
@@ -937,8 +902,7 @@ const aliases = {
   "चना": "Gram",
   "gram": "Gram",
 
-  "अरहर":
-    "Arhar (Tur/Red Gram)",
+  "अरहर": "Arhar (Tur/Red Gram)",
 
   "बाजरा":
     "Bajra (Pearl Millet/Cumbu)",
@@ -1183,9 +1147,7 @@ function normalizeRecord(item) {
    NORMALIZE RECORDS
 ========================================================= */
 
-function normalizeRecords(
-  records
-) {
+function normalizeRecords(records) {
   if (!Array.isArray(records)) {
     return [];
   }
@@ -1257,6 +1219,11 @@ async function searchMandi({
     }
   );
 
+  /* -------------------------------------------------------
+     ATTEMPT 1
+     state + commodity + market
+  ------------------------------------------------------- */
+
   try {
     const body =
       await fetchMandiPage({
@@ -1290,9 +1257,14 @@ async function searchMandi({
   } catch (error) {
     console.error(
       "ATTEMPT 1 ERROR:",
-      error
+      error?.message
     );
   }
+
+  /* -------------------------------------------------------
+     ATTEMPT 2
+     state + commodity
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 2: state + commodity"
@@ -1331,9 +1303,14 @@ async function searchMandi({
   } catch (error) {
     console.error(
       "ATTEMPT 2 ERROR:",
-      error
+      error?.message
     );
   }
+
+  /* -------------------------------------------------------
+     ATTEMPT 3
+     state only
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 3: state only"
@@ -1372,9 +1349,15 @@ async function searchMandi({
   } catch (error) {
     console.error(
       "ATTEMPT 3 ERROR:",
-      error
+      error?.message
     );
   }
+
+  /* -------------------------------------------------------
+     ATTEMPT 4
+     No API filters.
+     Fetch pages and filter locally.
+  ------------------------------------------------------- */
 
   console.log(
     "MANDI SEARCH ATTEMPT 4: no API filters"
@@ -1450,7 +1433,7 @@ async function searchMandi({
   } catch (error) {
     console.error(
       "ATTEMPT 4 ERROR:",
-      error
+      error?.message
     );
 
     return [];
@@ -1587,47 +1570,34 @@ app.get(
    ROOT
 ========================================================= */
 
-app.get(
-  "/",
-  (req, res) => {
-    res.json({
-      app:
-        "KisanSaathi AI",
+app.get("/", (req, res) => {
+  res.json({
+    app: "KisanSaathi AI",
 
-      status:
-        "online",
+    status: "online",
 
-      ai:
-        Boolean(
-          GEMINI_API_KEY
-        ),
+    ai: Boolean(GEMINI_API_KEY),
 
-      aiMode:
-        GEMINI_API_KEY
-          ? "gemini-with-local-fallback"
-          : "local-fallback",
+    aiMode: GEMINI_API_KEY
+      ? "gemini-with-local-fallback"
+      : "local-fallback",
 
-      cropDoctor:
-        Boolean(
-          GEMINI_API_KEY
-        ),
+    cropDoctor:
+      Boolean(GEMINI_API_KEY),
 
-      mandi:
-        Boolean(
-          DATA_GOV_API_KEY
-        ),
+    mandi:
+      Boolean(DATA_GOV_API_KEY),
 
-      geminiModel:
-        GEMINI_MODEL,
+    geminiModel:
+      GEMINI_MODEL,
 
-      fallbackModels:
-        GEMINI_FALLBACK_MODELS,
+    fallbackModels:
+      GEMINI_FALLBACK_MODELS,
 
-      mandiResource:
-        RESOURCE,
-    });
-  }
-);
+    mandiResource:
+      RESOURCE,
+  });
+});
 
 /* =========================================================
    START SERVER
