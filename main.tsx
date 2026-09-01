@@ -1635,8 +1635,12 @@ async function compressImage(
   try {
     await new Promise<void>((resolve, reject) => {
       image.onload = () => resolve();
+
       image.onerror = () =>
-        reject(new Error("Image load नहीं हुई"));
+        reject(
+          new Error("Image load नहीं हुई")
+        );
+
       image.src = objectUrl;
     });
 
@@ -1650,21 +1654,25 @@ async function compressImage(
         height = Math.round(
           (height / width) * maxSize
         );
+
         width = maxSize;
       } else {
         width = Math.round(
           (width / height) * maxSize
         );
+
         height = maxSize;
       }
     }
 
-    const canvas = document.createElement("canvas");
+    const canvas =
+      document.createElement("canvas");
 
     canvas.width = width;
     canvas.height = height;
 
-    const ctx = canvas.getContext("2d");
+    const ctx =
+      canvas.getContext("2d");
 
     if (!ctx) return file;
 
@@ -1676,14 +1684,15 @@ async function compressImage(
       height
     );
 
-    const blob = await new Promise<Blob | null>(
-      (resolve) =>
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          0.78
-        )
-    );
+    const blob =
+      await new Promise<Blob | null>(
+        (resolve) =>
+          canvas.toBlob(
+            resolve,
+            "image/jpeg",
+            0.78
+          )
+      );
 
     if (!blob) return file;
 
@@ -1710,10 +1719,20 @@ function DoctorPage({
     useState<File | null>(null);
 
   const [url, setUrl] = useState("");
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [crop, setCrop] = useState("");
-  const [symptoms, setSymptoms] = useState("");
+
+  const [result, setResult] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [crop, setCrop] =
+    useState("");
+
+  const [symptoms, setSymptoms] =
+    useState("");
+
+  /* ================= CHOOSE PHOTO ================= */
 
   const choose = (f: File | null) => {
     if (url) {
@@ -1724,11 +1743,15 @@ function DoctorPage({
     setResult("");
 
     if (f) {
-      setUrl(URL.createObjectURL(f));
+      setUrl(
+        URL.createObjectURL(f)
+      );
     } else {
       setUrl("");
     }
   };
+
+  /* ================= CLEAN PHOTO URL ================= */
 
   useEffect(() => {
     return () => {
@@ -1738,57 +1761,139 @@ function DoctorPage({
     };
   }, [url]);
 
+  /* ================= FILE TO BASE64 ================= */
+
+  const fileToDataUrl = (
+    input: File
+  ): Promise<string> => {
+    return new Promise(
+      (resolve, reject) => {
+        const reader =
+          new FileReader();
+
+        reader.onload = () => {
+          if (
+            typeof reader.result ===
+            "string"
+          ) {
+            resolve(
+              reader.result
+            );
+          } else {
+            reject(
+              new Error(
+                "फोटो को पढ़ा नहीं जा सका।"
+              )
+            );
+          }
+        };
+
+        reader.onerror = () => {
+          reject(
+            new Error(
+              "फोटो पढ़ने में समस्या हुई।"
+            )
+          );
+        };
+
+        reader.readAsDataURL(
+          input
+        );
+      }
+    );
+  };
+
+  /* ================= AI ANALYZE ================= */
+
   const analyze = async () => {
-    if (!file || loading) return;
+    if (!file || loading) {
+      if (!file) {
+        setResult(
+          "❌ पहले फसल की फोटो चुनें।"
+        );
+      }
+
+      return;
+    }
 
     setLoading(true);
     setResult("");
 
     try {
-      /* फोटो को छोटा करते हैं ताकि Render server
-         पर upload जल्दी हो */
+      /*
+       * Step 1:
+       * Photo को छोटा करें
+       */
       const smallImage =
         await compressImage(file);
 
-      const formData = new FormData();
+      /*
+       * Step 2:
+       * Photo को Base64 Data URL में बदलें
+       */
+      const imageData =
+        await fileToDataUrl(
+          smallImage
+        );
 
-      formData.append(
-        "image",
-        smallImage,
-        "crop-photo.jpg"
-      );
+      if (!imageData) {
+        throw new Error(
+          "फसल की फोटो तैयार नहीं हो पाई।"
+        );
+      }
 
-      formData.append(
-        "crop",
-        crop.trim() ||
-          "फसल का नाम नहीं बताया गया"
-      );
-
-      formData.append(
-        "symptoms",
-        symptoms.trim() ||
-          "कोई अतिरिक्त लक्षण नहीं बताया गया"
-      );
-
+      /*
+       * Step 3:
+       * Render backend को JSON भेजें
+       */
       const controller =
         new AbortController();
 
-      /* 30 sec की जगह 90 sec */
-      const timeout = setTimeout(() => {
-        controller.abort();
-      }, 90000);
+      const timeout =
+        setTimeout(() => {
+          controller.abort();
+        }, 90000);
 
-      const response = await fetch(
-        `${API_BASE}/api/crop-doctor`,
-        {
-          method: "POST",
-          body: formData,
-          signal: controller.signal,
-        }
-      );
+      const response =
+        await fetch(
+          `${API_BASE}/api/crop-doctor`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Accept:
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              image: imageData,
+
+              mimeType:
+                smallImage.type ||
+                "image/jpeg",
+
+              cropName:
+                crop.trim() ||
+                "फसल का नाम नहीं बताया गया",
+
+              symptoms:
+                symptoms.trim() ||
+                "कोई अतिरिक्त लक्षण नहीं बताया गया",
+            }),
+
+            signal:
+              controller.signal,
+          }
+        );
 
       clearTimeout(timeout);
 
+      /*
+       * Server response पढ़ें
+       */
       const contentType =
         response.headers.get(
           "content-type"
@@ -1810,11 +1915,19 @@ function DoctorPage({
         );
       }
 
-      setResult(
+      const reply =
         data.reply ||
-          data.result ||
-          "AI ने फोटो का विश्लेषण किया, लेकिन रिपोर्ट नहीं मिली।"
-      );
+        data.result ||
+        data.message ||
+        "";
+
+      if (!reply) {
+        throw new Error(
+          "AI ने कोई रिपोर्ट नहीं भेजी।"
+        );
+      }
+
+      setResult(reply);
     } catch (e) {
       if (
         e instanceof DOMException &&
@@ -1847,11 +1960,13 @@ function DoctorPage({
         <div className="upload">
           <Camera size={48} />
 
-          <h3>🌱 फसल की फोटो लें</h3>
+          <h3>
+            🌱 फसल की फोटो लें
+          </h3>
 
           <p className="muted">
-            पत्ती या पौधे की साफ और अच्छी रोशनी वाली
-            फोटो लें।
+            पत्ती या पौधे की साफ और
+            अच्छी रोशनी वाली फोटो लें।
           </p>
 
           <input
@@ -1860,7 +1975,8 @@ function DoctorPage({
             capture="environment"
             onChange={(e) =>
               choose(
-                e.target.files?.[0] || null
+                e.target.files?.[0] ||
+                  null
               )
             }
           />
@@ -1876,10 +1992,14 @@ function DoctorPage({
 
         <input
           className="search"
-          style={{ marginTop: 10 }}
+          style={{
+            marginTop: 10,
+          }}
           value={crop}
           onChange={(e) =>
-            setCrop(e.target.value)
+            setCrop(
+              e.target.value
+            )
           }
           placeholder="🌾 फसल का नाम (गेहूं, धान, कपास...)"
         />
@@ -1887,13 +2007,16 @@ function DoctorPage({
         <textarea
           value={symptoms}
           onChange={(e) =>
-            setSymptoms(e.target.value)
+            setSymptoms(
+              e.target.value
+            )
           }
           placeholder="📝 क्या समस्या दिख रही है? जैसे पत्तियां पीली हैं, दाग हैं, कीड़े हैं..."
           style={{
             width: "100%",
             minHeight: 90,
-            border: "1px solid #ddd",
+            border:
+              "1px solid #ddd",
             borderRadius: 11,
             padding: 11,
             resize: "vertical",
@@ -1905,7 +2028,9 @@ function DoctorPage({
         {file && (
           <button
             className="primary"
-            style={{ marginTop: 10 }}
+            style={{
+              marginTop: 10,
+            }}
             onClick={analyze}
             disabled={loading}
           >
@@ -1917,12 +2042,15 @@ function DoctorPage({
 
         {result && (
           <div className="result">
-            <b>🤖 AI Crop Doctor रिपोर्ट</b>
+            <b>
+              🤖 AI Crop Doctor रिपोर्ट
+            </b>
 
             <div
               style={{
                 marginTop: 7,
-                whiteSpace: "pre-wrap",
+                whiteSpace:
+                  "pre-wrap",
               }}
             >
               {result}
@@ -1934,18 +2062,24 @@ function DoctorPage({
       <div className="section">
         <Stethoscope size={28} />
 
-        <h3>⚠️ जरूरी सावधानी</h3>
+        <h3>
+          ⚠️ जरूरी सावधानी
+        </h3>
 
         <p className="muted">
-          AI की फोटो पहचान शुरुआती सहायता के लिए है।
-          दवा की मात्रा और अंतिम उपचार तय करने से पहले
-          स्थानीय कृषि विशेषज्ञ से पुष्टि करें।
+          AI की फोटो पहचान शुरुआती
+          सहायता के लिए है। दवा की
+          मात्रा और अंतिम उपचार तय
+          करने से पहले स्थानीय कृषि
+          विशेषज्ञ से पुष्टि करें।
         </p>
 
         <div className="doctorTip">
-          💡 बेहतर परिणाम के लिए: पूरी पत्ती, प्रभावित
-          हिस्सा, पौधे का आकार और खेत की स्थिति साफ
-          दिखाई देने वाली फोटो भेजें।
+          💡 बेहतर परिणाम के लिए:
+          पूरी पत्ती, प्रभावित हिस्सा,
+          पौधे का आकार और खेत की
+          स्थिति साफ दिखाई देने वाली
+          फोटो भेजें।
         </div>
       </div>
     </>
@@ -1963,10 +2097,11 @@ function StorePage({
   cart: Record<number, number>;
   add: (id: number) => void;
 }) {
-  const count = Object.values(cart).reduce(
-    (a, b) => a + b,
-    0
-  );
+  const count =
+    Object.values(cart).reduce(
+      (a, b) => a + b,
+      0
+    );
 
   return (
     <>
@@ -1989,7 +2124,11 @@ function StorePage({
                 alignItems: "center",
               }}
             >
-              <span style={{ fontSize: 28 }}>
+              <span
+                style={{
+                  fontSize: 28,
+                }}
+              >
                 {p.emoji}
               </span>
 
@@ -2006,7 +2145,9 @@ function StorePage({
 
             <button
               className="addBtn"
-              onClick={() => add(p.id)}
+              onClick={() =>
+                add(p.id)
+              }
             >
               कार्ट में डालें
             </button>
@@ -2015,11 +2156,17 @@ function StorePage({
 
         <button
           className="primary"
-          style={{ marginTop: 12 }}
-          onClick={() => setTab("cart")}
+          style={{
+            marginTop: 12,
+          }}
+          onClick={() =>
+            setTab("cart")
+          }
         >
           🛒 कार्ट देखें{" "}
-          {count ? `(${count})` : ""}
+          {count
+            ? `(${count})`
+            : ""}
         </button>
       </div>
     </>
@@ -2041,7 +2188,10 @@ function CartPage({
   remove: (id: number) => void;
   total: number;
 }) {
-  const ids = Object.keys(cart).map(Number);
+  const ids =
+    Object.keys(cart).map(
+      Number
+    );
 
   return (
     <>
@@ -2055,11 +2205,15 @@ function CartPage({
         <div className="section empty">
           <ShoppingCart size={50} />
 
-          <h3>Cart खाली है</h3>
+          <h3>
+            Cart खाली है
+          </h3>
 
           <button
             className="addBtn"
-            onClick={() => setTab("store")}
+            onClick={() =>
+              setTab("store")
+            }
           >
             Store देखें
           </button>
@@ -2067,9 +2221,11 @@ function CartPage({
       ) : (
         <div className="section">
           {ids.map((id) => {
-            const p = products.find(
-              (x) => x.id === id
-            );
+            const p =
+              products.find(
+                (x) =>
+                  x.id === id
+              );
 
             if (!p) return null;
 
@@ -2079,24 +2235,33 @@ function CartPage({
                 key={id}
               >
                 <div>
-                  <b>{p.name}</b>
+                  <b>
+                    {p.name}
+                  </b>
 
                   <div className="muted">
-                    ₹{p.price} × {cart[id]}
+                    ₹{p.price} ×{" "}
+                    {cart[id]}
                   </div>
                 </div>
 
                 <div className="quantity">
                   <button
-                    onClick={() => remove(id)}
+                    onClick={() =>
+                      remove(id)
+                    }
                   >
                     <Minus size={15} />
                   </button>
 
-                  <b>{cart[id]}</b>
+                  <b>
+                    {cart[id]}
+                  </b>
 
                   <button
-                    onClick={() => add(id)}
+                    onClick={() =>
+                      add(id)
+                    }
                   >
                     <Plus size={15} />
                   </button>
@@ -2106,10 +2271,15 @@ function CartPage({
           })}
 
           <div className="total">
-            <span>कुल राशि</span>
+            <span>
+              कुल राशि
+            </span>
 
             <span>
-              ₹{total.toLocaleString("en-IN")}
+              ₹
+              {total.toLocaleString(
+                "en-IN"
+              )}
             </span>
           </div>
 
@@ -2170,7 +2340,8 @@ function ChatPage({
             </h3>
 
             <p>
-              फसल, मौसम, मंडी या खेती के बारे में पूछें।
+              फसल, मौसम, मंडी या खेती
+              के बारे में पूछें।
             </p>
           </div>
         ) : (
@@ -2202,7 +2373,9 @@ function ChatPage({
         {quick.map((x) => (
           <button
             key={x}
-            onClick={() => send(x)}
+            onClick={() =>
+              send(x)
+            }
           >
             {x}
           </button>
@@ -2216,7 +2389,9 @@ function ChatPage({
             setQ(e.target.value)
           }
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            if (
+              e.key === "Enter"
+            ) {
               send();
             }
           }}
@@ -2225,7 +2400,9 @@ function ChatPage({
 
         <button
           className="sendBtn"
-          onClick={() => send()}
+          onClick={() =>
+            send()
+          }
         >
           <Send size={18} />
         </button>
@@ -2266,7 +2443,9 @@ function ProfilePage({
       </div>
 
       <div className="section">
-        <h3>🏛️ सरकारी योजनाएं</h3>
+        <h3>
+          🏛️ सरकारी योजनाएं
+        </h3>
 
         {schemes.map((s) => (
           <div
@@ -2277,8 +2456,14 @@ function ProfilePage({
               {s.icon}
             </div>
 
-            <div style={{ flex: 1 }}>
-              <b>{s.title}</b>
+            <div
+              style={{
+                flex: 1,
+              }}
+            >
+              <b>
+                {s.title}
+              </b>
 
               <div className="muted">
                 {s.text}
@@ -2298,7 +2483,9 @@ function ProfilePage({
       </div>
 
       <div className="section">
-        <h3>ℹ️ ऐप की स्थिति</h3>
+        <h3>
+          ℹ️ ऐप की स्थिति
+        </h3>
 
         <p className="muted">
           ✅ Real Mandi Bhav
@@ -2324,17 +2511,19 @@ function App() {
     useState("किसान भाई");
 
   const [cart, setCart] =
-    useState<Record<number, number>>(() => {
-      try {
-        return JSON.parse(
-          localStorage.getItem(
-            "ks_cart"
-          ) || "{}"
-        );
-      } catch {
-        return {};
+    useState<Record<number, number>>(
+      () => {
+        try {
+          return JSON.parse(
+            localStorage.getItem(
+              "ks_cart"
+            ) || "{}"
+          );
+        } catch {
+          return {};
+        }
       }
-    });
+    );
 
   const [crops, setCrops] =
     useState<Crop[]>(() => {
@@ -2362,7 +2551,10 @@ function App() {
       }
     });
 
-  const [q, setQ] = useState("");
+  const [q, setQ] =
+    useState("");
+
+  /* ================= STORAGE ================= */
 
   useEffect(() => {
     localStorage.setItem(
@@ -2385,31 +2577,41 @@ function App() {
     );
   }, [chat]);
 
-  const count = Object.values(cart).reduce(
-    (a, b) => a + b,
-    0
-  );
+  /* ================= CART ================= */
 
-  const total = Object.entries(cart).reduce(
-    (s, [id, n]) =>
-      s +
-      (products.find(
-        (p) => p.id === Number(id)
-      )?.price || 0) *
-        n,
-    0
-  );
+  const count =
+    Object.values(cart).reduce(
+      (a, b) => a + b,
+      0
+    );
+
+  const total =
+    Object.entries(cart).reduce(
+      (s, [id, n]) =>
+        s +
+        (products.find(
+          (p) =>
+            p.id === Number(id)
+        )?.price || 0) *
+          n,
+      0
+    );
 
   const add = (id: number) => {
     setCart((c) => ({
       ...c,
-      [id]: (c[id] || 0) + 1,
+      [id]:
+        (c[id] || 0) + 1,
     }));
   };
 
-  const remove = (id: number) => {
+  const remove = (
+    id: number
+  ) => {
     setCart((c) => {
-      const x = { ...c };
+      const x = {
+        ...c,
+      };
 
       if (x[id] > 1) {
         x[id]--;
@@ -2423,8 +2625,11 @@ function App() {
 
   /* ================= AI CHAT ================= */
 
-  const send = async (text = q) => {
-    const t = text.trim();
+  const send = async (
+    text = q
+  ) => {
+    const t =
+      text.trim();
 
     if (!t) return;
 
@@ -2436,7 +2641,8 @@ function App() {
       },
       {
         from: "ai",
-        text: "AI Kisan सोच रहा है...",
+        text:
+          "AI Kisan सोच रहा है...",
       },
     ]);
 
@@ -2446,31 +2652,40 @@ function App() {
       const controller =
         new AbortController();
 
-      const timeout = setTimeout(
-        () => controller.abort(),
-        30000
-      );
+      const timeout =
+        setTimeout(
+          () =>
+            controller.abort(),
+          30000
+        );
 
-      const r = await fetch(
-        `${API_BASE}/api/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            message: t,
-          }),
-          signal: controller.signal,
-        }
-      );
+      const r =
+        await fetch(
+          `${API_BASE}/api/chat`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                message: t,
+              }),
+
+            signal:
+              controller.signal,
+          }
+        );
 
       clearTimeout(timeout);
 
-      const data = await r
-        .json()
-        .catch(() => ({}));
+      const data =
+        await r
+          .json()
+          .catch(() => ({}));
 
       if (!r.ok) {
         throw new Error(
@@ -2480,11 +2695,19 @@ function App() {
       }
 
       setChat((c) => {
-        const copy = [...c];
+        const copy = [
+          ...c,
+        ];
 
-        const i = copy
-          .map((x) => x.from)
-          .lastIndexOf("ai");
+        const i =
+          copy
+            .map(
+              (x) =>
+                x.from
+            )
+            .lastIndexOf(
+              "ai"
+            );
 
         if (i >= 0) {
           copy[i] = {
@@ -2499,24 +2722,36 @@ function App() {
       });
     } catch (e) {
       const msg =
-        e instanceof DOMException &&
-        e.name === "AbortError"
+        e instanceof
+          DOMException &&
+        e.name ===
+          "AbortError"
           ? "AI server ने समय पर जवाब नहीं दिया।"
-          : e instanceof Error
+          : e instanceof
+            Error
           ? e.message
           : "AI सेवा से कनेक्शन नहीं हो पाया।";
 
       setChat((c) => {
-        const copy = [...c];
+        const copy = [
+          ...c,
+        ];
 
-        const i = copy
-          .map((x) => x.from)
-          .lastIndexOf("ai");
+        const i =
+          copy
+            .map(
+              (x) =>
+                x.from
+            )
+            .lastIndexOf(
+              "ai"
+            );
 
         if (i >= 0) {
           copy[i] = {
             from: "ai",
-            text: "❌ " + msg,
+            text:
+              "❌ " + msg,
           };
         }
 
@@ -2525,17 +2760,23 @@ function App() {
     }
   };
 
+  /* ================= UI ================= */
+
   return (
     <>
-      <style>{css}</style>
+      <style>
+        {css}
+      </style>
 
       <div className="app">
+
         <header>
           <button
             className="brand"
             style={{
               border: 0,
-              background: "transparent",
+              background:
+                "transparent",
               padding: 0,
             }}
             onClick={() =>
@@ -2548,6 +2789,7 @@ function App() {
 
             <span>
               KisanSaathi AI
+
               <small>
                 आपका डिजिटल किसान दोस्त
               </small>
@@ -2557,7 +2799,9 @@ function App() {
           <button
             className="profileIcon"
             onClick={() =>
-              setTab("profile")
+              setTab(
+                "profile"
+              )
             }
           >
             <User size={20} />
@@ -2565,6 +2809,7 @@ function App() {
         </header>
 
         <main>
+
           {tab === "home" && (
             <HomePage
               setTab={setTab}
@@ -2588,7 +2833,9 @@ function App() {
             <CropsPage
               setTab={setTab}
               crops={crops}
-              setCrops={setCrops}
+              setCrops={
+                setCrops
+              }
             />
           )}
 
@@ -2633,6 +2880,7 @@ function App() {
               crops={crops}
             />
           )}
+
         </main>
 
         <button
@@ -2646,25 +2894,44 @@ function App() {
         </button>
 
         <nav className="bottomNav">
+
           <Nav
-            active={tab === "home"}
-            on={() => setTab("home")}
-            icon={<Home size={19} />}
+            active={
+              tab === "home"
+            }
+            on={() =>
+              setTab("home")
+            }
+            icon={
+              <Home size={19} />
+            }
             text="Home"
           />
 
           <Nav
-            active={tab === "crops"}
-            on={() => setTab("crops")}
-            icon={<Leaf size={19} />}
+            active={
+              tab === "crops"
+            }
+            on={() =>
+              setTab("crops")
+            }
+            icon={
+              <Leaf size={19} />
+            }
             text="मेरी फसल"
           />
 
           <Nav
-            active={tab === "store"}
-            on={() => setTab("store")}
+            active={
+              tab === "store"
+            }
+            on={() =>
+              setTab("store")
+            }
             icon={
-              <ShoppingCart size={19} />
+              <ShoppingCart
+                size={19}
+              />
             }
             text={
               count
@@ -2674,13 +2941,20 @@ function App() {
           />
 
           <Nav
-            active={tab === "profile"}
-            on={() =>
-              setTab("profile")
+            active={
+              tab === "profile"
             }
-            icon={<User size={19} />}
+            on={() =>
+              setTab(
+                "profile"
+              )
+            }
+            icon={
+              <User size={19} />
+            }
             text="Profile"
           />
+
         </nav>
       </div>
     </>
@@ -2690,13 +2964,14 @@ function App() {
 /* ================= START ================= */
 
 const root =
-  document.getElementById("root");
+  document.getElementById(
+    "root"
+  );
 
 if (root) {
   createRoot(root).render(
     <React.StrictMode>
-  <App />
-</React.StrictMode>
- );
-}    
-    
+      <App />
+    </React.StrictMode>
+  );
+}
