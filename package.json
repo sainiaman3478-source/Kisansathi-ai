@@ -1,23 +1,15 @@
 {
   "name": "kisansathi-ai",
-  "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "dev": "node server.mjs"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "4.7.0",
-    "cors": "2.8.5",
-    "dotenv": "16.6.1",
-    "express": "5.1.0",
-    "lucide-react": "0.468.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "typescript": "5.8.3",
-    "vite": "6.3.5"
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
   }
 }
