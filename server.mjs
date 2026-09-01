@@ -24,21 +24,38 @@ const PORT = process.env.PORT || 10000;
    ENVIRONMENT
 ========================================================= */
 
-const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const DATA_GOV_API_KEY =
+  process.env.DATA_GOV_API_KEY;
+
+const GEMINI_API_KEY =
+  process.env.GEMINI_API_KEY;
+
+/*
+  IMPORTANT:
+  Purane gemini-2.0-flash ko intentionally allow nahi kiya gaya.
+  Agar Render Environment mein purana GEMINI_MODEL pada hai,
+  tab bhi app supported model use karega.
+*/
+
+const SUPPORTED_GEMINI_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+];
+
+/*
+  Primary model fixed to Gemini 3.6 Flash.
+  Google ke current stable models mein available hai.
+*/
 
 const GEMINI_MODEL =
-  process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  "gemini-3.6-flash";
 
 const GEMINI_FALLBACK_MODELS = [
-  GEMINI_MODEL,
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.0-flash",
-].filter(
-  (model, index, array) =>
-    model && array.indexOf(model) === index
-);
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+];
 
 /* =========================================================
    DATA.GOV RESOURCE
@@ -129,7 +146,9 @@ Keep the answer useful but reasonably concise.
 ========================================================= */
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 /* =========================================================
@@ -137,7 +156,10 @@ function sleep(ms) {
 ========================================================= */
 
 function localKisanFallback(message) {
-  const text = String(message || "").trim().toLowerCase();
+  const text =
+    String(message || "")
+      .trim()
+      .toLowerCase();
 
   if (
     (text.includes("गेहूं") ||
@@ -155,7 +177,8 @@ function localKisanFallback(message) {
   }
 
   if (
-    (text.includes("धान") || text.includes("चावल")) &&
+    (text.includes("धान") ||
+      text.includes("चावल")) &&
     (text.includes("पीली") ||
       text.includes("पीला") ||
       text.includes("yellow"))
@@ -245,13 +268,32 @@ function localKisanFallback(message) {
 }
 
 /* =========================================================
+   GEMINI MODEL CHECK
+========================================================= */
+
+function isSupportedGeminiModel(model) {
+  return SUPPORTED_GEMINI_MODELS.includes(
+    model
+  );
+}
+
+/* =========================================================
    GEMINI GENERIC REQUEST
 ========================================================= */
 
-async function callGeminiModel(model, message) {
+async function callGeminiModel(
+  model,
+  message
+) {
   if (!GEMINI_API_KEY) {
     throw new Error(
       "GEMINI_API_KEY Render Environment में सेट नहीं है।"
+    );
+  }
+
+  if (!isSupportedGeminiModel(model)) {
+    throw new Error(
+      `Unsupported Gemini model: ${model}`
     );
   }
 
@@ -259,71 +301,90 @@ async function callGeminiModel(model, message) {
     `https://generativelanguage.googleapis.com/v1beta/models/` +
     `${encodeURIComponent(model)}:generateContent`;
 
-  console.log("GEMINI REQUEST MODEL:", model);
+  console.log(
+    "GEMINI REQUEST MODEL:",
+    model
+  );
 
-  const controller = new AbortController();
+  const controller =
+    new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 12000);
+  const timeout =
+    setTimeout(() => {
+      controller.abort();
+    }, 20000);
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
+    const response =
+      await fetch(url, {
+        method: "POST",
 
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
+        headers: {
+          "Content-Type":
+            "application/json",
 
-      signal: controller.signal,
-
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: KISAN_SYSTEM_INSTRUCTION,
-            },
-          ],
+          "x-goog-api-key":
+            GEMINI_API_KEY,
         },
 
-        contents: [
-          {
-            role: "user",
+        signal: controller.signal,
+
+        body: JSON.stringify({
+          systemInstruction: {
             parts: [
               {
-                text: message,
+                text:
+                  KISAN_SYSTEM_INSTRUCTION,
               },
             ],
           },
-        ],
 
-        generationConfig: {
-          maxOutputTokens: 700,
-        },
-      }),
-    });
+          contents: [
+            {
+              role: "user",
 
-    const body = await response
-      .json()
-      .catch(() => ({}));
+              parts: [
+                {
+                  text: message,
+                },
+              ],
+            },
+          ],
+
+          generationConfig: {
+            maxOutputTokens: 700,
+          },
+        }),
+      });
+
+    const body =
+      await response
+        .json()
+        .catch(() => ({}));
 
     if (!response.ok) {
       const errorMessage =
         body?.error?.message ||
         `Gemini HTTP ${response.status}`;
 
-      const error = new Error(errorMessage);
+      const error =
+        new Error(errorMessage);
 
-      error.status = response.status;
+      error.status =
+        response.status;
+
       error.body = body;
 
       throw error;
     }
 
     const reply =
-      body?.candidates?.[0]?.content?.parts
-        ?.map((part) => part?.text || "")
+      body?.candidates?.[0]
+        ?.content?.parts
+        ?.map(
+          (part) =>
+            part?.text || ""
+        )
         .join("")
         .trim();
 
@@ -357,15 +418,23 @@ async function callGeminiVisionModel(
     );
   }
 
+  if (!isSupportedGeminiModel(model)) {
+    throw new Error(
+      `Unsupported Gemini model: ${model}`
+    );
+  }
+
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/` +
     `${encodeURIComponent(model)}:generateContent`;
 
-  const controller = new AbortController();
+  const controller =
+    new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 30000);
+  const timeout =
+    setTimeout(() => {
+      controller.abort();
+    }, 45000);
 
   try {
     const farmerInfo = `
@@ -374,73 +443,93 @@ Crop age: ${cropAge || "not provided"}
 Location: ${location || "not provided"}
 `;
 
-    const response = await fetch(url, {
-      method: "POST",
+    const response =
+      await fetch(url, {
+        method: "POST",
 
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
+        headers: {
+          "Content-Type":
+            "application/json",
 
-      signal: controller.signal,
-
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text: CROP_DOCTOR_INSTRUCTION,
-            },
-          ],
+          "x-goog-api-key":
+            GEMINI_API_KEY,
         },
 
-        contents: [
-          {
-            role: "user",
+        signal: controller.signal,
 
+        body: JSON.stringify({
+          systemInstruction: {
             parts: [
               {
                 text:
-                  `किसान की जानकारी:\n${farmerInfo}\n\n` +
-                  "इस फसल की फोटो का विश्लेषण करके Crop Doctor report दें।",
-              },
-
-              {
-                inlineData: {
-                  mimeType,
-                  data: imageBase64,
-                },
+                  CROP_DOCTOR_INSTRUCTION,
               },
             ],
           },
-        ],
 
-        generationConfig: {
-          maxOutputTokens: 900,
-          temperature: 0.2,
-        },
-      }),
-    });
+          contents: [
+            {
+              role: "user",
 
-    const body = await response
-      .json()
-      .catch(() => ({}));
+              parts: [
+                {
+                  text:
+                    `किसान की जानकारी:\n${farmerInfo}\n\n` +
+                    "इस फसल की फोटो का विश्लेषण करके Crop Doctor report दें।",
+                },
+
+                {
+                  inlineData: {
+                    mimeType:
+                      mimeType,
+
+                    data:
+                      imageBase64,
+                  },
+                },
+              ],
+            },
+          ],
+
+          /*
+            Gemini 3.x ke liye deprecated temperature
+            parameter intentionally remove kiya gaya hai.
+          */
+
+          generationConfig: {
+            maxOutputTokens: 900,
+          },
+        }),
+      });
+
+    const body =
+      await response
+        .json()
+        .catch(() => ({}));
 
     if (!response.ok) {
       const errorMessage =
         body?.error?.message ||
         `Gemini Vision HTTP ${response.status}`;
 
-      const error = new Error(errorMessage);
+      const error =
+        new Error(errorMessage);
 
-      error.status = response.status;
+      error.status =
+        response.status;
+
       error.body = body;
 
       throw error;
     }
 
     const reply =
-      body?.candidates?.[0]?.content?.parts
-        ?.map((part) => part?.text || "")
+      body?.candidates?.[0]
+        ?.content?.parts
+        ?.map(
+          (part) =>
+            part?.text || ""
+        )
         .join("")
         .trim();
 
@@ -460,12 +549,18 @@ Location: ${location || "not provided"}
    GEMINI TEMPORARY ERROR
 ========================================================= */
 
-function isTemporaryGeminiError(error) {
+function isTemporaryGeminiError(
+  error
+) {
   const status =
-    Number(error?.status || 0);
+    Number(
+      error?.status || 0
+    );
 
   const text =
-    String(error?.message || "").toLowerCase();
+    String(
+      error?.message || ""
+    ).toLowerCase();
 
   return (
     status === 408 ||
@@ -474,13 +569,27 @@ function isTemporaryGeminiError(error) {
     status === 502 ||
     status === 503 ||
     status === 504 ||
-    text.includes("high demand") ||
-    text.includes("temporarily") ||
-    text.includes("try again later") ||
-    text.includes("overloaded") ||
-    text.includes("timeout") ||
-    text.includes("deadline") ||
-    text.includes("aborted")
+    text.includes(
+      "high demand"
+    ) ||
+    text.includes(
+      "temporarily"
+    ) ||
+    text.includes(
+      "try again later"
+    ) ||
+    text.includes(
+      "overloaded"
+    ) ||
+    text.includes(
+      "timeout"
+    ) ||
+    text.includes(
+      "deadline"
+    ) ||
+    text.includes(
+      "aborted"
+    )
   );
 }
 
@@ -488,22 +597,28 @@ function isTemporaryGeminiError(error) {
    GEMINI SMART RETRY
 ========================================================= */
 
-async function geminiReply(message) {
+async function geminiReply(
+  message
+) {
   if (!GEMINI_API_KEY) {
     throw new Error(
       "GEMINI_API_KEY backend में सेट नहीं है।"
     );
   }
 
-  let lastError = null;
+  let lastError =
+    null;
 
   for (
     let modelIndex = 0;
-    modelIndex < GEMINI_FALLBACK_MODELS.length;
+    modelIndex <
+    GEMINI_FALLBACK_MODELS.length;
     modelIndex++
   ) {
     const model =
-      GEMINI_FALLBACK_MODELS[modelIndex];
+      GEMINI_FALLBACK_MODELS[
+        modelIndex
+      ];
 
     try {
       console.log(
@@ -526,7 +641,8 @@ async function geminiReply(message) {
         model,
       };
     } catch (error) {
-      lastError = error;
+      lastError =
+        error;
 
       console.error(
         `GEMINI ERROR: model=${model}`,
@@ -534,8 +650,10 @@ async function geminiReply(message) {
       );
 
       await sleep(
-        isTemporaryGeminiError(error)
-          ? 300
+        isTemporaryGeminiError(
+          error
+        )
+          ? 500
           : 200
       );
     }
@@ -566,15 +684,19 @@ async function cropDoctorReply({
     );
   }
 
-  let lastError = null;
+  let lastError =
+    null;
 
   for (
     let modelIndex = 0;
-    modelIndex < GEMINI_FALLBACK_MODELS.length;
+    modelIndex <
+    GEMINI_FALLBACK_MODELS.length;
     modelIndex++
   ) {
     const model =
-      GEMINI_FALLBACK_MODELS[modelIndex];
+      GEMINI_FALLBACK_MODELS[
+        modelIndex
+      ];
 
     try {
       console.log(
@@ -601,7 +723,8 @@ async function cropDoctorReply({
         model,
       };
     } catch (error) {
-      lastError = error;
+      lastError =
+        error;
 
       console.error(
         `CROP DOCTOR ERROR: model=${model}`,
@@ -609,8 +732,10 @@ async function cropDoctorReply({
       );
 
       await sleep(
-        isTemporaryGeminiError(error)
-          ? 300
+        isTemporaryGeminiError(
+          error
+        )
+          ? 500
           : 200
       );
     }
@@ -628,78 +753,111 @@ async function cropDoctorReply({
    HEALTH
 ========================================================= */
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
+app.get(
+  "/api/health",
+  (req, res) => {
+    res.json({
+      ok: true,
 
-    ai: Boolean(GEMINI_API_KEY),
+      ai:
+        Boolean(
+          GEMINI_API_KEY
+        ),
 
-    aiMode: GEMINI_API_KEY
-      ? "gemini-with-local-fallback"
-      : "local-fallback",
+      aiMode:
+        GEMINI_API_KEY
+          ? "gemini-with-local-fallback"
+          : "local-fallback",
 
-    cropDoctor: Boolean(GEMINI_API_KEY),
+      cropDoctor:
+        Boolean(
+          GEMINI_API_KEY
+        ),
 
-    cropDoctorMode: GEMINI_API_KEY
-      ? "gemini-vision"
-      : "unavailable",
+      cropDoctorMode:
+        GEMINI_API_KEY
+          ? "gemini-vision"
+          : "unavailable",
 
-    geminiModel: GEMINI_MODEL,
+      geminiModel:
+        GEMINI_MODEL,
 
-    fallbackModels: GEMINI_FALLBACK_MODELS,
+      fallbackModels:
+        GEMINI_FALLBACK_MODELS,
 
-    mandi: Boolean(DATA_GOV_API_KEY),
+      mandi:
+        Boolean(
+          DATA_GOV_API_KEY
+        ),
 
-    message: "KisanSaathi AI backend running",
-  });
-});
+      message:
+        "KisanSaathi AI backend running",
+    });
+  }
+);
 
 /* =========================================================
    AI CHAT
 ========================================================= */
 
-app.post("/api/chat", async (req, res) => {
-  const message =
-    String(
-      req.body?.message || ""
-    ).trim();
+app.post(
+  "/api/chat",
+  async (req, res) => {
+    const message =
+      String(
+        req.body?.message ||
+          ""
+      ).trim();
 
-  if (!message) {
-    return res.status(400).json({
-      error: "सवाल खाली है।",
+    if (!message) {
+      return res.status(400).json({
+        error:
+          "सवाल खाली है।",
+      });
+    }
+
+    if (GEMINI_API_KEY) {
+      try {
+        const result =
+          await geminiReply(
+            message
+          );
+
+        return res.json({
+          reply:
+            result.reply,
+
+          mode:
+            "gemini",
+
+          model:
+            result.model,
+        });
+      } catch (error) {
+        console.error(
+          "ALL GEMINI MODELS FAILED:",
+          error?.message
+        );
+      }
+    }
+
+    const fallbackReply =
+      localKisanFallback(
+        message
+      );
+
+    return res.json({
+      reply:
+        fallbackReply,
+
+      mode:
+        "local-fallback",
+
+      model:
+        "kisansathi-local-fallback",
     });
   }
-
-  if (GEMINI_API_KEY) {
-    try {
-      const result =
-        await geminiReply(message);
-
-      return res.json({
-        reply: result.reply,
-        mode: "gemini",
-        model: result.model,
-      });
-    } catch (error) {
-      console.error(
-        "ALL GEMINI MODELS FAILED:",
-        error?.message
-      );
-    }
-  }
-
-  const fallbackReply =
-    localKisanFallback(message);
-
-  return res.json({
-    reply: fallbackReply,
-
-    mode: "local-fallback",
-
-    model:
-      "kisansathi-local-fallback",
-  });
-});
+);
 
 /* =========================================================
    CROP DOCTOR ENDPOINT
@@ -720,7 +878,8 @@ app.post(
 
       const image =
         String(
-          req.body?.image || ""
+          req.body?.image ||
+            ""
         ).trim();
 
       const mimeType =
@@ -731,17 +890,20 @@ app.post(
 
       const cropName =
         String(
-          req.body?.cropName || ""
+          req.body?.cropName ||
+            ""
         ).trim();
 
       const cropAge =
         String(
-          req.body?.cropAge || ""
+          req.body?.cropAge ||
+            ""
         ).trim();
 
       const location =
         String(
-          req.body?.location || ""
+          req.body?.location ||
+            ""
         ).trim();
 
       if (!image) {
@@ -753,7 +915,8 @@ app.post(
         });
       }
 
-      let imageBase64 = image;
+      let imageBase64 =
+        image;
 
       if (
         imageBase64.includes(
@@ -767,8 +930,10 @@ app.post(
       }
 
       imageBase64 =
-        imageBase64
-          .replace(/\s/g, "");
+        imageBase64.replace(
+          /\s/g,
+          ""
+        );
 
       if (
         imageBase64.length >
@@ -806,7 +971,10 @@ app.post(
           cropName,
           cropAge,
           location,
-          mimeType: safeMimeType,
+
+          mimeType:
+            safeMimeType,
+
           imageSize:
             imageBase64.length,
         }
@@ -902,7 +1070,8 @@ const aliases = {
   "चना": "Gram",
   "gram": "Gram",
 
-  "अरहर": "Arhar (Tur/Red Gram)",
+  "अरहर":
+    "Arhar (Tur/Red Gram)",
 
   "बाजरा":
     "Bajra (Pearl Millet/Cumbu)",
@@ -925,7 +1094,10 @@ function cleanText(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, " ");
+    .replace(
+      /\s+/g,
+      " "
+    );
 }
 
 /* =========================================================
@@ -958,10 +1130,14 @@ function textMatches(
   }
 
   const valueText =
-    normalizeSearch(value);
+    normalizeSearch(
+      value
+    );
 
   const searchText =
-    normalizeSearch(search);
+    normalizeSearch(
+      search
+    );
 
   if (!valueText) {
     return false;
@@ -1109,7 +1285,8 @@ function normalizeRecord(item) {
       item?.grade || "",
 
     arrivalDate:
-      item?.arrival_date || "",
+      item?.arrival_date ||
+      "",
 
     minPrice:
       Number(
@@ -1147,8 +1324,12 @@ function normalizeRecord(item) {
    NORMALIZE RECORDS
 ========================================================= */
 
-function normalizeRecords(records) {
-  if (!Array.isArray(records)) {
+function normalizeRecords(
+  records
+) {
+  if (
+    !Array.isArray(records)
+  ) {
     return [];
   }
 
@@ -1459,7 +1640,8 @@ app.get(
 
       const rawState =
         String(
-          req.query.state || ""
+          req.query.state ||
+            ""
         ).trim();
 
       const rawCommodity =
@@ -1471,13 +1653,15 @@ app.get(
 
       const rawMarket =
         String(
-          req.query.market || ""
+          req.query.market ||
+            ""
         ).trim();
 
       const commodity =
         aliases[
           rawCommodity.toLowerCase()
-        ] || rawCommodity;
+        ] ||
+        rawCommodity;
 
       console.log(
         "================================================"
@@ -1486,29 +1670,41 @@ app.get(
       console.log(
         "MANDI SEARCH:",
         {
-          state: rawState,
-          commodity,
-          market: rawMarket,
+          state:
+            rawState,
+
+          commodity:
+            commodity,
+
+          market:
+            rawMarket,
         }
       );
 
       const mandi =
         await searchMandi({
-          state: rawState,
-          commodity,
-          market: rawMarket,
+          state:
+            rawState,
+
+          commodity:
+            commodity,
+
+          market:
+            rawMarket,
         });
 
       mandi.sort(
         (a, b) => {
           const dateA =
             String(
-              a.arrivalDate || ""
+              a.arrivalDate ||
+                ""
             );
 
           const dateB =
             String(
-              b.arrivalDate || ""
+              b.arrivalDate ||
+                ""
             );
 
           return dateB.localeCompare(
@@ -1570,34 +1766,47 @@ app.get(
    ROOT
 ========================================================= */
 
-app.get("/", (req, res) => {
-  res.json({
-    app: "KisanSaathi AI",
+app.get(
+  "/",
+  (req, res) => {
+    res.json({
+      app:
+        "KisanSaathi AI",
 
-    status: "online",
+      status:
+        "online",
 
-    ai: Boolean(GEMINI_API_KEY),
+      ai:
+        Boolean(
+          GEMINI_API_KEY
+        ),
 
-    aiMode: GEMINI_API_KEY
-      ? "gemini-with-local-fallback"
-      : "local-fallback",
+      aiMode:
+        GEMINI_API_KEY
+          ? "gemini-with-local-fallback"
+          : "local-fallback",
 
-    cropDoctor:
-      Boolean(GEMINI_API_KEY),
+      cropDoctor:
+        Boolean(
+          GEMINI_API_KEY
+        ),
 
-    mandi:
-      Boolean(DATA_GOV_API_KEY),
+      mandi:
+        Boolean(
+          DATA_GOV_API_KEY
+        ),
 
-    geminiModel:
-      GEMINI_MODEL,
+      geminiModel:
+        GEMINI_MODEL,
 
-    fallbackModels:
-      GEMINI_FALLBACK_MODELS,
+      fallbackModels:
+        GEMINI_FALLBACK_MODELS,
 
-    mandiResource:
-      RESOURCE,
-  });
-});
+      mandiResource:
+        RESOURCE,
+    });
+  }
+);
 
 /* =========================================================
    START SERVER
