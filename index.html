@@ -1,42 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>KisanSaathi AI - Kisanon Ka AI Dost</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KisanSaathi AI</title>
 <style>
-body{margin:0;font-family:sans-serif;background:#f0fdf4;color:#14532d}
-.hero{max-width:800px;margin:0 auto;padding:15px;text-align:center}
-.hero img{width:100%;border-radius:16px;box-shadow:0 5px 20px rgba(0,0,0,0.15);margin:10px 0;display:block}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:800px;margin:15px auto;padding:10px}
-.box{background:white;padding:18px;border-radius:14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,0.07)}
-.btn{display:inline-block;background:#16a34a;color:white;padding:16px 32px;border-radius:50px;text-decoration:none;font-weight:bold;font-size:19px;margin-top:15px}
-.bottom{position:fixed;bottom:0;left:0;right:0;background:#166534;color:white;text-align:center;padding:12px;font-weight:bold;z-index:999}
-.bottom a{background:#22c55e;color:white;padding:8px 20px;border-radius:50px;text-decoration:none;margin-left:10px}
+body{margin:0;font-family:system-ui;background:#f0fdf4}
+.header{background:#fff;padding:20px;text-align:center}
+.hero{position:relative}.hero img{width:100%}.hero-text{position:absolute;bottom:0;background:#15803d;color:#fff;width:100%;padding:8px;text-align:center;font-weight:bold}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px}
+.card{background:#fff;padding:20px;border-radius:16px;text-align:center;box-shadow:0 2px 10px #0001;cursor:pointer}
+.card:active{transform:scale(0.97)}
+.section{margin:15px;background:#fff;padding:15px;border-radius:12px;display:none}
+.section.active{display:block}
+button{background:#16a34a;color:#fff;border:0;padding:12px 20px;border-radius:10px;width:100%;font-weight:bold;font-size:16px;margin-top:10px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;margin-top:8px;box-sizing:border-box}
+#chat{height:300px;overflow:auto;border:1px solid #eee;padding:10px;border-radius:10px;background:#f9fff9}
+.msg{margin:8px 0}.user{color:#15803d;font-weight:bold}.ai{background:#e8f5e9;padding:8px;border-radius:8px;margin-top:4px}
 </style>
 </head>
 <body>
-<div class="hero">
-<h1 style="margin:10px 0;">🌱 KisanSaathi AI</h1>
-<p>50,000+ Kisano ka bharosa | Fasal Rog, Mandi Bhav, Mausam</p>
-<img src="./rog-pehchan.webp" alt="KisanSaathi AI">
-<h2 style="margin-top:20px;">Kisanon Ka Sacha AI Dost</h2>
-</div>
-
+<div class="header"><h2 style="color:#15803d;margin:0">🌱 KisanSaathi AI</h2><p style="margin:5px 0">50,000+ Kisano ka bharosa</p></div>
+<div class="hero"><img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800"><div class="hero-text">AI Se Fasal Ka Rog Pehchano, 2 Second Me Ilaaj Pao</div></div>
+<h3 style="text-align:center">Kisanon Ka Sacha AI Dost</h3>
 <div class="grid">
-<div class="box">🌿<br><b>Rog Pehchan</b><br>Photo se rog ka pata</div>
-<div class="box">🌍<br><b>Mitti Jaanch</b><br>AI se salah</div>
-<div class="box">📈<br><b>Mandi Bhav</b><br>Live Mandi Rate</div>
-<div class="box">🌦️<br><b>Mausam</b><br>7 din ka mausam</div>
+<div class="card" onclick="openSec('rog')"><div>🌿</div><b>Rog Pehchan</b><br><small>Photo se rog ka pata</small></div>
+<div class="card" onclick="openSec('mitti')"><div>🌍</div><b>Mitti Jaanch</b><br><small>AI se salah</small></div>
+<div class="card" onclick="openSec('mandi')"><div>📈</div><b>Mandi Bhav</b><br><small>Live Mandi Rate</small></div>
+<div class="card" onclick="openSec('mausam')"><div>🌦️</div><b>Mausam + AI Chat</b><br><small>7 din ka mausam</small></div>
 </div>
 
-<div style="text-align:center;padding:20px 15px;">
-<p>Android ke liye | Size 31 MB | Free</p>
-<a class="btn" href="https://www.mediafire.com/file/csr534jum32qib5/_Kisansaathi_ai_20127684.apk/file" target="_blank">📥 App Download Karo</a>
-<p style="color:#666;font-size:13px;margin-top:10px;">Safe & Verified Download</p>
-</div>
+<div id="rog" class="section"><h3>🌿 Rog Pehchan</h3><input type="file" id="cropImg" accept="image/*"><textarea id="cropQ" placeholder="Samashya likho ex: patte peele ho rahe hain"></textarea><button onclick="checkCrop()">AI Se Check Karo</button><div id="cropRes"></div></div>
 
-<div style="height:80px"></div>
-<div class="bottom">🌾 KisanSaathi AI <a href="https://www.mediafire.com/file/csr534jum32qib5/_Kisansaathi_ai_20127684.apk/file" target="_blank">DOWNLOAD</a></div>
+<div id="mitti" class="section"><h3>🌍 Mitti Jaanch</h3><select id="soilType"><option>Kaali Mitti</option><option>Domatt Mitti</option><option>Retili Mitti</option><option>Lal Mitti</option></select><input id="soilLoc" placeholder="Gaon / Jila"><button onclick="soilCheck()">Salah Lo</button><div id="soilRes"></div></div>
+
+<div id="mandi" class="section"><h3>📈 Mandi Bhav</h3><input id="st" placeholder="State: Uttar Pradesh"><input id="com" placeholder="Fasal: Wheat / Dhan"><button onclick="mandi()">Bhav Dekho</button><div id="mandiRes"></div></div>
+
+<div id="mausam" class="section"><h3>💬 AI Kisan Dost - Chat</h3><div id="chat"></div><textarea id="q" placeholder="Kuch bhi pucho..."></textarea><button onclick="chat()">Bhejo</button></div>
+
+<script>
+const API="https://kisansathi-ai-q9b0.onrender.com";
+function openSec(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,600)}
+async function chat(){const m=document.getElementById('q').value;if(!m)return;const c=document.getElementById('chat');c.innerHTML+=`<div class=msg><span class=user>You:</span> ${m}</div>`;const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});const d=await r.json();c.innerHTML+=`<div class=msg><div class=ai>${d.reply||d.error}</div></div>`;c.scrollTop=9999;document.getElementById('q').value=''}
+async function mandi(){const s=document.getElementById('st').value||'Uttar Pradesh',cm=document.getElementById('com').value||'Wheat';const r=await fetch(`${API}/api/mandi?state=${s}&commodity=${cm}`);const d=await r.json();document.getElementById('mandiRes').innerHTML=d.mandi?d.mandi.slice(0,8).map(x=>`<p>🏪 ${x.market} - ${x.commodity}: <b>₹${x.modalPrice}</b></p>`).join(''):d.error}
+async function checkCrop(){const f=document.getElementById('cropImg').files[0];const q=document.getElementById('cropQ').value;let img="";if(f){img=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(f)})} const r=await fetch(API+'/api/crop-doctor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img,message:q})});const d=await r.json();document.getElementById('cropRes').innerHTML=`<div class=ai>${d.reply||d.error}</div>`}
+async function soilCheck(){const t=document.getElementById('soilType').value,l=document.getElementById('soilLoc').value;const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Meri mitti ${t} hai, location ${l} hai, isme kaunsi fasal best rahegi aur khaad kaunsi dalu?`})});const d=await r.json();document.getElementById('soilRes').innerHTML=`<div class=ai>${d.reply}</div>`}
+</script>
 </body>
 </html>
