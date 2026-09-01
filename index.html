@@ -5,45 +5,84 @@
 <title>KisanSaathi AI</title>
 <style>
 body{margin:0;font-family:system-ui;background:#f0fdf4}
-.header{background:#fff;padding:20px;text-align:center}
-.hero{position:relative}.hero img{width:100%}.hero-text{position:absolute;bottom:0;background:#15803d;color:#fff;width:100%;padding:8px;text-align:center;font-weight:bold}
+.header{background:#fff;padding:16px;text-align:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 5px #0001}
+.hero{position:relative}.hero img{width:100%;height:200px;object-fit:cover}.hero-text{position:absolute;bottom:0;background:#15803d;color:#fff;width:100%;padding:8px;text-align:center;font-weight:bold}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px}
 .card{background:#fff;padding:20px;border-radius:16px;text-align:center;box-shadow:0 2px 10px #0001;cursor:pointer}
-.card:active{transform:scale(0.97)}
-.section{margin:15px;background:#fff;padding:15px;border-radius:12px;display:none}
-.section.active{display:block}
+.card:active{transform:scale(0.95)}
+.section{margin:15px;background:#fff;padding:15px;border-radius:16px;display:none;border:2px solid #16a34a}
+.section.active{display:block;animation:pop 0.2s}
+@keyframes pop{from{transform:scale(0.9)}to{transform:scale(1)}}
 button{background:#16a34a;color:#fff;border:0;padding:12px 20px;border-radius:10px;width:100%;font-weight:bold;font-size:16px;margin-top:10px}
 input,textarea,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;margin-top:8px;box-sizing:border-box}
-#chat{height:300px;overflow:auto;border:1px solid #eee;padding:10px;border-radius:10px;background:#f9fff9}
-.msg{margin:8px 0}.user{color:#15803d;font-weight:bold}.ai{background:#e8f5e9;padding:8px;border-radius:8px;margin-top:4px}
+#chat{height:280px;overflow:auto;border:1px solid #eee;padding:10px;border-radius:10px;background:#f9fff9}
+.ai{background:#e8f5e9;padding:10px;border-radius:10px;margin-top:8px;white-space:pre-wrap;line-height:1.5}
 </style>
 </head>
 <body>
-<div class="header"><h2 style="color:#15803d;margin:0">🌱 KisanSaathi AI</h2><p style="margin:5px 0">50,000+ Kisano ka bharosa</p></div>
+<div class="header"><h2 style="color:#15803d;margin:0">🌱 KisanSaathi AI</h2><p style="margin:4px 0;font-size:14px">50,000+ Kisano ka bharosa - LIVE ✅</p></div>
 <div class="hero"><img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800"><div class="hero-text">AI Se Fasal Ka Rog Pehchano, 2 Second Me Ilaaj Pao</div></div>
 <h3 style="text-align:center">Kisanon Ka Sacha AI Dost</h3>
 <div class="grid">
-<div class="card" onclick="openSec('rog')"><div>🌿</div><b>Rog Pehchan</b><br><small>Photo se rog ka pata</small></div>
-<div class="card" onclick="openSec('mitti')"><div>🌍</div><b>Mitti Jaanch</b><br><small>AI se salah</small></div>
-<div class="card" onclick="openSec('mandi')"><div>📈</div><b>Mandi Bhav</b><br><small>Live Mandi Rate</small></div>
-<div class="card" onclick="openSec('mausam')"><div>🌦️</div><b>Mausam + AI Chat</b><br><small>7 din ka mausam</small></div>
+<div class="card" onclick="openSec('rog')"><div style="font-size:32px">🌿</div><b>Rog Pehchan</b><br><small>Photo se rog</small></div>
+<div class="card" onclick="openSec('mitti')"><div style="font-size:32px">🌍</div><b>Mitti Jaanch</b><br><small>AI salah</small></div>
+<div class="card" onclick="openSec('mandi')"><div style="font-size:32px">📈</div><b>Mandi Bhav</b><br><small>Live Rate</small></div>
+<div class="card" onclick="openSec('mausam')"><div style="font-size:32px">💬</div><b>AI Chat</b><br><small>Kisan Dost</small></div>
 </div>
 
-<div id="rog" class="section"><h3>🌿 Rog Pehchan</h3><input type="file" id="cropImg" accept="image/*"><textarea id="cropQ" placeholder="Samashya likho ex: patte peele ho rahe hain"></textarea><button onclick="checkCrop()">AI Se Check Karo</button><div id="cropRes"></div></div>
+<div id="rog" class="section"><h3>🌿 Rog Pehchan</h3><input type="file" id="cropImg" accept="image/*"><textarea id="cropQ" placeholder="Ex: Patte peele ho rahe hain"></textarea><button onclick="checkCrop()">AI Se Check Karo</button><div id="cropRes"></div><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
 
-<div id="mitti" class="section"><h3>🌍 Mitti Jaanch</h3><select id="soilType"><option>Kaali Mitti</option><option>Domatt Mitti</option><option>Retili Mitti</option><option>Lal Mitti</option></select><input id="soilLoc" placeholder="Gaon / Jila"><button onclick="soilCheck()">Salah Lo</button><div id="soilRes"></div></div>
+<div id="mitti" class="section"><h3>🌍 Mitti Jaanch</h3><select id="soilType"><option>Kaali Mitti</option><option>Domatt Mitti</option><option>Retili Mitti</option><option>Lal Mitti</option></select><input id="soilLoc" placeholder="Gaon / Jila - Ex: Muzaffarnagar"><button onclick="soilCheck()">Salah Lo</button><div id="soilRes"></div><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
 
-<div id="mandi" class="section"><h3>📈 Mandi Bhav</h3><input id="st" placeholder="State: Uttar Pradesh"><input id="com" placeholder="Fasal: Wheat / Dhan"><button onclick="mandi()">Bhav Dekho</button><div id="mandiRes"></div></div>
+<div id="mandi" class="section"><h3>📈 Live Mandi Bhav</h3><input id="st" value="Uttar Pradesh"><input id="com" placeholder="Fasal - Ex: Wheat"><button onclick="mandi()">Bhav Dekho</button><div id="mandiRes"></div><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
 
-<div id="mausam" class="section"><h3>💬 AI Kisan Dost - Chat</h3><div id="chat"></div><textarea id="q" placeholder="Kuch bhi pucho..."></textarea><button onclick="chat()">Bhejo</button></div>
+<div id="mausam" class="section"><h3>💬 AI Kisan Dost</h3><div id="chat"><div class="ai">🙏 Namaste! Main aapka KisanSaathi hu. Kheti-badi se related kuch bhi pucho.</div></div><textarea id="q" placeholder="Sawal likho..."></textarea><button onclick="chat()">Bhejo 🚀</button><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
 
 <script>
 const API="https://kisansathi-ai-q9b0.onrender.com";
-function openSec(id){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,600)}
-async function chat(){const m=document.getElementById('q').value;if(!m)return;const c=document.getElementById('chat');c.innerHTML+=`<div class=msg><span class=user>You:</span> ${m}</div>`;const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});const d=await r.json();c.innerHTML+=`<div class=msg><div class=ai>${d.reply||d.error}</div></div>`;c.scrollTop=9999;document.getElementById('q').value=''}
-async function mandi(){const s=document.getElementById('st').value||'Uttar Pradesh',cm=document.getElementById('com').value||'Wheat';const r=await fetch(`${API}/api/mandi?state=${s}&commodity=${cm}`);const d=await r.json();document.getElementById('mandiRes').innerHTML=d.mandi?d.mandi.slice(0,8).map(x=>`<p>🏪 ${x.market} - ${x.commodity}: <b>₹${x.modalPrice}</b></p>`).join(''):d.error}
-async function checkCrop(){const f=document.getElementById('cropImg').files[0];const q=document.getElementById('cropQ').value;let img="";if(f){img=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(f)})} const r=await fetch(API+'/api/crop-doctor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img,message:q})});const d=await r.json();document.getElementById('cropRes').innerHTML=`<div class=ai>${d.reply||d.error}</div>`}
-async function soilCheck(){const t=document.getElementById('soilType').value,l=document.getElementById('soilLoc').value;const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Meri mitti ${t} hai, location ${l} hai, isme kaunsi fasal best rahegi aur khaad kaunsi dalu?`})});const d=await r.json();document.getElementById('soilRes').innerHTML=`<div class=ai>${d.reply}</div>`}
+function openSec(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  el.classList.add('active');
+  setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},100);
+}
+function closeAll(){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));window.scrollTo({top:0,behavior:'smooth'})}
+async function chat(){
+  const m=document.getElementById('q').value.trim();if(!m)return;
+  const c=document.getElementById('chat');c.innerHTML+=`<p><b style="color:#15803d">You:</b> ${m}</p>`;document.getElementById('q').value='';
+  c.innerHTML+=`<p id="load">AI soch raha hai...</p>`;c.scrollTop=c.scrollHeight;
+  try{
+    const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});
+    const d=await r.json();document.getElementById('load').remove();
+    c.innerHTML+=`<div class="ai">${d.reply||d.error}</div>`;
+  }catch(e){document.getElementById('load').innerText='Backend jag raha hai, 20 sec me fir try karo';}
+  c.scrollTop=c.scrollHeight;
+}
+async function mandi(){
+  const s=document.getElementById('st').value,cm=document.getElementById('com').value||'Wheat';
+  document.getElementById('mandiRes').innerHTML='⏳ Loading...';
+  try{
+    const r=await fetch(`${API}/api/mandi?state=${s}&commodity=${cm}`);const d=await r.json();
+    document.getElementById('mandiRes').innerHTML=d.mandi?d.mandi.slice(0,10).map(x=>`🏪 <b>${x.market}</b> - ${x.commodity}: <b>₹${x.modalPrice}</b> <small>(${x.date})</small>`).join('<br><br>'):d.error;
+  }catch(e){document.getElementById('mandiRes').innerHTML='Error, fir try karo';}
+}
+async function checkCrop(){
+  const f=document.getElementById('cropImg').files[0];const q=document.getElementById('cropQ').value;let img="";
+  if(f){img=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(f)})}
+  document.getElementById('cropRes').innerHTML='⏳ AI check kar raha hai...';
+  try{
+    const r=await fetch(API+'/api/crop-doctor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img,message:q})});
+    const d=await r.json();document.getElementById('cropRes').innerHTML=`<div class="ai">${d.reply||d.error}</div>`;
+  }catch(e){document.getElementById('cropRes').innerHTML='Error';}
+}
+async function soilCheck(){
+  const t=document.getElementById('soilType').value,l=document.getElementById('soilLoc').value;
+  document.getElementById('soilRes').innerHTML='⏳ Salah le raha hu...';
+  try{
+    const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Meri mitti ${t} hai, location ${l} hai, isme kaunsi fasal best rahegi aur khaad kaunsi dalu? Hindi me simple jawab do`})});
+    const d=await r.json();document.getElementById('soilRes').innerHTML=`<div class="ai">${d.reply}</div>`;
+  }catch(e){document.getElementById('soilRes').innerHTML='Error';}
+}
 </script>
 </body>
 </html>
