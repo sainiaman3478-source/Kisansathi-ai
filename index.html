@@ -1,88 +1,32 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KisanSaathi AI</title>
-<style>
-body{margin:0;font-family:system-ui;background:#f0fdf4}
-.header{background:#fff;padding:16px;text-align:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 5px #0001}
-.hero{position:relative}.hero img{width:100%;height:200px;object-fit:cover}.hero-text{position:absolute;bottom:0;background:#15803d;color:#fff;width:100%;padding:8px;text-align:center;font-weight:bold}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:15px}
-.card{background:#fff;padding:20px;border-radius:16px;text-align:center;box-shadow:0 2px 10px #0001;cursor:pointer}
-.card:active{transform:scale(0.95)}
-.section{margin:15px;background:#fff;padding:15px;border-radius:16px;display:none;border:2px solid #16a34a}
-.section.active{display:block;animation:pop 0.2s}
-@keyframes pop{from{transform:scale(0.9)}to{transform:scale(1)}}
-button{background:#16a34a;color:#fff;border:0;padding:12px 20px;border-radius:10px;width:100%;font-weight:bold;font-size:16px;margin-top:10px}
-input,textarea,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:10px;margin-top:8px;box-sizing:border-box}
-#chat{height:280px;overflow:auto;border:1px solid #eee;padding:10px;border-radius:10px;background:#f9fff9}
-.ai{background:#e8f5e9;padding:10px;border-radius:10px;margin-top:8px;white-space:pre-wrap;line-height:1.5}
-</style>
-</head>
-<body>
-<div class="header"><h2 style="color:#15803d;margin:0">🌱 KisanSaathi AI</h2><p style="margin:4px 0;font-size:14px">50,000+ Kisano ka bharosa - LIVE ✅</p></div>
-<div class="hero"><img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800"><div class="hero-text">AI Se Fasal Ka Rog Pehchano, 2 Second Me Ilaaj Pao</div></div>
-<h3 style="text-align:center">Kisanon Ka Sacha AI Dost</h3>
-<div class="grid">
-<div class="card" onclick="openSec('rog')"><div style="font-size:32px">🌿</div><b>Rog Pehchan</b><br><small>Photo se rog</small></div>
-<div class="card" onclick="openSec('mitti')"><div style="font-size:32px">🌍</div><b>Mitti Jaanch</b><br><small>AI salah</small></div>
-<div class="card" onclick="openSec('mandi')"><div style="font-size:32px">📈</div><b>Mandi Bhav</b><br><small>Live Rate</small></div>
-<div class="card" onclick="openSec('mausam')"><div style="font-size:32px">💬</div><b>AI Chat</b><br><small>Kisan Dost</small></div>
-</div>
+<input type="text" id="mandiSearch" placeholder="Sabzi khojo - jaise Tamatar, Pyaz, Aalu..." onkeyup="filterMandi()" style="width:90%;padding:10px;margin:10px;">
 
-<div id="rog" class="section"><h3>🌿 Rog Pehchan</h3><input type="file" id="cropImg" accept="image/*"><textarea id="cropQ" placeholder="Ex: Patte peele ho rahe hain"></textarea><button onclick="checkCrop()">AI Se Check Karo</button><div id="cropRes"></div><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
-
-<div id="mitti" class="section"><h3>🌍 Mitti Jaanch</h3><select id="soilType"><option>Kaali Mitti</option><option>Domatt Mitti</option><option>Retili Mitti</option><option>Lal Mitti</option></select><input id="soilLoc" placeholder="Gaon / Jila - Ex: Muzaffarnagar"><button onclick="soilCheck()">Salah Lo</button><div id="soilRes"></div><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
-
-<div id="mandi" class="section"><h3>📈 Live Mandi Bhav</h3><input id="st" value="Uttar Pradesh"><input id="com" placeholder="Fasal - Ex: Wheat"><button onclick="mandi()">Bhav Dekho</button><div id="mandiRes"></div><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
-
-<div id="mausam" class="section"><h3>💬 AI Kisan Dost</h3><div id="chat"><div class="ai">🙏 Namaste! Main aapka KisanSaathi hu. Kheti-badi se related kuch bhi pucho.</div></div><textarea id="q" placeholder="Sawal likho..."></textarea><button onclick="chat()">Bhejo 🚀</button><button onclick="closeAll()" style="background:#555">⬅️ Band Karo</button></div>
+<div id="mandiResult"></div>
 
 <script>
-const API="https://kisansathi-ai-q9b0.onrender.com";
-function openSec(id){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById(id);
-  el.classList.add('active');
-  setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},100);
+let allMandi = [];
+async function checkMandi(){
+  document.getElementById('mandiResult').innerHTML = "Bharat ki mandiyon se live bhav la raha hu...";
+  const res = await fetch('https://kisansathi-ai-q9b0.onrender.com/api/mandi');
+  const data = await res.json();
+  allMandi = data.mandis;
+  showMandi(allMandi);
 }
-function closeAll(){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));window.scrollTo({top:0,behavior:'smooth'})}
-async function chat(){
-  const m=document.getElementById('q').value.trim();if(!m)return;
-  const c=document.getElementById('chat');c.innerHTML+=`<p><b style="color:#15803d">You:</b> ${m}</p>`;document.getElementById('q').value='';
-  c.innerHTML+=`<p id="load">AI soch raha hai...</p>`;c.scrollTop=c.scrollHeight;
-  try{
-    const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});
-    const d=await r.json();document.getElementById('load').remove();
-    c.innerHTML+=`<div class="ai">${d.reply||d.error}</div>`;
-  }catch(e){document.getElementById('load').innerText='Backend jag raha hai, 20 sec me fir try karo';}
-  c.scrollTop=c.scrollHeight;
+function showMandi(list){
+  let html = "";
+  list.forEach(m=>{
+    let star = m.isPramukh ? "⭐ PRAMUKH MANDI" : "";
+    html += `<div style="border:1px solid #ccc;padding:10px;margin:8px;border-radius:8px;background:${m.isPramukh?'#fff8e1':'#fff'}">
+      <b>${m.mandi} ${star}</b> - ${m.state||''}<br>
+      🥦 <b>${m.fasal}</b> - ${m.bhav}<br>
+      <small>${m.full} | ${m.date||''}</small>
+    </div>`;
+  });
+  document.getElementById('mandiResult').innerHTML = html;
 }
-async function mandi(){
-  const s=document.getElementById('st').value,cm=document.getElementById('com').value||'Wheat';
-  document.getElementById('mandiRes').innerHTML='⏳ Loading...';
-  try{
-    const r=await fetch(`${API}/api/mandi?state=${s}&commodity=${cm}`);const d=await r.json();
-    document.getElementById('mandiRes').innerHTML=d.mandi?d.mandi.slice(0,10).map(x=>`🏪 <b>${x.market}</b> - ${x.commodity}: <b>₹${x.modalPrice}</b> <small>(${x.date})</small>`).join('<br><br>'):d.error;
-  }catch(e){document.getElementById('mandiRes').innerHTML='Error, fir try karo';}
+function filterMandi(){
+  let q = document.getElementById('mandiSearch').value.toLowerCase();
+  let filtered = allMandi.filter(m => m.fasal.toLowerCase().includes(q) || m.mandi.toLowerCase().includes(q));
+  showMandi(filtered);
 }
-async function checkCrop(){
-  const f=document.getElementById('cropImg').files[0];const q=document.getElementById('cropQ').value;let img="";
-  if(f){img=await new Promise(res=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.readAsDataURL(f)})}
-  document.getElementById('cropRes').innerHTML='⏳ AI check kar raha hai...';
-  try{
-    const r=await fetch(API+'/api/crop-doctor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:img,message:q})});
-    const d=await r.json();document.getElementById('cropRes').innerHTML=`<div class="ai">${d.reply||d.error}</div>`;
-  }catch(e){document.getElementById('cropRes').innerHTML='Error';}
-}
-async function soilCheck(){
-  const t=document.getElementById('soilType').value,l=document.getElementById('soilLoc').value;
-  document.getElementById('soilRes').innerHTML='⏳ Salah le raha hu...';
-  try{
-    const r=await fetch(API+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:`Meri mitti ${t} hai, location ${l} hai, isme kaunsi fasal best rahegi aur khaad kaunsi dalu? Hindi me simple jawab do`})});
-    const d=await r.json();document.getElementById('soilRes').innerHTML=`<div class="ai">${d.reply}</div>`;
-  }catch(e){document.getElementById('soilRes').innerHTML='Error';}
-}
+checkMandi(); // page khulte hi load
 </script>
-</body>
-</html>
