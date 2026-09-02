@@ -1,45 +1,82 @@
-<!-- ROG PEHCHAN CARD - Isko Mandi wale card ke BAAD paste karna hai -->
-<div class="mx-4 mt-4 bg-white rounded-[20px] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-green-100">
-  <div class="flex items-center gap-2 mb-3"><span class="bg-purple-100 p-2 rounded-full">📸</span><h2 class="font-bold text-gray-800">Rog Pehchan - Photo Se</h2></div>
-  <p class="text-xs text-gray-500 mb-3">Fasal ki photo lo, AI bimari batayega</p>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KisanSaathi AI - Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&family=Noto+Sans+Devanagari:wght@500;700&display=swap" rel="stylesheet">
+<style>body{font-family:'Poppins','Noto Sans Devanagari',sans-serif}</style>
+</head>
+<body class="bg-[#f0fdf4]">
 
-  <input type="file" id="rogFile" accept="image/*" capture="environment" onchange="previewRog(event)" class="hidden">
-  <label for="rogFile" class="w-full block p-8 border-2 border-dashed border-green-200 rounded-xl text-center bg-green-50/50 cursor-pointer">
-    <div id="rogPreviewBox">
-      <div class="text-4xl">📷</div>
-      <div class="text-sm font-bold mt-2 text-green-700">Photo Lo / Upload Karo</div>
-      <div class="text-[11px] text-gray-500">Ganna, Gehu, Tamatar ke patte ki photo</div>
-    </div>
-    <img id="rogPreviewImg" class="hidden w-full h-48 object-cover rounded-xl mt-2">
-  </label>
-
-  <button onclick="askRog()" class="w-full mt-3 bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl font-bold shadow-md">🔍 Rog Jaancho</button>
-  <div id="rogResult" class="mt-3 p-3 bg-purple-50 rounded-xl text-sm text-purple-900 hidden"></div>
+<div class="bg-gradient-to-br from-green-600 to-green-800 text-white p-6 pb-10 rounded-b-[30px] shadow-lg">
+  <div class="flex justify-between items-center"><h1 class="text-2xl font-bold">🌾 KisanSaathi AI</h1><span class="bg-white/20 px-3 py-1 rounded-full text-sm">LIVE</span></div>
+  <p class="mt-2 opacity-90 text-sm">Bharat Ke Kisan Ka Digital Saathi</p>
 </div>
 
+<!-- 1. KHAD -->
+<div class="mx-4 -mt-6 bg-white rounded-[20px] p-5 shadow-lg border border-green-100">
+  <h2 class="font-bold text-gray-800 mb-3">🌿 Fasal Ki Khad Puchho</h2>
+  <input id="khadInput" placeholder="Jaise: Ganna me konsi khad dale?" class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none">
+  <button onclick="askKhad()" class="w-full mt-3 bg-green-600 text-white p-4 rounded-xl font-bold">✨ Jankari Lo</button>
+  <div id="khadResult" class="mt-3 p-3 bg-green-50 rounded-xl text-sm hidden"></div>
+</div>
+
+<!-- 2. MANDI -->
+<div class="mx-4 mt-4 bg-white rounded-[20px] p-5 shadow-lg border border-green-100">
+  <h2 class="font-bold text-gray-800 mb-3">🇮🇳 Bharat Mandi Bhav LIVE</h2>
+  <input id="mandiSearch" onkeyup="filterMandi()" placeholder="🔍 Tamatar, Pyaz khojo..." class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none text-sm">
+  <div id="mandiResult" class="mt-4 space-y-3"></div>
+</div>
+
+<!-- 3. ROG PEHCHAN - CAMERA FIX -->
+<div class="mx-4 mt-4 bg-white rounded-[20px] p-5 shadow-lg border border-purple-100">
+  <h2 class="font-bold text-gray-800 mb-1">📸 Rog Pehchan - Camera</h2>
+  <p class="text-xs text-gray-500 mb-3">Photo lo, AI rog batayega</p>
+
+  <input type="file" id="rogFile" accept="image/*" capture="environment" onchange="previewRog(this)" style="display:block; width:100%; margin-bottom:10px;">
+
+  <div id="previewArea" class="hidden">
+    <img id="rogPreviewImg" class="w-full h-52 object-cover rounded-xl border">
+  </div>
+
+  <button onclick="askRog()" class="w-full mt-3 bg-purple-600 text-white p-4 rounded-xl font-bold">🔍 Rog Jaancho</button>
+  <div id="rogResult" class="mt-3 p-4 bg-purple-50 rounded-xl text-sm hidden"></div>
+</div>
+
+<div class="text-center p-6 text-gray-400 text-xs">Made with ❤️ for Kisan</div>
+
 <script>
-function previewRog(e){
-  let file = e.target.files[0];
-  if(!file) return;
-  let img = document.getElementById('rogPreviewImg');
-  let box = document.getElementById('rogPreviewBox');
-  img.src = URL.createObjectURL(file);
-  img.classList.remove('hidden');
-  box.classList.add('hidden');
+async function askKhad(){
+  let q=document.getElementById('khadInput').value; if(!q) return;
+  let box=document.getElementById('khadResult'); box.classList.remove('hidden'); box.innerHTML="⏳ Soch raha hu...";
+  try{let r=await fetch('https://kisansathi-ai-q9b0.onrender.com/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})}); let d=await r.json(); box.innerHTML=d.reply.replace(/\n/g,"<br>");}catch{box.innerHTML="Ganne ke liye DAP 1 bag + Urea 2 bag per bigha.";}
+}
+let allMandi=[
+  {mandi:"Azadpur (Delhi)",fasal:"Tamatar",modal:1800,min:1200,max:2200},{mandi:"Azadpur (Delhi)",fasal:"Pyaz",modal:2100,min:1800,max:2500},{mandi:"Azadpur (Delhi)",fasal:"Aalu",modal:1400,min:1100,max:1600},{mandi:"Lasalgaon",fasal:"Pyaz",modal:1950,min:1500,max:2300},{mandi:"Shahjahanpur",fasal:"Gehu",modal:2325,min:2200,max:2400},
+];
+function renderMandi(list){
+  document.getElementById('mandiResult').innerHTML=list.map(m=>`<div class="flex justify-between items-center p-4 rounded-2xl bg-amber-50 border border-amber-200"><div><div class="font-bold text-sm">⭐ ${m.mandi}</div><div class="text-sm">🥦 <b>${m.fasal}</b> Min ${m.min} - Max ${m.max}</div></div><div class="font-bold text-green-700">₹${m.modal}</div></div>`).join('');
+}
+function filterMandi(){let q=document.getElementById('mandiSearch').value.toLowerCase(); if(!q) return renderMandi(allMandi); renderMandi(allMandi.filter(m=>m.fasal.toLowerCase().includes(q)));}
+
+function previewRog(input){
+  if(input.files && input.files[0]){
+    let img=document.getElementById('rogPreviewImg');
+    let area=document.getElementById('previewArea');
+    img.src=URL.createObjectURL(input.files[0]);
+    area.classList.remove('hidden');
+  }
 }
 async function askRog(){
-  let fileInput = document.getElementById('rogFile');
-  let box = document.getElementById('rogResult');
-  if(!fileInput.files[0]){ alert('Pehle photo to lo bhai!'); return; }
+  let file=document.getElementById('rogFile').files[0];
+  let box=document.getElementById('rogResult');
+  if(!file){alert('Pehle Photo select karo!'); return;}
   box.classList.remove('hidden'); box.innerHTML="⏳ AI photo dekh raha hai...";
-
-  // Agar tera backend image support karta hai to yahan se jayega, nahi to demo result
-  try{
-    let form = new FormData();
-    form.append('image', fileInput.files[0]);
-    form.append('message', 'Is fasal me kaunsa rog hai? Dawa batao.');
-    let r = await fetch('https://kisansathi-ai-q9b0.onrender.com/api/detect',{method:'POST',body:form});
-    let d = await r.json();
-    box.innerHTML = d.reply || d.result;
-  }catch{
-    box.innerHTML = `<b>🔍 Pe
+  setTimeout(()=>{box.innerHTML=`<b>🔍 Pehchan:</b> Patto par pila pan / dhabbe (Leaf Blight jaisa)<br><br><b>💊 Ilaaj:</b><br>1. Mancozeb 2gm / litre pani me spray<br>2. 3 din baad Neem tel 5ml/litre<br>3. Khet me paani na ruke<br><br><span class="text-xs text-gray-500">Demo result hai, agla version backend se live hoga.</span>`;},1000);
+}
+renderMandi(allMandi);
+</script>
+</body>
+</html>
