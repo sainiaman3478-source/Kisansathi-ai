@@ -14,7 +14,7 @@ async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY Render Environment Variables mein nahi mili.");
 
-  const model = "gemini-3.6-flash";
+  const model = "gemini-1.5-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
   const controller = new AbortController();
