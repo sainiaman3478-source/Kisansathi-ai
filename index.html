@@ -3,18 +3,147 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KisanSaathi AI - Pro</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>KisanSaathi AI - Mirganj</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans Devanagari',sans-serif}
+body{background:#f0fdf4;padding-bottom:90px}
+.header{background:#15803d;color:white;padding:15px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.header h1{font-size:22px}
+.weather-card{background:#dcfce7;margin:15px;padding:15px;border-radius:15px;display:flex;align-items:center;gap:15px}
+.weather-card .temp{font-size:36px;font-weight:700;color:#14532d}
+.location-card{background:white;margin:0 15px;padding:12px 15px;border-radius:12px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px #0001}
+.title{margin:18px 15px 10px;font-size:20px;font-weight:700;color:#14532d}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0 15px}
+.card{background:#e7f5e9;padding:15px 5px;border-radius:14px;text-align:center;cursor:pointer;border:2px solid transparent}
+.card:active{border-color:#15803d;transform:scale(0.97)}
+.card .icon{font-size:32px}
+.card h3{font-size:14px;margin-top:6px;color:#14532d}
+.card p{font-size:11px;color:#555}
+.chat-box{background:white;margin:15px;border-radius:14px;padding:12px;box-shadow:0 1px 4px #0001}
+.chat-box input{width:100%;padding:12px;border-radius:10px;border:1px solid #bbf7d0;outline:none;font-size:15px}
+.chat-box button{background:#15803d;color:white;border:none;padding:10px 18px;border-radius:10px;margin-top:8px;width:100%;font-size:16px;font-weight:700}
+#aiReply{margin-top:10px;background:#f0fdf4;padding:10px;border-radius:10px;font-size:14px;white-space:pre-wrap;display:none}
+.mandi-list{margin:0 15px;display:flex;flex-direction:column;gap:10px}
+.mandi-item{background:white;padding:12px 15px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px #0001}
+.mandi-item .left{display:flex;gap:10px;align-items:center}
+.price{font-weight:700;color:#15803d;font-size:18px;text-align:right}
+.price span{font-size:12px;display:block;font-weight:500}
+.nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;display:flex;justify-content:space-around;padding:8px 0}
+.nav div{text-align:center;font-size:12px;color:#555;cursor:pointer}
+.nav .active{color:#15803d;font-weight:700}
+.hidden{display:none}
+#cameraInput{display:none}
+.result-box{background:#15803d;color:white;padding:15px;border-radius:15px;margin-top:12px}
+</style>
 </head>
-<body class="bg-[#f0fdf4]">
-<div class="bg-gradient-to-br from-green-600 to-green-800 text-white p-6 pb-10 rounded-b-[30px]"><h1 class="text-2xl font-bold">🌾 KisanSaathi AI</h1><span class="bg-white/20 px-3 py-1 rounded-full text-sm">LIVE - REAL AI</span></div>
-<div class="mx-4 -mt-6 bg-white rounded-[20px] p-5 shadow-lg"><h2 class="font-bold">🌿 Fasal Ki Khad Puchho</h2><input id="khadInput" placeholder="Ganna me konsi khad dale?" class="w-full p-4 bg-gray-50 rounded-xl"><button onclick="askKhad()" class="w-full mt-3 bg-green-600 text-white p-4 rounded-xl font-bold">✨ Jankari Lo</button><div id="khadResult" class="mt-3 p-3 bg-green-50 rounded-xl text-sm hidden"></div></div>
-<div class="mx-4 mt-4 bg-white rounded-[20px] p-5 shadow-lg"><h2 class="font-bold">📸 Rog Pehchan - Camera (REAL AI)</h2><input type="file" id="rogFile" accept="image/*" capture="environment" onchange="previewRog(this)" style="width:100%; margin:10px 0;"><div id="previewArea" class="hidden"><img id="rogPreviewImg" class="w-full h-52 object-cover rounded-xl"></div><button onclick="askRog()" id="rogBtn" class="w-full mt-3 bg-purple-600 text-white p-4 rounded-xl font-bold">🔍 Rog Jaancho - Asli AI</button><div id="rogResult" class="mt-3 p-4 bg-purple-50 rounded-xl text-sm hidden"></div></div>
+<body>
+
+<div class="header">
+<span style="font-size:24px">🌿</span><h1>KisanSaathi AI</h1>
+</div>
+
+<!-- HOME -->
+<div id="homePage">
+<div class="weather-card">
+<div style="font-size:40px">⛅</div>
+<div><div class="temp" id="temp">28°C</div><div style="font-size:14px">आंशिक रूप से बादल</div><div style="font-size:11px">आज • अधिकतम 32° • न्यूनतम 22°</div></div>
+</div>
+
+<div class="location-card">
+<span style="font-size:22px">📍</span>
+<div><b>Mirganj, UP</b><div style="font-size:11px;color:#666" id="weatherText">Updated: आज 8:20 AM • Live</div></div>
+</div>
+
+<div class="title">त्वरित सेवाएं</div>
+<div class="grid">
+<div class="card" onclick="showMandi()"><div class="icon">🌱</div><h3>मंडी भाव</h3><p>आज के भाव देखें</p></div>
+<div class="card" onclick="openCamera()"><div class="icon">🍃</div><h3>रोग पहचान</h3><p>फसल रोग जांचें</p></div>
+<div class="card"><div class="icon">⛅</div><h3>मौसम</h3><p>7 दिन का पूर्वानुमान</p></div>
+</div>
+
+<div class="chat-box">
+<h3 style="margin-bottom:8px">🌿 फसल सलाह - AI से पूछें</h3>
+<input id="qInput" placeholder="उदा: गन्ना में कौन सी खाद डालें?">
+<button onclick="askAI()">जानकारी लो</button>
+<div id="aiReply"></div>
+</div>
+</div>
+
+<!-- MANDI PAGE -->
+<div id="mandiPage" class="hidden">
+<div class="title">मंडी भाव LIVE • Mirganj मंडी</div>
+<input placeholder="फसल खोजें..." style="margin:0 15px 12px;width:calc(100% - 30px);padding:10px;border-radius:10px;border:1px solid #ddd">
+<div class="mandi-list" id="mandiList">Loading...</div>
+</div>
+
+<!-- CAMERA PAGE -->
+<div id="cameraPage" class="hidden">
+<div class="title">रोग पहचान</div>
+<div style="margin:0 15px">
+<button onclick="openCamera()" style="background:#15803d;color:white;border:none;padding:14px;width:100%;border-radius:12px;font-size:16px;font-weight:700">📸 फोटो खींचें / गैलरी से चुनें</button>
+<input type="file" id="cameraInput" accept="image/*" onchange="uploadImage(this)">
+<div id="preview" style="margin-top:12px"></div>
+<div id="diseaseResult"></div>
+</div>
+</div>
+
+<div class="nav">
+<div class="active" onclick="showHome()"><div style="font-size:20px">🏠</div>होम</div>
+<div onclick="openCamera()"><div style="font-size:20px">📷</div>स्कैन</div>
+<div onclick="showMandi()"><div style="font-size:20px">🏪</div>मंडी</div>
+<div><div style="font-size:20px">👤</div>प्रोफाइल</div>
+</div>
+
 <script>
-const BACKEND_URL='https://kisansathi-ai-q9b0.onrender.com';
-async function askKhad(){let q=document.getElementById('khadInput').value;if(!q)return;let box=document.getElementById('khadResult');box.classList.remove('hidden');box.innerHTML="⏳ Soch raha hu...";try{let r=await fetch(`${BACKEND_URL}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});let d=await r.json();box.innerHTML=d.reply.replace(/\n/g,"<br>");}catch(e){box.innerHTML="20 sec baad try karo, server jag raha hai";}}
-function previewRog(input){if(input.files&&input.files[0]){document.getElementById('rogPreviewImg').src=URL.createObjectURL(input.files[0]);document.getElementById('previewArea').classList.remove('hidden');}}
-async function askRog(){let file=document.getElementById('rogFile').files[0];let box=document.getElementById('rogResult');let btn=document.getElementById('rogBtn');if(!file){alert('Photo select karo');return;}box.classList.remove('hidden');box.innerHTML="⏳ AI photo dekh raha hai... (30 sec lag sakta hai)";btn.disabled=true;try{let fd=new FormData();fd.append('image',file);let r=await fetch(`${BACKEND_URL}/api/detect`,{method:'POST',body:fd});let d=await r.json();box.innerHTML="<b>🤖 Gemini Report:</b><br><br>"+d.result.replace(/\n/g,"<br>");}catch(e){box.innerHTML="Error: "+e.message+" - Dobara try karo";}finally{btn.disabled=false;}}
+const BACKEND = "https://kisansathi-backend.onrender.com";
+
+function showHome(){document.getElementById('homePage').classList.remove('hidden');document.getElementById('mandiPage').classList.add('hidden');document.getElementById('cameraPage').classList.add('hidden');}
+function showMandi(){document.getElementById('homePage').classList.add('hidden');document.getElementById('mandiPage').classList.remove('hidden');document.getElementById('cameraPage').classList.add('hidden');loadMandi();}
+function openCamera(){document.getElementById('homePage').classList.add('hidden');document.getElementById('mandiPage').classList.add('hidden');document.getElementById('cameraPage').classList.remove('hidden');document.getElementById('cameraInput').click();}
+
+async function askAI(){
+  const q = document.getElementById('qInput').value;
+  if(!q) return alert("Sawal likho");
+  const box = document.getElementById('aiReply');
+  box.style.display='block'; box.innerText='AI soch raha hai...';
+  try{
+    const res = await fetch(BACKEND+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q})});
+    const data = await res.json();
+    box.innerText = data.reply;
+  }catch(e){box.innerText='Error: Backend sleep me hai, 1 min baad try karo';}
+}
+
+async function loadMandi(){
+  const list = document.getElementById('mandiList');
+  try{
+    const res = await fetch(BACKEND+'/api/mandi');
+    const data = await res.json();
+    list.innerHTML = data.map(i=>`
+      <div class="mandi-item">
+        <div class="left"><div style="font-size:28px">${i.icon}</div><div><b>${i.name}</b><div style="font-size:11px">क्वालिटी: ${i.quality}</div></div></div>
+        <div class="price">${i.price}<span>${i.trend} कल से</span></div>
+      </div>
+    `).join('');
+  }catch{list.innerHTML='Mandi load nahi hui';}
+}
+
+async function uploadImage(input){
+  const file = input.files[0]; if(!file) return;
+  const preview = document.getElementById('preview');
+  preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:100%;border-radius:12px">`;
+  const resultDiv = document.getElementById('diseaseResult');
+  resultDiv.innerHTML = `<div class="result-box">AI जांच कर रहा है... 10 sec</div>`;
+  const fd = new FormData(); fd.append('image', file);
+  try{
+    const res = await fetch(BACKEND+'/api/detect',{method:'POST',body:fd});
+    const data = await res.json();
+    resultDiv.innerHTML = `<div class="result-box"><b>AI विश्लेषण परिणाम</b><br><br>${data.result.replace(/\n/g,'<br>')}</div>`;
+  }catch(e){resultDiv.innerHTML=`Error: ${e.message}`;}
+}
+
+// weather load
+fetch(BACKEND+'/api/weather').then(r=>r.json()).then(d=>{document.getElementById('weatherText').innerText=d.weather});
 </script>
 </body>
 </html>
