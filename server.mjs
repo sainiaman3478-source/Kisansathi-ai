@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const app = express();
@@ -10,9 +10,8 @@ const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '../dist')));
 
-// --- YAHI TERA DIYA HUA FINAL FUNCTION ---
+// TERA WALA FINAL GEMINI FUNCTION
 async function callGemini(prompt, imageBase64 = null) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("KEY missing in Render Env");
@@ -35,7 +34,6 @@ async function callGemini(prompt, imageBase64 = null) {
   }
   throw new Error(lastError);
 }
-// --- KHATAM ---
 
 app.post('/api/chat', async (req, res) => {
   try {
@@ -49,9 +47,22 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-app.get('*', (req,res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
-});
+// DIST ka crash fix
+const possiblePaths = [
+  path.join(__dirname, '../dist'),
+  path.join(__dirname, '../frontend/dist'),
+  path.join(__dirname, './dist'),
+  path.join(__dirname, '../../dist')
+];
+let distPath = possiblePaths.find(p => fs.existsSync(path.join(p, 'index.html')));
+if(distPath) {
+  app.use(express.static(distPath));
+  app.get('*', (req,res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req,res) => res.json({ status: "API Live", dist: "not found but API working" }));
+}
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Live on ${PORT}`));
