@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// TERA WALA FINAL GEMINI FUNCTION
+// 100% WORKING GEMINI FUNCTION - v1
 async function callGemini(prompt, imageBase64 = null) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("KEY missing in Render Env");
@@ -22,15 +22,24 @@ async function callGemini(prompt, imageBase64 = null) {
   }
   const body = JSON.stringify({ contents: [{ parts }] });
 
-  const models = ["gemini-2.0-flash", "gemini-1.5-flash-latest", "gemini-1.5-flash"];
+  const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"];
   let lastError = "";
+
   for (const m of models) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-    const data = await res.json();
-    if (data.candidates) return data.candidates[0].content.parts[0].text;
-    lastError = JSON.stringify(data).slice(0,500);
-    console.log(`Model ${m} failed:`, lastError);
+    // yahan v1 kar diya - v1beta fail ho raha tha
+    const url = `https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${key}`;
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      const data = await res.json();
+      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      }
+      lastError = JSON.stringify(data).slice(0,1000);
+      console.log(`Model ${m} failed:`, lastError);
+    } catch (err) {
+      lastError = err.message;
+      console.log(`Model ${m} error:`, lastError);
+    }
   }
   throw new Error(lastError);
 }
@@ -38,7 +47,7 @@ async function callGemini(prompt, imageBase64 = null) {
 app.post('/api/chat', async (req, res) => {
   try {
     const { message, image } = req.body;
-    const prompt = `Tu KisanSathi AI hai. Is kisan sawal ka jawab de: ${message}`;
+    const prompt = `Tu KisanSathi AI hai, ek digital kisan dost. Hindi me chhota aur sahi jawab de. Sawal: ${message}`;
     const reply = await callGemini(prompt, image);
     res.json({ reply });
   } catch (e) {
@@ -58,6 +67,7 @@ let distPath = possiblePaths.find(p => fs.existsSync(path.join(p, 'index.html'))
 if(distPath) {
   app.use(express.static(distPath));
   app.get('*', (req,res) => {
+    if (req.path.startsWith('/api')) return res.status(404).json({error: 'API not found'});
     res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
