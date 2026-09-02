@@ -14,26 +14,42 @@ async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY Render Environment Variables mein nahi mili.");
 
-  // Sahi model - 2.0 flash AQ key pe chalta hai
   const model = "gemini-3.6-flash";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
-  const body = {
-    contents: [{ parts: [{ text: `Tum ek expert AI Kisan assistant ho. Bharat ke kisanon ki madad karo. Hindi mein simple aur useful jawab do.\n\nKisan ka sawal: ${prompt}` }] }]
-  };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: `Tum ek expert AI Kisan assistant ho. Bharat ke kisanon ki madad karo. Hindi mein simple aur useful jawab do.\n\nKisan ka sawal: ${prompt}` }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+      }),
+      signal: controller.signal
+    });
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || JSON.stringify(data));
-  
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (text) return text;
-  throw new Error("Gemini se koi jawab nahi mila: " + JSON.stringify(data));
+    clearTimeout(timeoutId);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Gemini API Error Full:", JSON.stringify(data));
+      throw new Error(data.error?.message || "Gemini API Error");
+    }
+    
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (text) return text;
+    throw new Error("Gemini se khali jawab aaya");
+
+  } catch (e) {
+    clearTimeout(timeoutId);
+    if (e.name === 'AbortError') {
+      throw new Error("AI server thoda slow hai, 30 sec baad fir se try karo");
+    }
+    throw e;
+  }
 }
 
 app.post("/api/chat", async (req, res) => {
