@@ -1,0 +1,228 @@
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#f4f7f1;
+  color:#17251a;
+  font-family:system-ui,-apple-system,"Noto Sans Devanagari",sans-serif
+}
+.app{max-width:760px;margin:auto;min-height:100vh;padding-bottom:84px}
+header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:#fff;
+  padding:14px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid #e2e8df
+}
+.brand{font-size:20px;font-weight:800}
+header small{color:#607060}
+.avatar,.bigavatar{background:#e5f2df;border-radius:50%;padding:10px}
+.bigavatar{font-size:42px;width:90px;height:90px;text-align:center;margin:auto}
+main{padding:16px}
+.hero{background:linear-gradient(135deg,#e2f3da,#fff);padding:20px;border-radius:22px}
+.hero h1{margin:0 0 6px;font-size:26px}
+.weather{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-top:18px;
+  background:#fff;
+  padding:13px;
+  border-radius:16px
+}
+.weather small,.action small{display:block;color:#647264;margin-top:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.action{
+  border:0;
+  background:#fff;
+  border-radius:18px;
+  padding:15px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+  min-height:82px;
+  box-shadow:0 1px 5px #dfe6dc
+}
+.action span{font-size:27px}
+.action div{flex:1}
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:17px;
+  margin:12px 0;
+  box-shadow:0 1px 5px #e0e6de
+}
+.notice,.warning{
+  background:#edf7e9;
+  border-radius:14px;
+  padding:13px;
+  margin:10px 0
+}
+.warning{background:#fff5d9}
+.title{margin:8px 0 18px}
+.title h1{margin:0;font-size:25px}
+.primary,.secondary{
+  border:0;
+  border-radius:13px;
+  padding:12px 16px;
+  font-weight:800;
+  cursor:pointer;
+  width:100%;
+  margin-top:10px
+}
+.primary{background:#2f7d32;color:#fff}
+.secondary{background:#e9f2e7;color:#245a28}
+.primary:disabled{opacity:.45}
+.search,input,select{
+  width:100%;
+  border:1px solid #d5ded2;
+  border-radius:12px;
+  padding:13px;
+  background:#fff;
+  font-size:16px;
+  margin:6px 0
+}
+.chips{
+  display:flex;
+  gap:8px;
+  overflow:auto;
+  padding:8px 0
+}
+.chips span,.tag{
+  background:#eaf4e7;
+  padding:8px 11px;
+  border-radius:20px;
+  white-space:nowrap;
+  font-size:13px
+}
+.products{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px
+}
+.product{
+  background:#fff;
+  border-radius:17px;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:5px
+}
+.pimg{
+  height:105px;
+  background:#edf5e9;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  font-size:45px
+}
+.price{font-size:20px;font-weight:800}
+.price del{font-size:12px;color:#999;font-weight:400}
+.cartrow{
+  background:#fff;
+  margin:8px 0;
+  padding:14px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+.cartrow span{flex:1}
+.cartrow button{
+  border:0;
+  background:#eef4eb;
+  padding:7px;
+  border-radius:8px
+}
+.totals p,.totals h2{
+  display:flex;
+  justify-content:space-between
+}
+.success{text-align:center}
+.chat{min-height:55vh}
+.chat>div{
+  max-width:88%;
+  padding:12px 14px;
+  border-radius:15px;
+  margin:9px 0
+}
+.ai{background:#fff}
+.user{
+  background:#dff0da;
+  margin-left:auto!important
+}
+.composer{
+  position:fixed;
+  bottom:64px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(728px,calc(100% - 24px));
+  display:flex;
+  background:#fff;
+  padding:7px;
+  border-radius:18px;
+  box-shadow:0 4px 18px #aab5aa
+}
+.composer input{margin:0;border:0}
+.composer button{
+  border:0;
+  border-radius:13px;
+  background:#2f7d32;
+  color:#fff;
+  width:48px;
+  font-size:22px
+}
+.fab{
+  position:fixed;
+  right:max(18px,calc((100vw - 760px)/2 + 18px));
+  bottom:132px;
+  border:0;
+  background:#1f6f2b;
+  color:#fff;
+  border-radius:30px;
+  padding:12px 16px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-weight:800;
+  box-shadow:0 5px 16px #9ba99b;
+  z-index:4
+}
+nav{
+  position:fixed;
+  bottom:0;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(760px,100%);
+  background:#fff;
+  border-top:1px solid #dfe6dc;
+  display:flex;
+  justify-content:space-around;
+  padding:7px 4px;
+  z-index:6
+}
+nav button{
+  border:0;
+  background:none;
+  color:#637063;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  font-size:11px;
+  gap:3px;
+  padding:4px
+}
+nav button.active{
+  color:#24712b;
+  font-weight:800
+}
+@media(max-width:420px){
+  .grid{grid-template-columns:1fr}
+  .products{grid-template-columns:1fr 1fr}
+  .action{min-height:74px}
+  .fab span{display:none}
+}
