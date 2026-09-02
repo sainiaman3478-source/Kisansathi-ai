@@ -13,7 +13,7 @@ async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("Render me GEMINI_API_KEY nahi hai");
   const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
   const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
   const data = await res.json();
   if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
