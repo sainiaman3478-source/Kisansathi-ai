@@ -1,25 +1,15 @@
-{
-  "name": "kisansathi-ai",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "start": "node server.mjs"
-  },
-  "dependencies": {
-    "express": "^4.21.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "lucide-react": "^0.468.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.7"
-  }
-}
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const app = express();
+app.use(express.json());
+const PORT = process.env.PORT || 10000;
+
+app.get("/api/health", (req,res)=> res.json({status:true}));
+
+app.use(express.static(path.join(__dirname, "dist")));
+app.get("*", (req,res)=> res.sendFile(path.join(__dirname, "dist", "index.html")));
+
+app.listen(PORT, ()=> console.log("Live "+PORT));
