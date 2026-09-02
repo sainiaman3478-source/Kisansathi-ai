@@ -10,26 +10,32 @@ app.use(express.json({ limit: "10mb" }));
 
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
-  // Google ka naya model - screenshot me khud bola hai
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: `You are AI Kisan, help in Hindi: ${prompt}` }] }]
-    })
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || "Gemini Error");
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Jawab nahi mila";
+  // 2026 ka sabse naya model - screenshot me Google ne khud bola
+  const models = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.5-flash"];
+  let lastErr = "";
+  for (const model of models) {
+    try {
+      console.log("Trying", model);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: `Tum AI Kisan ho, Hindi me help karo: ${prompt}` }] }] })
+      });
+      const data = await r.json();
+      if (!r.ok) { lastErr = data.error?.message; continue; }
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+    } catch (e) { lastErr = e.message; }
+  }
+  throw new Error(lastErr);
 }
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const reply = await callGemini(req.body?.message || "namaste");
+    const reply = await callGemini(req.body?.message || "hi");
     res.json({ reply });
   } catch (e) {
-    console.error(e);
     res.status(500).json({ error: e.message });
   }
 });
