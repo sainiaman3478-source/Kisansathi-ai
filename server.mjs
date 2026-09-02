@@ -11,33 +11,13 @@ app.use(express.json({ limit: '10mb' }));
 
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("Render me GEMINI_API_KEY nahi hai");
-
-  const models = [
-    "gemini-2.5-flash",
-    "gemini-3.6-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash-latest"
-  ];
-
-  let lastError = "";
-  for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-      const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-      const data = await res.json();
-      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        console.log("Success with model:", model);
-        return data.candidates[0].content.parts[0].text;
-      }
-      lastError = JSON.stringify(data);
-      console.log(`Model ${model} failed:`, lastError);
-    } catch (e) {
-      lastError = e.message;
-    }
-  }
-  throw new Error(lastError);
+  const model = "gemini-2.5-flash"; // sabse stable
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const body = JSON.stringify({ contents: [{ parts: [{ text: "Tum ek kisan expert ho. Hindi me jawab do: " + prompt }] }] });
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+  const data = await res.json();
+  if (data.candidates?.[0]?.content?.parts?.[0]?.text) return data.candidates[0].content.parts[0].text;
+  throw new Error(JSON.stringify(data));
 }
 
 app.post('/api/chat', async (req, res) => {
@@ -45,7 +25,6 @@ app.post('/api/chat', async (req, res) => {
     const reply = await callGemini(req.body.message);
     res.json({ reply });
   } catch (e) {
-    console.error(e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -58,4 +37,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Live on " + PORT));
+app.listen(PORT, () => console.log("Live"));
