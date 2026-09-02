@@ -14,7 +14,7 @@ async function ask(){
  let q=document.getElementById('q').value;
  document.getElementById('ans').innerText='Soch raha hu...';
  try{
-  let res=await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',{
+  let res=await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent',{
    method:'POST',
    headers:{'Content-Type':'application/json','x-goog-api-key':k},
    body:JSON.stringify({contents:[{parts:[{text:"Tu ek Bharat ka kisan expert hai. Hindi me chhota aur saaf jawab de: "+q}]}]})
