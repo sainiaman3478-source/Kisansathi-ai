@@ -7,48 +7,38 @@ import { fileURLToPath } from "url";
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// 100% WORKING GEMINI FUNCTION - v1
 async function callGemini(prompt, imageBase64 = null) {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("KEY missing in Render Env");
+  if (!key) throw new Error("GEMINI_API_KEY missing on Render");
 
   const parts = [{ text: prompt }];
-  if (imageBase64) {
-    parts.push({ inline_data: { mime_type: "image/jpeg", data: imageBase64 } });
-  }
+  if (imageBase64) parts.push({ inline_data: { mime_type: "image/jpeg", data: imageBase64 } });
   const body = JSON.stringify({ contents: [{ parts }] });
 
-  const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"];
-  let lastError = "";
+  // Sahi model naam
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
 
-  for (const m of models) {
-    // yahan v1 kar diya - v1beta fail ho raha tha
-    const url = `https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${key}`;
-    try {
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-      const data = await res.json();
-      if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-      lastError = JSON.stringify(data).slice(0,1000);
-      console.log(`Model ${m} failed:`, lastError);
-    } catch (err) {
-      lastError = err.message;
-      console.log(`Model ${m} error:`, lastError);
-    }
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+  const data = await res.json();
+  if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+    return data.candidates[0].content.parts[0].text;
   }
-  throw new Error(lastError);
+  // Agar 1.5 fail ho toh 2.0 try karo
+  const url2 = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${key}`;
+  const res2 = await fetch(url2, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+  const data2 = await res2.json();
+  if (data2.candidates?.[0]?.content?.parts?.[0]?.text) {
+    return data2.candidates[0].content.parts[0].text;
+  }
+  throw new Error(JSON.stringify(data2).slice(0,1000));
 }
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { message, image } = req.body;
-    const prompt = `Tu KisanSathi AI hai, ek digital kisan dost. Hindi me chhota aur sahi jawab de. Sawal: ${message}`;
-    const reply = await callGemini(prompt, image);
+    const reply = await callGemini(`Tu KisanSaathi AI hai. Hindi me jawab de: ${req.body.message}`, req.body.image);
     res.json({ reply });
   } catch (e) {
     console.error(e);
@@ -56,23 +46,15 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// DIST ka crash fix
-const possiblePaths = [
-  path.join(__dirname, '../dist'),
-  path.join(__dirname, '../frontend/dist'),
-  path.join(__dirname, './dist'),
-  path.join(__dirname, '../../dist')
-];
-let distPath = possiblePaths.find(p => fs.existsSync(path.join(p, 'index.html')));
-if(distPath) {
+const distPath = path.join(__dirname, '../dist');
+if(fs.existsSync(path.join(distPath, 'index.html'))){
   app.use(express.static(distPath));
   app.get('*', (req,res) => {
-    if (req.path.startsWith('/api')) return res.status(404).json({error: 'API not found'});
+    if(req.path.startsWith('/api')) return res.status(404).json({error:'api'});
     res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
-  app.get('/', (req,res) => res.json({ status: "API Live", dist: "not found but API working" }));
+  app.get('/', (req,res) => res.json({status:"API Live"}));
 }
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Live on ${PORT}`));
