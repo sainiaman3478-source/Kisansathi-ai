@@ -20,7 +20,7 @@ async function callGemini(prompt, imageBase64 = null) {
     parts.push({ inline_data: { mime_type: "image/jpeg", data: imageBase64 } });
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
