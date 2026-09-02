@@ -12,14 +12,32 @@ app.use(express.json({ limit: '10mb' }));
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("Render me GEMINI_API_KEY nahi hai");
-  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
-  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
-  const data = await res.json();
-  if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-    return data.candidates[0].content.parts[0].text;
+
+  const models = [
+    "gemini-2.5-flash",
+    "gemini-3.6-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash-latest"
+  ];
+
+  let lastError = "";
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      const data = await res.json();
+      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        console.log("Success with model:", model);
+        return data.candidates[0].content.parts[0].text;
+      }
+      lastError = JSON.stringify(data);
+      console.log(`Model ${model} failed:`, lastError);
+    } catch (e) {
+      lastError = e.message;
+    }
   }
-  throw new Error("Google Error: " + JSON.stringify(data));
+  throw new Error(lastError);
 }
 
 app.post('/api/chat', async (req, res) => {
