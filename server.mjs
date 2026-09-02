@@ -1,4 +1,4 @@
-import express from 'express';
+express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -31,4 +31,4 @@ app.post('/api/detect', upload.single('image'), async (req, res) => {
 app.get('/', (req,res)=> res.send('KisanSathi AI LIVE - Real AI'));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, ()=> console.log('Running on '+PORT));
+app.
