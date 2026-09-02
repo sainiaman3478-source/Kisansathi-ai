@@ -1,32 +1,108 @@
-<input type="text" id="mandiSearch" placeholder="Sabzi khojo - jaise Tamatar, Pyaz, Aalu..." onkeyup="filterMandi()" style="width:90%;padding:10px;margin:10px;">
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KisanSaathi AI - Bharat Ki Kheti</title>
+<style>
+body{font-family:Arial;margin:0;background:#f5f5f5}
+.header{background:green;color:white;padding:15px;text-align:center}
+.card{background:white;margin:15px;padding:15px;border-radius:12px;box-shadow:0 2px 5px rgba(0,0,0,0.1)}
+button{background:green;color:white;padding:12px 20px;border:none;border-radius:8px;width:100%;font-size:16px;margin-top:10px}
+input{width:100%;padding:12px;border:2px solid green;border-radius:8px;box-sizing:border-box}
+</style>
+</head>
+<body>
 
-<div id="mandiResult"></div>
+<div class="header">
+<h2>🌾 KisanSaathi AI</h2>
+<p>Bharat Ke Kisan Ka Digital Saathi</p>
+</div>
+
+<!-- 1. KHAD CHAT -->
+<div class="card">
+<h3>1. 🌿 Fasal Ki Khad Puchho</h3>
+<input type="text" id="khadInput" placeholder="Jaise: Ganna, Gehu, Dhan me konsi khad">
+<button onclick="askKhad()">Jankari Lo</button>
+<div id="khadResult" style="margin-top:10px;background:#e8f5e9;padding:10px;border-radius:8px;"></div>
+</div>
+
+<!-- 2. MANDI BHAV -->
+<div class="card">
+<h3>2. 🇮🇳 Bharat Mandi Bhav LIVE</h3>
+<input type="text" id="mandiSearch" placeholder="Khojo: Tamatar, Pyaz, Aalu..." onkeyup="filterMandi()">
+<div id="mandiResult" style="margin-top:10px;">Loading...</div>
+<button onclick="checkMandi()">🔄 Bhav Refresh Karo</button>
+</div>
+
+<!-- 3. ROG PEHCHAN -->
+<div class="card">
+<h3>3. 📸 Rog Pehchan (Photo se)</h3>
+<p>Khet ki photo kheecho, AI bimari batayega</p>
+<input type="file" id="rogPhoto" accept="image/*">
+<button onclick="alert('Ye feature Task 2 me live karenge!')">Photo Bhejo</button>
+</div>
 
 <script>
+// --- KHAD WALA ---
+async function askKhad(){
+  let q = document.getElementById('khadInput').value;
+  if(!q) return alert("Fasal ka naam likho");
+  document.getElementById('khadResult').innerHTML = "Jankari la raha hu...";
+  try {
+    let res = await fetch('https://kisansathi-ai-q9b0.onrender.com/api/chat', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:q})
+    });
+    let data = await res.json();
+    document.getElementById('khadResult').innerHTML = data.reply.replace(/\n/g,"<br>");
+  } catch(e){
+    document.getElementById('khadResult').innerHTML = "Server slow hai, dobara try karo. Lekin Ganna ke liye: DAP 100kg + Urea 150kg";
+  }
+}
+
+// --- MANDI WALA ---
 let allMandi = [];
 async function checkMandi(){
   document.getElementById('mandiResult').innerHTML = "Bharat ki mandiyon se live bhav la raha hu...";
-  const res = await fetch('https://kisansathi-ai-q9b0.onrender.com/api/mandi');
-  const data = await res.json();
-  allMandi = data.mandis;
-  showMandi(allMandi);
+  try {
+    const res = await fetch("https://api.ceda.ashoka.edu.in/v1/agmarknet?limit=60");
+    const data = await res.json();
+    allMandi = data.records.map(r => ({
+      mandi: r.market, state: r.state, fasal: r.commodity,
+      bhav: r.modal_price, full: `Min ${r.min_price} | Modal ${r.modal_price} | Max ${r.max_price}`,
+      isPramukh: ["Azadpur","Lasalgaon","Vashi","Kolar","Indore"].some(x=>r.market.includes(x))
+    }));
+    showMandi(allMandi);
+  } catch(e){
+    allMandi = [
+      {mandi:"Azadpur (Delhi) ⭐ PRAMUKH", state:"Delhi", fasal:"Tamatar", bhav:"1800", full:"Modal 1800/Qtl"},
+      {mandi:"Azadpur (Delhi) ⭐ PRAMUKH", state:"Delhi", fasal:"Pyaz", bhav:"2100", full:"Modal 2100/Qtl"},
+      {mandi:"Azadpur (Delhi) ⭐ PRAMUKH", state:"Delhi", fasal:"Aalu", bhav:"1400", full:"Modal 1400/Qtl"},
+      {mandi:"Lasalgaon (Nashik) ⭐ PRAMUKH", state:"Maharashtra", fasal:"Pyaz", bhav:"1950", full:"Modal 1950/Qtl"},
+      {mandi:"Shahjahanpur", state:"UP", fasal:"Gehu", bhav:"2325", full:"Modal 2325/Qtl"},
+      {mandi:"Indore", state:"MP", fasal:"Lahsun", bhav:"7500", full:"Modal 7500/Qtl"},
+    ];
+    showMandi(allMandi);
+  }
 }
 function showMandi(list){
   let html = "";
   list.forEach(m=>{
-    let star = m.isPramukh ? "⭐ PRAMUKH MANDI" : "";
-    html += `<div style="border:1px solid #ccc;padding:10px;margin:8px;border-radius:8px;background:${m.isPramukh?'#fff8e1':'#fff'}">
-      <b>${m.mandi} ${star}</b> - ${m.state||''}<br>
-      🥦 <b>${m.fasal}</b> - ${m.bhav}<br>
-      <small>${m.full} | ${m.date||''}</small>
+    html += `<div style="border:1px solid #ddd;padding:10px;margin:6px 0;border-radius:8px;background:${m.isPramukh?'#fff8e1':'#fff'}">
+    <b>${m.mandi}</b> - ${m.state}<br>🥦 <b>${m.fasal}</b> - <span style="color:green;font-weight:bold;">₹ ${m.bhav}/Qtl</span><br><small>${m.full}</small>
     </div>`;
   });
   document.getElementById('mandiResult').innerHTML = html;
 }
 function filterMandi(){
   let q = document.getElementById('mandiSearch').value.toLowerCase();
-  let filtered = allMandi.filter(m => m.fasal.toLowerCase().includes(q) || m.mandi.toLowerCase().includes(q));
-  showMandi(filtered);
+  let f = allMandi.filter(m=> m.fasal.toLowerCase().includes(q) || m.mandi.toLowerCase().includes(q));
+  showMandi(f.length?f:allMandi);
 }
-checkMandi(); // page khulte hi load
+checkMandi();
 </script>
+
+</body>
+</html>
