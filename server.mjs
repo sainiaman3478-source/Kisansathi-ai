@@ -1,3 +1,18 @@
+import express from "express";
+import cors from "cors";
+import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// --- YAHI TERA DIYA HUA FINAL FUNCTION ---
 async function callGemini(prompt, imageBase64 = null) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("KEY missing in Render Env");
@@ -20,3 +35,23 @@ async function callGemini(prompt, imageBase64 = null) {
   }
   throw new Error(lastError);
 }
+// --- KHATAM ---
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, image } = req.body;
+    const prompt = `Tu KisanSathi AI hai. Is kisan sawal ka jawab de: ${message}`;
+    const reply = await callGemini(prompt, image);
+    res.json({ reply });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('*', (req,res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Live on ${PORT}`));
