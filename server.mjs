@@ -12,65 +12,54 @@ app.use(express.json({ limit: "10mb" }));
 
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key) throw new Error("GEMINI_API_KEY Render Environment Variables mein nahi mili.");
+  if (!key) throw new Error("GEMINI_API_KEY nahi mili");
 
-  // Nayi key v1 pe chalti hai, v1beta pe nahi - isiliye 3 models ka backup
-  const modelsToTry = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash"];
+  // NAYE VALID MODELS - 1.5 ab dead hai
+  const modelsToTry = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-2.0-flash-lite"];
   let lastError = "";
 
   for (const model of modelsToTry) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-    
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
     try {
-      console.log(`Trying model: ${model}`);
-      const url = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`;
-
+      console.log(`Trying: ${model}`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `Tum ek expert AI Kisan assistant ho. Bharat ke kisanon ki madad karo. Hindi mein simple aur useful jawab do.\n\nKisan ka sawal: ${prompt}` }] }],
+          contents: [{ parts: [{ text: `Tum ek expert AI Kisan assistant ho. Hindi me jawab do. Sawal: ${prompt}` }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
         }),
         signal: controller.signal
       });
-
       clearTimeout(timeoutId);
       const data = await response.json();
-
       if (!response.ok) {
         lastError = data.error?.message || JSON.stringify(data);
-        console.error(`Model ${model} fail:`, lastError);
-        continue; // Agla model try karo
+        console.error(`${model} failed:`, lastError);
+        continue;
       }
-      
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) {
-        console.log(`Model ${model} success!`);
-        return text;
-      }
+      if (text) return text;
     } catch (e) {
       clearTimeout(timeoutId);
       lastError = e.message;
-      console.error(`Model ${model} error:`, e.message);
-      if (e.name === 'AbortError') {
-        lastError = "AI server slow hai";
-      }
+      console.error(`${model} error:`, e.message);
       continue;
     }
   }
-  throw new Error(lastError || "AI abhi busy hai, 1 min baad try karo");
+  throw new Error(lastError);
 }
 
 app.post("/api/chat", async (req, res) => {
   try {
     const message = req.body?.message;
-    if (!message) return res.status(400).json({ error: "Message required hai" });
+    if (!message) return res.status(400).json({ error: "Message required" });
     const reply = await callGemini(message);
     res.json({ reply });
   } catch (e) {
-    console.error("Gemini Error:", e.message);
+    console.error("Final Error:", e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -87,6 +76,4 @@ app.get("*", (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`AI Kisan server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
