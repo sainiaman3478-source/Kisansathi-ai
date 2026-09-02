@@ -11,31 +11,27 @@ const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "10mb" }));
 
-// IMPORTANT - Isse hi app ke options ayenge
-app.use(express.static(path.join(__dirname, "dist")));
-
 const PORT = process.env.PORT || 10000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const DATA_GOV_API_KEY = process.env.DATA_GOV_API_KEY;
 const RESOURCE = "9ef84268-d588-465a-a308-a864a43d0070";
 
-const SUPPORTED_GEMINI_MODELS = ["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b"];
-const GEMINI_FALLBACK_MODELS = ["gemini-2.0-flash","gemini-1.5-flash"];
-const GEMINI_MODEL = "gemini-2.0-flash";
+// Frontend - isse hi tere asli options ayenge
+app.use(express.static(path.join(__dirname, "dist")));
 
-//... tere KISAN_SYSTEM_INSTRUCTION aur saare functions waise hi rehne de...
-
+// Health - ab / pe nahi, /api/health pe
 app.get("/api/health",(req,res)=>res.json({ok:true, ai:!!GEMINI_API_KEY, mandi:!!DATA_GOV_API_KEY}));
 
-// Tere /api/chat aur /api/crop-doctor waise hi
-
-// NAYE ENDPOINT - Ye missing the
+// Weather
 app.get("/api/weather", async (req,res)=>{
-  const lat=req.query.lat||"26.79"; const lon=req.query.lon||"79.02";
-  const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto`);
-  res.json(await r.json());
+  try{
+    const lat=req.query.lat||"26.79"; const lon=req.query.lon||"79.02";
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto`);
+    res.json(await r.json());
+  }catch(e){ res.status(500).json({error:e.message}) }
 });
 
+// Mandi
 app.get("/api/mandi", async (req,res)=>{
   try{
     const p=new URLSearchParams();
@@ -54,6 +50,10 @@ app.get("/api/mandi", async (req,res)=>{
   }catch(e){ res.status(500).json({ok:false, error:e.message}); }
 });
 
+// Tera /api/chat aur /api/crop-doctor ka code yahan waise hi rahega
+//... [agar hai to yahan paste kar dena]...
+
+// SPA - sabse last me, isse hi app khulega
 app.get("*",(req,res)=>{
   if(req.path.startsWith("/api/")) return res.status(404).json({error:"API not found"});
   res.sendFile(path.join(__dirname,"dist","index.html"));
