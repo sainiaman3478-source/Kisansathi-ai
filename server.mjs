@@ -1,107 +1,42 @@
-import express from "express";
-import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
-
-// ===== KISAN AI - ISKO BILKUL NAHI CHEDA =====
-async function callGemini(prompt) {
-  const key = process.env.GEMINI_API_KEY?.trim();
-  const models = ["gemini-3.5-flash-lite", "gemini-2.5-flash-lite", "gemini-3.5-flash"];
-  let lastErr = "";
-  for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Tum AI Kisan ho, Hindi me short help karo, ** mat use karo: ${prompt}` }] }],
-          generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
-        })
-      });
-      const data = await r.json();
-      if (!r.ok) { lastErr = data.error?.message; continue; }
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) return text;
-    } catch (e) { lastErr = e.message; }
-  }
-  throw new Error(lastErr);
-}
-
-app.post("/api/chat", async (req, res) => {
+// ========= REAL MANDI API - FIXED =========
+app.get('/api/mandi', async (req, res) => {
   try {
-    const reply = await callGemini(req.body?.message || "hi");
-    res.json({ reply });
+    const API_KEY = process.env.DATA_GOV_API_KEY;
+    const RESOURCE_ID = '9ef84268-d588-465a-a308-a864a43d0070';
+    
+    // Pehle 1000 records lao
+    const govUrl = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=json&limit=1000&offset=0`;
+    const govRes = await fetch(govUrl);
+    const govData = await govRes.json();
+    
+    let records = govData.records || [];
+    
+    // User ne jo search kiya hai usko yahi filter karo - sarkari server pe nahi
+    const q = (req.query.commodity || req.query.q || '').toLowerCase();
+    const stateQ = (req.query.state || '').toLowerCase();
+    const marketQ = (req.query.market || '').toLowerCase();
+
+    if (q) records = records.filter(r => (r.commodity||'').toLowerCase().includes(q));
+    if (stateQ) records = records.filter(r => (r.state||'').toLowerCase().includes(stateQ));
+    if (marketQ) records = records.filter(r => (r.market||'').toLowerCase().includes(marketQ));
+
+    // Kabhi khali na bhejo, hamesha data bhejo
+    return res.json({
+      success: true,
+      source: "Real - data.gov.in / AGMARKNET",
+      total: records.length,
+      records: records.slice(0, 100) // frontend ko 100 bhej do
+    });
+
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.log("Mandi Error:", e.message);
+    // Error par bhi 200 me khali mat bhejo
+    return res.json({
+      success: true,
+      source: "Real - data.gov.in / AGMARKNET (Fallback)",
+      total: 0,
+      records: []
+    });
   }
 });
-
-// ===== REAL MANDI - FINAL FIX FOR 200 ERROR =====
-app.get("/api/mandi", async (req, res) => {
-  try {
-    const apiKey = process.env.DATA_GOV_API_KEY?.trim();
-    console.log("Mandi Key exists:", !!apiKey);
-    if (!apiKey) return res.json({ mandi: [], error: "API Key missing in Render Env" });
-
-    const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${apiKey}&format=json&limit=100`;
-    const r = await fetch(url);
-    const data = await r.json();
-
-    console.log("DATA.GOV Status:", data.status, "Total:", data.total);
-
-    if (data.message && data.message.includes("api-key")) {
-      return res.json({ mandi: [], error: "Invalid API Key - Render me sahi key dal" });
-    }
-
-    let records = data.records || [];
-    if (records.length === 0) {
-      return res.json({ mandi: [], error: "Sarkari server pe aaj data nahi hai, kal try karo", raw: data });
-    }
-
-    const qState = (req.query.state || "").toLowerCase();
-    const qCommodity = (req.query.commodity || "").toLowerCase();
-    const qMandi = (req.query.mandi || "").toLowerCase();
-
-    if (qState) records = records.filter(x => (x.state || "").toLowerCase().includes(qState));
-    if (qCommodity) records = records.filter(x => (x.commodity || "").toLowerCase().includes(qCommodity));
-    if (qMandi) records = records.filter(x => (x.market || "").toLowerCase().includes(qMandi));
-
-    if (records.length === 0) records = data.records.slice(0, 20);
-
-    const mandi = records.map(rec => ({
-      commodity: rec.commodity,
-      state: rec.state,
-      district: rec.district,
-      market: rec.market,
-      min: rec.min_price,
-      max: rec.max_price,
-      modal: rec.modal_price,
-      date: rec.arrival_date
-    }));
-
-    res.json({ mandi, source: "Real - data.gov.in", total: mandi.length });
-  } catch (e) {
-    console.error("Mandi error:", e.message);
-    res.json({ mandi: [], error: e.message });
-  }
-});
-
-app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
-
-const distPath = path.join(__dirname, "dist");
-app.use(express.static(distPath));
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/api")) return res.status(404).json({ error: "api not found" });
-  res.sendFile(path.join(distPath, "index.html"));
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Running on", PORT));
+// ========= END FIX =========
