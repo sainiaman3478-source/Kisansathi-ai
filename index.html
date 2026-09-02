@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KisanSaathi Real AI</title>
-<style>body{font-family:sans-serif;background:#f0fdf4;margin:0}header{background:#15803d;color:#fff;padding:15px;font-weight:bold;font-size:20px}.box{background:#fff;margin:15px;padding:15px;border-radius:12px} input{width:100%;padding:12px;border-radius:8px;border:1px solid #15803d;box-sizing:border-box} button{width:100%;padding:12px;background:#15803d;color:#fff;border:0;border-radius:8px;margin-top:10px;font-weight:bold} #ans{margin-top:15px;background:#dcfce7;padding:12px;border-radius:8px;white-space:pre-wrap}</style>
+<style>body{font-family:sans-serif;background:#f0fdf4;margin:0}header{background:#15803d;color:#fff;padding:15px;font-weight:bold;font-size:20px}.box{background:#fff;margin:15px;padding:15px;border-radius:12px}input{width:100%;padding:12px;border-radius:8px;border:1px solid #15803d;box-sizing:border-box}button{width:100%;padding:12px;background:#15803d;color:#fff;border:0;border-radius:8px;margin-top:10px;font-weight:bold}#ans{margin-top:15px;background:#dcfce7;padding:12px;border-radius:8px;white-space:pre-wrap}</style>
 </head><body>
 <header>🌿 KisanSaathi - Real AI</header>
-<div class="box"><b>Ek baar Key dalo:</b><input id="key" placeholder="AIzaSy... wali key"><button onclick="saveKey()">SAVE KARO</button></div>
-<div class="box"><input id="q" placeholder="Jaise: Ganna me khad kaun si dale?"><button onclick="ask()">REAL JANKARI LO</button><div id="ans">Jawab yaha aayega...</div></div>
+<div class="box"><b>API Key (AQ wali chalegi):</b><input id="key" placeholder="AQ.Ab8..."><button onclick="saveKey()">SAVE KARO</button></div>
+<div class="box"><input id="q" value="Ganna me khad kaun si dale?"><button onclick="ask()">REAL JANKARI LO</button><div id="ans">Jawab yaha aayega...</div></div>
 <script>
-function saveKey(){localStorage.setItem('k',document.getElementById('key').value);alert('Key Save ho gayi!');}
+function saveKey(){localStorage.setItem('k',document.getElementById('key').value);alert('Save ho gayi!');}
 async function ask(){
  let k=localStorage.getItem('k')||document.getElementById('key').value;
- if(!k.startsWith('AIza')){document.getElementById('ans').innerText='Key galat hai! AIzaSy... wali honi chahiye, AQ wali nahi.';return;}
+ if(!k){alert('Pehle key dalo');return;}
  let q=document.getElementById('q').value;
  document.getElementById('ans').innerText='Soch raha hu...';
- let url=`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${k}`;
- let res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:"Tu ek kisan expert hai. Hindi me jawab de: "+q}]}]})});
- let data=await res.json();
- if(data.error){document.getElementById('ans').innerText='Error: '+data.error.message;return;}
- document.getElementById('ans').innerText=data.candidates[0].content.parts[0].text;
+ try{
+  let res=await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','x-goog-api-key':k},
+   body:JSON.stringify({contents:[{parts:[{text:"Tu ek Bharat ka kisan expert hai. Hindi me chhota aur saaf jawab de: "+q}]}]})
+  });
+  let data=await res.json();
+  if(data.error){document.getElementById('ans').innerText='Error: '+data.error.message;return;}
+  document.getElementById('ans').innerText=data.candidates[0].content.parts[0].text;
+ }catch(e){document.getElementById('ans').innerText='Error: '+e.message;}
 }
 document.getElementById('key').value=localStorage.getItem('k')||'';
 </script></body></html>
