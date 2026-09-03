@@ -32,7 +32,7 @@ async function callGemini(
 
 
   // केवल valid model use करो
-  const MODEL = "gemini-2.5-flash";
+  const MODEL = "gemini-3.6-flash";
 
 
   console.log("Calling Gemini model:", MODEL);
