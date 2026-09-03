@@ -1,4 +1,4 @@
-import express from "express";
+Import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -14,7 +14,7 @@ app.use(express.json({ limit: "10mb" }));
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
-  const models = ["gemini-3.6-flash", "gemini-2.5-flash-lite"];
+  const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
   let lastErr = "";
   for (const model of models) {
     try {
@@ -45,7 +45,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ===== CROP DOCTOR (UPDATED TO GEMINI 3.6 FLASH) =====
+// ===== CROP DOCTOR (MODEL FIXED TO STABLE GEMINI 1.5 FLASH) =====
 app.post("/api/crop-doctor", async (req, res) => {
   try {
     const key = process.env.GEMINI_API_KEY?.trim();
@@ -68,7 +68,7 @@ Kripya niche diye gaye format me chota aur saral jawab do:
 2. 💊 **Upchar / Dawa:** (Kaun si dawa ya kitnashak kitna dalna hai)
 3. 🛡️ **Bachav ke Upay:** (Aage ke liye savdhani)`;
 
-    const models = ["gemini-3.6-flash", "gemini-2.5-flash-lite"];
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
     let lastErr = "";
     let replyText = "";
 
@@ -121,7 +121,7 @@ Kripya niche diye gaye format me chota aur saral jawab do:
   }
 });
 
-// ===== MANDI - FIX FOR FRONTEND (ok: true Added) =====
+// ===== MANDI - FIX FOR FRONTEND (ok: true Added) - UNTOUCHED =====
 app.get("/api/mandi", async (req, res) => {
   try {
     const apiKey = process.env.DATA_GOV_API_KEY;
