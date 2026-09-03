@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+Import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Home,
@@ -858,7 +858,7 @@ function Nav({
   );
 }
 
-/* ================= HOME (Play Store Style Download Page integrated) ================= */
+/* ================= HOME ================= */
 
 function HomePage({
   setTab,
@@ -869,16 +869,8 @@ function HomePage({
 }) {
   const apkDownloadUrl = "https://github.com/sainiaman3478-source/Kisansathi-ai/raw/refs/heads/main/app-release.apk";
 
-  const appFeatures = [
-    { icon: <Cpu className="w-6 h-6 text-green-600" />, title: "AI Kisan Doctor", desc: "Fasal ke rog ki pehchan turant karein aur sahi ilaaj paayein." },
-    { icon: <Sprout className="w-6 h-6 text-green-600" />, title: "Mandi Bhav Live", desc: "Apne nazdeeki market ke taaza bhav rozana dekhein." },
-    { icon: <CloudSun className="w-6 h-6 text-green-600" />, title: "Mausam ki Jankari", desc: "Aane wale dino ke mausam ka sateek anuman." },
-    { icon: <Building2 className="w-6 h-6 text-green-600" />, title: "Sarkari Yojnae", desc: "Sabhi kisan kalyan yojnao ki poori jankari aur aavedan." }
-  ];
-
   return (
     <div className="pb-8">
-      {/* Play Store Style Hero Section */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
         <div className="w-28 h-28 bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl shadow-lg flex items-center justify-center text-white text-5xl flex-shrink-0">
           🌱
@@ -891,7 +883,7 @@ function HomePage({
           <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 my-4 text-xs text-slate-600">
             <div className="flex items-center space-x-1 bg-slate-100 px-2.5 py-1 rounded-md">
               <span className="font-bold text-slate-800">4.8</span>
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 text-amber-400" />
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
               <span className="text-slate-500">(12K+ reviews)</span>
             </div>
             <div className="border-l border-slate-300 h-4"></div>
@@ -919,7 +911,6 @@ function HomePage({
         </div>
       </div>
 
-      {/* Security Banner */}
       <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start space-x-3" style={{ background: '#edf7ea', border: '1px solid #c8e6c9', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px' }}>
         <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-emerald-900">
@@ -928,7 +919,6 @@ function HomePage({
         </div>
       </div>
 
-      {/* Original Web Tools Quick Navigation */}
       <section className="hero">
         <h1>नमस्ते {name} 👋</h1>
         <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
@@ -952,7 +942,6 @@ function HomePage({
         </button>
       </section>
 
-      {/* Features Grid */}
       <div className="grid mb-6">
         {[
           ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
@@ -984,7 +973,6 @@ function HomePage({
         ))}
       </div>
 
-      {/* App Key Features list */}
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
@@ -1244,7 +1232,7 @@ function WeatherPage({
 }) {
   const [lat, setLat] = useState("28.6139");
   const [lon, setLon] = useState("77.2090");
-  const [locationName, setLocationName] = useState("Delhi");
+  const [locationName, setLocationName] = useState("Live Location");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1271,8 +1259,32 @@ function WeatherPage({
     }
   };
 
+  const fetchLiveLocationWeather = () => {
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude.toString();
+          const longitude = position.coords.longitude.toString();
+          setLat(latitude);
+          setLon(longitude);
+          fetchWeather(latitude, longitude, "आपकी लाइव लोकेशन");
+        },
+        (err) => {
+          setLoading(false);
+          setError("लोकेशन की अनुमति नहीं मिली। Default दिल्ली का मौसम दिखाया जा रहा है।");
+          fetchWeather("28.6139", "77.2090", "दिल्ली");
+        },
+        { timeout: 10000 }
+      );
+    } else {
+      setError("Aapka browser geolocation support nahi karta.");
+      fetchWeather("28.6139", "77.2090", "दिल्ली");
+    }
+  };
+
   useEffect(() => {
-    fetchWeather("28.6139", "77.2090", "Delhi");
+    fetchLiveLocationWeather();
   }, []);
 
   return (
@@ -1280,9 +1292,17 @@ function WeatherPage({
       <PageTitle setTab={setTab} sub="Live Open-Meteo Weather" title="मौसम की जानकारी" />
 
       <div className="section">
-        <div className="locationRow">
-          <MapPin size={18} color="#2e7d32" />
-          <span>चुना गया स्थान: <b>{locationName}</b></span>
+        <div className="locationRow" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+            <MapPin size={18} color="#2e7d32" />
+            <span>चुना गया स्थान: <b>{locationName}</b></span>
+          </div>
+          <button 
+            onClick={fetchLiveLocationWeather}
+            style={{ background: "#2e7d32", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "8px", fontSize: "11px", cursor: "pointer" }}
+          >
+            🔄 Live Location
+          </button>
         </div>
 
         <div className="filterGrid" style={{ marginBottom: 10 }}>
@@ -1436,7 +1456,7 @@ function DoctorPage({
     setAnalyzing(true);
     setTimeout(() => {
       setAnalyzing(false);
-      setResult("AI Doctor Analysis: पत्ती पर हल्के धับबे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
+      setResult("AI Doctor Analysis: पत्ती पर हल्के धब्बे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
     }, 2000);
   };
 
@@ -1609,7 +1629,7 @@ function CartPage({
   );
 }
 
-/* ================= CHAT ================= */
+/* ================= CHAT (FIXED & REAL API CONNECTED) ================= */
 
 function ChatPage({
   setTab,
@@ -1620,19 +1640,35 @@ function ChatPage({
     { from: "ai", text: "नमस्ते! मैं KisanSathi AI हूँ। खेती से जुड़ा कोई भी सवाल पूछिए।" },
   ]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const send = () => {
-    if (!input.trim()) return;
+  const send = async () => {
+    if (!input.trim() || loading) return;
     const userText = input;
     setMessages((prev) => [...prev, { from: "user", text: userText }]);
     setInput("");
+    setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userText }),
+      });
+      const data = await res.json();
+      
+      const aiReply = data.reply || data.answer || data.message || "माफ कीजिए, अभी जवाब देने में समस्या आ रही है।";
+      setMessages((prev) => [...prev, { from: "ai", text: aiReply }]);
+    } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { from: "ai", text: `AI उत्तर: ${userText} के संबंध में सही खाद और समय पर सिंचाई की सलाह दी जाती है।` },
+        { from: "ai", text: "सर्वर से संपर्क नहीं हो पाया। कृपया दोबारा कोशिश करें।" },
       ]);
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1648,6 +1684,11 @@ function ChatPage({
             {m.text}
           </div>
         ))}
+        {loading && (
+          <div className="bubble aiBubble" style={{ color: "#666" }}>
+            AI सोच रहा है...
+          </div>
+        )}
       </div>
 
       <div className="inputRow">
@@ -1655,9 +1696,10 @@ function ChatPage({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="अपना सवाल लिखें..."
+          disabled={loading}
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
-        <button className="sendBtn" onClick={send}>
+        <button className="sendBtn" onClick={send} disabled={loading}>
           <Send size={18} />
         </button>
       </div>
