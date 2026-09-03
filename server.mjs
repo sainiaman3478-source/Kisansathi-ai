@@ -1,4 +1,4 @@
-Import express from "express";
+import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -63,7 +63,7 @@ app.post("/api/crop-doctor", async (req, res) => {
 - Fasal ka naam: ${cropName || 'Pata nahi'}
 - Kisaan dwara bataye gaye lakshan: ${symptoms || 'Koi nahi'}
 
-Kripya niche diye gaye format me chota aur saral jawab do:
+Kripya niche दिए गए format me chota aur saral jawab do:
 1. 🩺 **Bimari / Samasya:** (Bimari ka naam aur karan)
 2. 💊 **Upchar / Dawa:** (Kaun si dawa ya kitnashak kitna dalna hai)
 3. 🛡️ **Bachav ke Upay:** (Aage ke liye savdhani)`;
