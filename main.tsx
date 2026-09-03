@@ -1223,64 +1223,167 @@ function MandiPage({
   );
 }
 
-/* ================= WEATHER ================= */
+/* ==/* ================= WEATHER ================= */
 
 function WeatherPage({
   setTab,
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [lat, setLat] = useState("28.6139");
-  const [lon, setLon] = useState("77.2090");
-  const [locationName, setLocationName] = useState("Live Location");
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+  const [locationName, setLocationName] = useState("लोकेशन प्राप्त की जा रही है...");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchWeather = async (latitude: string, longitude: string, name: string) => {
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return "☀️";
+
+    if ([1, 2].includes(code)) return "🌤️";
+
+    if (code === 3) return "☁️";
+
+    if ([45, 48].includes(code)) return "🌫️";
+
+    if ([51, 53, 55, 56, 57].includes(code)) return "🌦️";
+
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "🌧️";
+
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return "❄️";
+
+    if ([95, 96, 99].includes(code)) return "⛈️";
+
+    return "🌤️";
+  };
+
+  const getWeatherText = (code: number) => {
+    if (code === 0) return "साफ आसमान";
+
+    if ([1, 2].includes(code)) return "आंशिक बादल";
+
+    if (code === 3) return "बादल छाए हैं";
+
+    if ([45, 48].includes(code)) return "कोहरा";
+
+    if ([51, 53, 55, 56, 57].includes(code)) return "हल्की बारिश";
+
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "बारिश";
+
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return "बर्फबारी";
+
+    if ([95, 96, 99].includes(code)) return "तूफान";
+
+    return "मौसम की जानकारी";
+  };
+
+  const getDayName = (date: string) => {
+    const days = [
+      "रविवार",
+      "सोमवार",
+      "मंगलवार",
+      "बुधवार",
+      "गुरुवार",
+      "शुक्रवार",
+      "शनिवार",
+    ];
+
+    const d = new Date(`${date}T12:00:00`);
+
+    return days[d.getDay()];
+  };
+
+  const fetchWeather = async (
+    latitude: string,
+    longitude: string,
+    name: string
+  ) => {
     setLoading(true);
     setError("");
-    setLocationName(name);
 
     try {
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max`
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setWeather(data);
-      } else {
-        throw new Error("मौसम का डाटा लोड नहीं हो पाया।");
+      const url =
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${latitude}` +
+        `&longitude=${longitude}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
+        `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
+        `&timezone=auto` +
+        `&forecast_days=5`;
+
+      const res = await fetch(url, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error("Weather API error");
       }
+
+      const data: WeatherData = await res.json();
+
+      setLat(latitude);
+      setLon(longitude);
+      setWeather(data);
+      setLocationName(name);
     } catch (e) {
-      setError("मौसम लोड करने में समस्या आई।");
+      setError("मौसम का लाइव डाटा लोड नहीं हो पाया। कृपया दोबारा कोशिश करें।");
     } finally {
       setLoading(false);
     }
   };
 
   const fetchLiveLocationWeather = () => {
-    if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const latitude = position.coords.latitude.toString();
-          const longitude = position.coords.longitude.toString();
-          setLat(latitude);
-          setLon(longitude);
-          fetchWeather(latitude, longitude, "आपकी लाइव लोकेशन");
-        },
-        (err) => {
-          setLoading(false);
-          setError("लोकेशन की अनुमति नहीं मिली। Default दिल्ली का मौसम दिखाया जा रहा है।");
-          fetchWeather("28.6139", "77.2090", "दिल्ली");
-        },
-        { timeout: 10000 }
-      );
-    } else {
-      setError("Aapka browser geolocation support nahi karta.");
-      fetchWeather("28.6139", "77.2090", "दिल्ली");
+    if (!navigator.geolocation) {
+      setError("आपका browser Live Location support नहीं करता।");
+      return;
     }
+
+    setLoading(true);
+    setError("");
+    setLocationName("आपकी लाइव लोकेशन प्राप्त की जा रही है...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude.toString();
+        const longitude = position.coords.longitude.toString();
+
+        await fetchWeather(
+          latitude,
+          longitude,
+          "आपकी लाइव लोकेशन"
+        );
+      },
+
+      (err) => {
+        setLoading(false);
+
+        if (err.code === 1) {
+          setError(
+            "Live Location की permission नहीं मिली। कृपया browser में Location Allow करें।"
+          );
+        } else if (err.code === 2) {
+          setError(
+            "आपकी Live Location प्राप्त नहीं हो पाई। कृपया दोबारा कोशिश करें।"
+          );
+        } else if (err.code === 3) {
+          setError(
+            "Live Location प्राप्त करने में समय समाप्त हो गया। कृपया दोबारा कोशिश करें।"
+          );
+        } else {
+          setError(
+            "Live Location प्राप्त नहीं हो पाई।"
+          );
+        }
+
+        setLocationName("कोई Live Location नहीं चुनी गई");
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
   };
 
   useEffect(() => {
@@ -1289,63 +1392,198 @@ function WeatherPage({
 
   return (
     <>
-      <PageTitle setTab={setTab} sub="Live Open-Meteo Weather" title="मौसम की जानकारी" />
+      <PageTitle
+        setTab={setTab}
+        sub="Real Live Open-Meteo Weather"
+        title="मौसम की जानकारी"
+      />
 
       <div className="section">
-        <div className="locationRow" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+        <div
+          className="locationRow"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
             <MapPin size={18} color="#2e7d32" />
-            <span>चुना गया स्थान: <b>{locationName}</b></span>
+
+            <span>
+              चुना गया स्थान: <b>{locationName}</b>
+            </span>
           </div>
-          <button 
+
+          <button
             onClick={fetchLiveLocationWeather}
-            style={{ background: "#2e7d32", color: "#fff", border: "none", padding: "6px 10px", borderRadius: "8px", fontSize: "11px", cursor: "pointer" }}
+            disabled={loading}
+            style={{
+              background: "#2e7d32",
+              color: "#fff",
+              border: "none",
+              padding: "8px 11px",
+              borderRadius: "8px",
+              fontSize: "11px",
+              cursor: loading ? "not-allowed" : "pointer",
+              marginLeft: "8px",
+              opacity: loading ? 0.7 : 1,
+            }}
           >
             🔄 Live Location
           </button>
         </div>
-
-        <div className="filterGrid" style={{ marginBottom: 10 }}>
-          <button
-            className="addBtn"
-            onClick={() => fetchWeather("28.6139", "77.2090", "दिल्ली")}
-          >
-            दिल्ली
-          </button>
-          <button
-            className="addBtn"
-            onClick={() => fetchWeather("26.9124", "75.7873", "जयपुर")}
-          >
-            जयपुर
-          </button>
-        </div>
       </div>
 
-      {loading && <div className="section">मौसम लोड हो रहा है...</div>}
-      {error && <div className="section" style={{ color: "red" }}>{error}</div>}
+      {loading && (
+        <div className="section">
+          📍 आपकी Live Location और मौसम की जानकारी लोड हो रही है...
+        </div>
+      )}
 
-      {weather && (
+      {error && (
+        <div
+          className="section"
+          style={{
+            color: "#c62828",
+            background: "#fff0f0",
+          }}
+        >
+          ❌ {error}
+        </div>
+      )}
+
+      {weather && !loading && (
         <>
           <div className="weatherBig">
+            <div style={{ fontSize: "34px" }}>
+              {getWeatherIcon(weather.current.weather_code)}
+            </div>
+
             <div>वर्तमान तापमान</div>
-            <div className="temperature">{weather.current.temperature_2m}°C</div>
-            <div>महसूस हो रहा है: {weather.current.apparent_temperature}°C</div>
+
+            <div className="temperature">
+              {weather.current.temperature_2m}°C
+            </div>
+
+            <div>
+              {getWeatherText(weather.current.weather_code)}
+            </div>
+
+            <div style={{ marginTop: "8px" }}>
+              महसूस हो रहा है:{" "}
+              {weather.current.apparent_temperature}°C
+            </div>
           </div>
 
           <div className="weatherInfoGrid">
             <div className="weatherInfo">
-              💧 नमी (Humidity): <b>{weather.current.relative_humidity_2m}%</b>
+              💧 नमी (Humidity):{" "}
+              <b>
+                {weather.current.relative_humidity_2m}%
+              </b>
             </div>
+
             <div className="weatherInfo">
-              💨 हवा की गति: <b>{weather.current.wind_speed_10m} km/h</b>
+              💨 हवा की गति:{" "}
+              <b>
+                {weather.current.wind_speed_10m} km/h
+              </b>
+            </div>
+          </div>
+
+          <div
+            className="section"
+            style={{ marginTop: "12px" }}
+          >
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: "12px",
+              }}
+            >
+              📅 अगले 5 दिन का लाइव मौसम
+            </h3>
+
+            <div className="forecast">
+              {weather.daily.time
+                .slice(0, 5)
+                .map((date, index) => (
+                  <div
+                    className="forecastCard"
+                    key={date}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 800,
+                      }}
+                    >
+                      {index === 0
+                        ? "आज"
+                        : getDayName(date)}
+                    </div>
+
+                    <div className="forecastIcon">
+                      {getWeatherIcon(
+                        weather.daily.weather_code[index]
+                      )}
+                    </div>
+
+                    <div>
+                      <b>
+                        {Math.round(
+                          weather.daily
+                            .temperature_2m_max[index]
+                        )}°C
+                      </b>
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#777",
+                        marginTop: "3px",
+                      }}
+                    >
+                      न्यूनतम:{" "}
+                      {Math.round(
+                        weather.daily
+                          .temperature_2m_min[index]
+                      )}°C
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#2e7d32",
+                        marginTop: "5px",
+                        fontSize: "10px",
+                      }}
+                    >
+                      🌧️ बारिश:{" "}
+                      {
+                        weather.daily
+                          .precipitation_probability_max[
+                            index
+                          ]
+                      }
+                      %
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </>
       )}
     </>
   );
-}
-
+              }
 /* ================= CROPS ================= */
 
 function CropsPage({
