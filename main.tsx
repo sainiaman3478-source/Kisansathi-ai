@@ -815,7 +815,7 @@ function PageTitle({
         onClick={() => setTab("home")}
         aria-label="Back"
       >
-        <ArrowLeft size="{21}"/>
+        <ArrowLeft size={21} />
       </button>
 
       <div>
@@ -883,7 +883,7 @@ function HomePage({
           className="weatherButton"
           onClick={() => setTab("weather")}
         >
-          <CloudSun size="{29}"/>
+          <CloudSun size={29} />
 
           <div>
             <strong>आज का मौसम देखें</strong>
@@ -891,7 +891,13 @@ function HomePage({
             <span>अपने इलाके का live मौसम देखें</span>
           </div>
 
-          <ArrowLeft "auto", "rotate(180deg)", marginLeft: size="{16}" style="{{" transform: }}/>
+          <ArrowLeft
+            size={16}
+            style={{
+              marginLeft: "auto",
+              transform: "rotate(180deg)",
+            }}
+          />
         </button>
       </section>
 
@@ -1042,7 +1048,7 @@ function MandiPage({
 
   return (
     <>
-      <PageTitle setTab="{setTab}" sub="Real Government Mandi Data (Pan-India)" title="मंडी भाव"/>
+      <PageTitle setTab={setTab} sub="Real Government Mandi Data (Pan-India)" title="मंडी भाव" />
 
       <div className="section">
         <div className="mandiStatus">
@@ -1086,7 +1092,7 @@ function MandiPage({
           onClick={loadMandi}
           disabled={loading}
         >
-          <RefreshCw "middle", 5, marginRight: size="{16}" style="{{" verticalAlign: }}/>
+          <RefreshCw size={16} style={{ verticalAlign: "middle", marginRight: 5 }} />
 
           {loading
             ? "देशभर के मंडी भाव लोड हो रहे हैं..."
@@ -1186,7 +1192,7 @@ function WeatherPage({
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [weather, setWeather] = useState<WeatherData null |>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [locationName, setLocationName] = useState("आपका स्थान");
@@ -1246,17 +1252,17 @@ function WeatherPage({
 
   return (
     <>
-      <PageTitle setTab="{setTab}" sub="लाइव मौसम पूर्वानुमान" title="मौसम जानकारी"/>
+      <PageTitle setTab={setTab} sub="लाइव मौसम पूर्वानुमान" title="मौसम जानकारी" />
 
       <div className="locationRow">
-        <MapPin color="#2e7d32" size="{18}"/>
+        <MapPin color="#2e7d32" size={18} />
         <span style={{ flex: 1, fontWeight: "bold" }}>{locationName}</span>
         <button
           className="addBtn"
           onClick={getCurrentLocation}
           disabled={loading}
         >
-          <RefreshCw 4 marginRight: size="{12}" style="{{" }}/>
+          <RefreshCw size={12} style={{ marginRight: 4 }} />
           रिफ्रेश
         </button>
       </div>
@@ -1347,7 +1353,7 @@ function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
 
   return (
     <>
-      <PageTitle setTab="{setTab}" sub="आपकी फसलों का हिसाब" title="मेरी फसलें"/>
+      <PageTitle setTab={setTab} sub="आपकी फसलों का हिसाब" title="मेरी फसलें" />
 
       <div className="section">
         <h3>नई फसल जोड़ें</h3>
@@ -1389,7 +1395,7 @@ function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
                 style={{ border: 0, background: "transparent", color: "red" }}
                 onClick={() => removeCrop(c.id)}
               >
-                <X size="{18}"/>
+                <X size={18} />
               </button>
             </div>
           ))
@@ -1431,11 +1437,11 @@ function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
 
   return (
     <>
-      <PageTitle setTab="{setTab}" sub="फोटो खींचकर बीमारी का पता लगाएं" title="फसल डॉक्टर"/>
+      <PageTitle setTab={setTab} sub="फोटो खींचकर बीमारी का पता लगाएं" title="फसल डॉक्टर" />
 
       <div className="section">
         <div className="upload">
-          <Camera color="#28752e" size="{40}"/>
+          <Camera color="#28752e" size={40} />
           <p style={{ margin: "10px 0 5px", fontWeight: "bold" }}>
             फसल के प्रभावित हिस्से की फोटो अपलोड करें
           </p>
@@ -1506,7 +1512,7 @@ function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
 
   return (
     <>
-      <PageTitle setTab="{setTab}" sub="24x7 कृषि सलाह" title="AI Kisan Salahkar"/>
+      <PageTitle setTab={setTab} sub="24x7 कृषि सलाह" title="AI Kisan Salahkar" />
 
       <div className="chatBox">
         {messages.map((m, idx) => (
@@ -1531,7 +1537,7 @@ function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
         <button className="sendBtn" onClick={() => sendMessage()}>
-          <Send size="{18}"/>
+          <Send size={18} />
         </button>
       </div>
     </>
@@ -1547,7 +1553,7 @@ function StorePage({
 }: {
   setTab: (t: Tab) => void;
   cart: { [key: number]: number };
-  setCart: React.Dispatch<React.SetStateAction<{ [key: number number]: }>>;
+  setCart: React.Dispatch<React.SetStateAction<{ [key: number]: number }>>;
 }) {
   const addToCart = (id: number) => {
     setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
@@ -1555,7 +1561,7 @@ function StorePage({
 
   return (
     <>
-      <PageTitle setTab="{setTab}" sub="उत्कृष्ट कृषि उत्पाद" title="Kisan Store"/>
+      <PageTitle setTab={setTab} sub="उत्कृष्ट कृषि उत्पाद" title="Kisan Store" />
 
       <div className="section">
         {products.map((p) => (
@@ -1585,7 +1591,7 @@ function CartPage({
 }: {
   setTab: (t: Tab) => void;
   cart: { [key: number]: number };
-  setCart: React.Dispatch<React.SetStateAction<{ [key: number number]: }>>;
+  setCart: React.Dispatch<React.SetStateAction<{ [key: number]: number }>>;
 }) {
   const updateQty = (id: number, delta: number) => {
     setCart((prev) => {
@@ -1602,7 +1608,7 @@ function CartPage({
 
   return (
     <>
-      <PageTitle setTab="{setTab}" title="आपकी कार्ट"/>
+      <PageTitle setTab={setTab} title="आपकी कार्ट" />
 
       <div className="section">
         {cartItems.length === 0 ? (
@@ -1617,11 +1623,11 @@ function CartPage({
                 </div>
                 <div className="quantity">
                   <button onClick={() => updateQty(p.id, -1)}>
-                    <Minus size="{14}"/>
+                    <Minus size={14} />
                   </button>
                   <span>{cart[p.id]}</span>
                   <button onClick={() => updateQty(p.id, 1)}>
-                    <Plus size="{14}"/>
+                    <Plus size={14} />
                   </button>
                 </div>
               </div>
@@ -1650,11 +1656,11 @@ function CartPage({
 function ProfilePage({ setTab, name }: { setTab: (t: Tab) => void; name: string }) {
   return (
     <>
-      <PageTitle setTab="{setTab}" title="प्रोफाइल व योजनाएं"/>
+      <PageTitle setTab={setTab} title="प्रोफाइल व योजनाएं" />
 
       <div className="section profileCard">
         <div className="bigProfile">
-          <User size="{36}"/>
+          <User size={36} />
         </div>
         <h3 style={{ margin: "10px 0 2px" }}>{name}</h3>
         <p className="muted">किसान साथी पंजीकृत सदस्य</p>
@@ -1670,7 +1676,7 @@ function ProfilePage({ setTab, name }: { setTab: (t: Tab) => void; name: string 
               <div className="muted">{s.text}</div>
             </div>
             <a href={s.url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink size="{16}"/>
+              <ExternalLink size={16} />
             </a>
           </div>
         ))}
@@ -1709,7 +1715,7 @@ export function App() {
               aria-label="Cart"
               style={{ position: "relative" }}
             >
-              <ShoppingCart size="{20}"/>
+              <ShoppingCart size={20} />
               {totalCartCount > 0 && (
                 <span
                   style={{
@@ -1733,32 +1739,32 @@ export function App() {
               onClick={() => setTab("profile")}
               aria-label="Profile"
             >
-              <User size="{20}"/>
+              <User size={20} />
             </button>
           </div>
         </header>
 
         <main>
-          {tab === "home" && <HomePage name="{name}" setTab="{setTab}"/>}
-          {tab === "mandi" && <MandiPage setTab="{setTab}"/>}
-          {tab === "weather" && <WeatherPage setTab="{setTab}"/>}
-          {tab === "crops" && <CropsPage setTab="{setTab}"/>}
-          {tab === "doctor" && <DoctorPage setTab="{setTab}"/>}
-          {tab === "chat" && <ChatPage setTab="{setTab}"/>}
-          {tab === "store" && <StorePage cart="{cart}" setCart="{setCart}" setTab="{setTab}"/>}
-          {tab === "cart" && <CartPage cart="{cart}" setCart="{setCart}" setTab="{setTab}"/>}
-          {tab === "profile" && <ProfilePage name="{name}" setTab="{setTab}"/>}
+          {tab === "home" && <HomePage name={name} setTab={setTab} />}
+          {tab === "mandi" && <MandiPage setTab={setTab} />}
+          {tab === "weather" && <WeatherPage setTab={setTab} />}
+          {tab === "crops" && <CropsPage setTab={setTab} />}
+          {tab === "doctor" && <DoctorPage setTab={setTab} />}
+          {tab === "chat" && <ChatPage setTab={setTab} />}
+          {tab === "store" && <StorePage cart={cart} setCart={setCart} setTab={setTab} />}
+          {tab === "cart" && <CartPage cart={cart} setCart={setCart} setTab={setTab} />}
+          {tab === "profile" && <ProfilePage name={name} setTab={setTab} />}
         </main>
 
         <button className="fab" onClick={() => setTab("chat")} aria-label="Ask AI">
-          <MessageCircle size="{26}"/>
+          <MessageCircle size={26} />
         </button>
 
         <nav className="bottomNav">
-          <Nav "home"} active="{tab" on="{()"> setTab("home")} icon={<Home size="{20}"/>} text="होम" />
-          <Nav "mandi"} active="{tab" on="{()"> setTab("mandi")} icon={<Leaf size="{20}"/>} text="मंडी" />
-          <Nav "doctor"} active="{tab" on="{()"> setTab("doctor")} icon={<Stethoscope size="{20}"/>} text="डॉक्टर" />
-          <Nav "store"} active="{tab" on="{()"> setTab("store")} icon={<ShoppingCart size="{20}"/>} text="स्टोर" />
+          <Nav active={tab === "home"} on={() => setTab("home")} icon={<Home size={20} />} text="होम" />
+          <Nav active={tab === "mandi"} on={() => setTab("mandi")} icon={<Leaf size={20} />} text="मंडी" />
+          <Nav active={tab === "doctor"} on={() => setTab("doctor")} icon={<Stethoscope size={20} />} text="डॉक्टर" />
+          <Nav active={tab === "store"} on={() => setTab("store")} icon={<ShoppingCart size={20} />} text="स्टोर" />
         </nav>
       </div>
     </>
@@ -1772,7 +1778,7 @@ if (container) {
   const root = createRoot(container);
   root.render(
     <React.StrictMode>
-      <App/>
+      <App />
     </React.StrictMode>
   );
 }
