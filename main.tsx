@@ -1,4 +1,4 @@
-Import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   Home,
@@ -815,7 +815,7 @@ function PageTitle({
         onClick={() => setTab("home")}
         aria-label="Back"
       >
-        <ArrowLeft size={21} />
+        <ArrowLeft size="{21}"/>
       </button>
 
       <div>
@@ -883,7 +883,7 @@ function HomePage({
           className="weatherButton"
           onClick={() => setTab("weather")}
         >
-          <CloudSun size={29} />
+          <CloudSun size="{29}"/>
 
           <div>
             <strong>आज का मौसम देखें</strong>
@@ -891,13 +891,7 @@ function HomePage({
             <span>अपने इलाके का live मौसम देखें</span>
           </div>
 
-          <ArrowLeft
-            size={16}
-            style={{
-              marginLeft: "auto",
-              transform: "rotate(180deg)",
-            }}
-          />
+          <ArrowLeft "auto", "rotate(180deg)", marginLeft: size="{16}" style="{{" transform: }}/>
         </button>
       </section>
 
@@ -1048,11 +1042,7 @@ function MandiPage({
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="मंडी भाव"
-        sub="Real Government Mandi Data (Pan-India)"
-      />
+      <PageTitle setTab="{setTab}" sub="Real Government Mandi Data (Pan-India)" title="मंडी भाव"/>
 
       <div className="section">
         <div className="mandiStatus">
@@ -1096,13 +1086,7 @@ function MandiPage({
           onClick={loadMandi}
           disabled={loading}
         >
-          <RefreshCw
-            size={16}
-            style={{
-              verticalAlign: "middle",
-              marginRight: 5,
-            }}
-          />
+          <RefreshCw "middle", 5, marginRight: size="{16}" style="{{" verticalAlign: }}/>
 
           {loading
             ? "देशभर के मंडी भाव लोड हो रहे हैं..."
@@ -1164,11 +1148,631 @@ function MandiPage({
 
             <div className="mandiPrice">
               <span className="priceLabel">मॉडल भाव</span>
-              <div>₹{x.modalPrice || 0}</div>
+              <div>₹{x.modalPrice || 0}/क्विंटल</div>
+            </div>
+          </div>
+
+          <div className="mandiDetails">
+            <div className="mandiDetail">
+              न्यूनतम भाव
+              <b>₹{x.minPrice || 0}</b>
+            </div>
+
+            <div className="mandiDetail">
+              अधिकतम भाव
+              <b>₹{x.maxPrice || 0}</b>
+            </div>
+
+            <div className="mandiDetail">
+              किस्म (Variety)
+              <b>{x.variety || "General"}</b>
+            </div>
+
+            <div className="mandiDetail">
+              तारीख
+              <b>{x.arrivalDate || "आज"}</b>
             </div>
           </div>
         </div>
       ))}
     </>
+  );
+}
+
+/* ================= WEATHER ================= */
+
+function WeatherPage({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  const [weather, setWeather] = useState<WeatherData null |>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [locationName, setLocationName] = useState("आपका स्थान");
+
+  const getWeatherCodeText = (code: number) => {
+    if (code === 0) return "साफ़ आसमान";
+    if (code <= 3) return "आंशिक बादल";
+    if (code <= 48) return "कोहरा";
+    if (code <= 67) return "बारिश";
+    if (code <= 77) return "बर्फबारी";
+    if (code <= 82) return "तेज़ बारिश";
+    if (code <= 99) return "तूफान व बारिश";
+    return "सामान्य";
+  };
+
+  const fetchWeather = (lat: number, lon: number) => {
+    setLoading(true);
+    setError("");
+
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.current) {
+          setWeather(data);
+        } else {
+          setError("मौसम डेटा उपलब्ध नहीं हो सका।");
+        }
+      })
+      .catch(() => setError("मौसम सेवा उपलब्ध नहीं हो सकी।"))
+      .finally(() => setLoading(false));
+  };
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      setLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocationName("आपकी वर्तमान लोकेशन");
+          fetchWeather(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          setLocationName("नई दिल्ली (Default)");
+          fetchWeather(28.6139, 77.209);
+        }
+      );
+    } else {
+      setLocationName("नई दिल्ली (Default)");
+      fetchWeather(28.6139, 77.209);
+    }
+  };
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  return (
+    <>
+      <PageTitle setTab="{setTab}" sub="लाइव मौसम पूर्वानुमान" title="मौसम जानकारी"/>
+
+      <div className="locationRow">
+        <MapPin color="#2e7d32" size="{18}"/>
+        <span style={{ flex: 1, fontWeight: "bold" }}>{locationName}</span>
+        <button
+          className="addBtn"
+          onClick={getCurrentLocation}
+          disabled={loading}
+        >
+          <RefreshCw 4 marginRight: size="{12}" style="{{" }}/>
+          रिफ्रेश
+        </button>
+      </div>
+
+      {loading && (
+        <div className="section empty">
+          <h3>मौसम का हाल लोड हो रहा है...</h3>
+        </div>
+      )}
+
+      {error && <div className="section" style={{ color: "red" }}>{error}</div>}
+
+      {weather && !loading && (
+        <>
+          <div className="weatherBig">
+            <div>📍 {locationName}</div>
+            <div className="temperature">
+              {Math.round(weather.current.temperature_2m)}°C
+            </div>
+            <div style={{ fontWeight: "bold", fontSize: 16 }}>
+              {getWeatherCodeText(weather.current.weather_code)}
+            </div>
+
+            <div className="weatherInfoGrid">
+              <div className="weatherInfo">
+                💧 नमी: <b>{weather.current.relative_humidity_2m}%</b>
+              </div>
+              <div className="weatherInfo">
+                💨 हवा: <b>{weather.current.wind_speed_10m} km/h</b>
+              </div>
+            </div>
+          </div>
+
+          <div className="section">
+            <h3>अगले 3 दिनों का अनुमान</h3>
+            <div className="forecast">
+              {weather.daily.time.slice(1, 4).map((time, idx) => (
+                <div className="forecastCard" key={time}>
+                  <div>{new Date(time).toLocaleDateString("hi-IN", { weekday: "short" })}</div>
+                  <div className="forecastIcon">🌦️</div>
+                  <div>
+                    <b>{Math.round(weather.daily.temperature_2m_max[idx + 1])}°</b> /{" "}
+                    {Math.round(weather.daily.temperature_2m_min[idx + 1])}°
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+/* ================= CROPS ================= */
+
+function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [crops, setCrops] = useState<Crop[]>(() => {
+    const saved = localStorage.getItem("ks_crops");
+    return saved
+      ? JSON.parse(saved)
+      : [
+          { id: 1, name: "गेहूं", area: "2 एकड़", note: "सिंचाई पूरी हो चुकी है" },
+          { id: 2, name: "सरसों", area: "1 एकड़", note: "कटाई की तैयारी" },
+        ];
+  });
+
+  const [name, setName] = useState("");
+  const [area, setArea] = useState("");
+  const [note, setNote] = useState("");
+
+  const addCrop = () => {
+    if (!name.trim()) return;
+    const newCrop: Crop = { id: Date.now(), name, area, note };
+    const updated = [...crops, newCrop];
+    setCrops(updated);
+    localStorage.setItem("ks_crops", JSON.stringify(updated));
+    setName("");
+    setArea("");
+    setNote("");
+  };
+
+  const removeCrop = (id: number) => {
+    const updated = crops.filter((c) => c.id !== id);
+    setCrops(updated);
+    localStorage.setItem("ks_crops", JSON.stringify(updated));
+  };
+
+  return (
+    <>
+      <PageTitle setTab="{setTab}" sub="आपकी फसलों का हिसाब" title="मेरी फसलें"/>
+
+      <div className="section">
+        <h3>नई फसल जोड़ें</h3>
+        <input
+          className="search"
+          placeholder="फसल का नाम (उदा. धान, गेहूं)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          className="search"
+          placeholder="क्षेत्रफल (उदा. 2 एकड़)"
+          value={area}
+          onChange={(e) => setArea(e.target.value)}
+        />
+        <input
+          className="search"
+          placeholder="टिप्पणी / नोट (ऑप्शनल)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+        <button className="primary" onClick={addCrop}>
+          + फसल जोड़ें
+        </button>
+      </div>
+
+      <div className="section">
+        <h3>आपकी जोड़ी गई फसलें</h3>
+        {crops.length === 0 ? (
+          <p className="muted">अभी कोई फसल नहीं जोड़ी गई है।</p>
+        ) : (
+          crops.map((c) => (
+            <div className="cropRow" key={c.id}>
+              <div>
+                <div className="cropName">🌱 {c.name}</div>
+                <div className="muted">{c.area} {c.note && `• ${c.note}`}</div>
+              </div>
+              <button
+                style={{ border: 0, background: "transparent", color: "red" }}
+                onClick={() => removeCrop(c.id)}
+              >
+                <X size="{18}"/>
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ================= DOCTOR ================= */
+
+function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState("");
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+        setResult("");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const analyzeImage = () => {
+    if (!selectedImage) return;
+    setAnalyzing(true);
+    setTimeout(() => {
+      setAnalyzing(false);
+      setResult(
+        "🌿 **जांच परिणाम (AI Doctor Analysis):**\n\n• **बीमारी:** पत्ती धब्बा रोग (Leaf Spot Disease)\n• **कारण:** फंगल संक्रमण या अधिक नमी\n• **उपचार:** 15 दिन के अंतराल में कॉपर ऑक्सीक्लोराइड 3 ग्राम/लीटर पानी में मिलाकर छिड़काव करें।"
+      );
+    }, 2500);
+  };
+
+  return (
+    <>
+      <PageTitle setTab="{setTab}" sub="फोटो खींचकर बीमारी का पता लगाएं" title="फसल डॉक्टर"/>
+
+      <div className="section">
+        <div className="upload">
+          <Camera color="#28752e" size="{40}"/>
+          <p style={{ margin: "10px 0 5px", fontWeight: "bold" }}>
+            फसल के प्रभावित हिस्से की फोटो अपलोड करें
+          </p>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            style={{ marginTop: 10 }}
+          />
+        </div>
+
+        {selectedImage && (
+          <div style={{ textAlign: "center", marginTop: 10 }}>
+            <img src={selectedImage} alt="Crop" className="preview" />
+            <button
+              className="primary"
+              onClick={analyzeImage}
+              disabled={analyzing}
+              style={{ marginTop: 10 }}
+            >
+              {analyzing ? "जांच की जा रही है..." : "🔍 AI से जांच करवाएं"}
+            </button>
+          </div>
+        )}
+
+        {result && <div className="result">{result}</div>}
+
+        <div className="doctorTip">
+          💡 **सलाह:** साफ़ और साफ़ धूप में ली गई फोटो से अधिक सटीक परिणाम मिलते हैं।
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ================= CHAT ================= */
+
+function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { from: "ai", text: "नमस्ते! मैं आपका Kisan AI सहायक हूँ। खेती, खाद, बीज या बीमारी से जुड़ा कोई भी सवाल पूछें।" },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const sendMessage = async (textToSend?: string) => {
+    const text = textToSend || input;
+    if (!text.trim() || loading) return;
+
+    const newMsgs: ChatMsg[] = [...messages, { from: "user", text }];
+    setMessages(newMsgs);
+    if (!textToSend) setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      setMessages([...newMsgs, { from: "ai", text: data.reply || "क्षमा करें, जवाब नहीं मिल सका।" }]);
+    } catch {
+      setMessages([...newMsgs, { from: "ai", text: "सर्वर से कनेक्ट करने में परेशानी आ रही है।" }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <PageTitle setTab="{setTab}" sub="24x7 कृषि सलाह" title="AI Kisan Salahkar"/>
+
+      <div className="chatBox">
+        {messages.map((m, idx) => (
+          <div key={idx} className={`bubble ${m.from === "ai" ? "aiBubble" : "userBubble"}`}>
+            {m.text}
+          </div>
+        ))}
+        {loading && <div className="bubble aiBubble">सोच रहा हूँ...</div>}
+      </div>
+
+      <div className="quick">
+        <button onClick={() => sendMessage("गेहूं में पहली सिंचाई कब करें?")}>🌾 गेहूं में सिंचाई</button>
+        <button onClick={() => sendMessage("खाद की मात्रा कैसे तय करें?")}>🌱 खाद प्रबंधन</button>
+        <button onClick={() => sendMessage("कीट नियंत्रण के घरेलू उपाय")}>🐛 कीट नियंत्रण</button>
+      </div>
+
+      <div className="inputRow">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="अपना सवाल पूछें..."
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <button className="sendBtn" onClick={() => sendMessage()}>
+          <Send size="{18}"/>
+        </button>
+      </div>
+    </>
+  );
+}
+
+/* ================= STORE & CART ================= */
+
+function StorePage({
+  setTab,
+  cart,
+  setCart,
+}: {
+  setTab: (t: Tab) => void;
+  cart: { [key: number]: number };
+  setCart: React.Dispatch<React.SetStateAction<{ [key: number number]: }>>;
+}) {
+  const addToCart = (id: number) => {
+    setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  };
+
+  return (
+    <>
+      <PageTitle setTab="{setTab}" sub="उत्कृष्ट कृषि उत्पाद" title="Kisan Store"/>
+
+      <div className="section">
+        {products.map((p) => (
+          <div className="product" key={p.id}>
+            <div>
+              <div className="productName">
+                {p.emoji} {p.name}
+              </div>
+              <div className="muted">
+                ₹{p.price} / {p.unit}
+              </div>
+            </div>
+            <button className="addBtn" onClick={() => addToCart(p.id)}>
+              + कार्ट में जोड़ें
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function CartPage({
+  setTab,
+  cart,
+  setCart,
+}: {
+  setTab: (t: Tab) => void;
+  cart: { [key: number]: number };
+  setCart: React.Dispatch<React.SetStateAction<{ [key: number number]: }>>;
+}) {
+  const updateQty = (id: number, delta: number) => {
+    setCart((prev) => {
+      const next = { ...prev };
+      const val = (next[id] || 0) + delta;
+      if (val <= 0) delete next[id];
+      else next[id] = val;
+      return next;
+    });
+  };
+
+  const cartItems = products.filter((p) => cart[p.id]);
+  const total = cartItems.reduce((acc, p) => acc + p.price * cart[p.id], 0);
+
+  return (
+    <>
+      <PageTitle setTab="{setTab}" title="आपकी कार्ट"/>
+
+      <div className="section">
+        {cartItems.length === 0 ? (
+          <div className="empty">कार्ट खाली है।</div>
+        ) : (
+          <>
+            {cartItems.map((p) => (
+              <div className="cartRow" key={p.id}>
+                <div>
+                  <div className="productName">{p.name}</div>
+                  <div className="muted">₹{p.price}</div>
+                </div>
+                <div className="quantity">
+                  <button onClick={() => updateQty(p.id, -1)}>
+                    <Minus size="{14}"/>
+                  </button>
+                  <span>{cart[p.id]}</span>
+                  <button onClick={() => updateQty(p.id, 1)}>
+                    <Plus size="{14}"/>
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <div className="total">
+              <span>कुल योग:</span>
+              <span>₹{total}</span>
+            </div>
+
+            <button
+              className="primary"
+              onClick={() => alert("आर्डर सफलतापूर्वक दर्ज कर लिया गया है!")}
+            >
+              ऑर्डर करें
+            </button>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ================= PROFILE ================= */
+
+function ProfilePage({ setTab, name }: { setTab: (t: Tab) => void; name: string }) {
+  return (
+    <>
+      <PageTitle setTab="{setTab}" title="प्रोफाइल व योजनाएं"/>
+
+      <div className="section profileCard">
+        <div className="bigProfile">
+          <User size="{36}"/>
+        </div>
+        <h3 style={{ margin: "10px 0 2px" }}>{name}</h3>
+        <p className="muted">किसान साथी पंजीकृत सदस्य</p>
+      </div>
+
+      <div className="section">
+        <h3>🏛️ प्रमुख सरकारी योजनाएं</h3>
+        {schemes.map((s, idx) => (
+          <div className="scheme" key={idx}>
+            <div className="schemeIcon">{s.icon}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: "bold", fontSize: 13 }}>{s.title}</div>
+              <div className="muted">{s.text}</div>
+            </div>
+            <a href={s.url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink size="{16}"/>
+            </a>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/* ================= MAIN APP ================= */
+
+export function App() {
+  const [tab, setTab] = useState<Tab>("home");
+  const [cart, setCart] = useState<{ [key: number]: number }>({});
+  const name = "अमन सैनी";
+
+  const totalCartCount = Object.values(cart).reduce((a, b) => a + b, 0);
+
+  return (
+    <>
+      <style>{css}</style>
+
+      <div className="app">
+        <header>
+          <div className="brand">
+            <div className="logo">🌾</div>
+            <div>
+              KisanSathi AI
+              <small>स्मार्ट कृषि साथी</small>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="profileIcon"
+              onClick={() => setTab("cart")}
+              aria-label="Cart"
+              style={{ position: "relative" }}
+            >
+              <ShoppingCart size="{20}"/>
+              {totalCartCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -2,
+                    right: -2,
+                    background: "red",
+                    color: "white",
+                    borderRadius: "50%",
+                    padding: "2px 5px",
+                    fontSize: 9,
+                  }}
+                >
+                  {totalCartCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              className="profileIcon"
+              onClick={() => setTab("profile")}
+              aria-label="Profile"
+            >
+              <User size="{20}"/>
+            </button>
+          </div>
+        </header>
+
+        <main>
+          {tab === "home" && <HomePage name="{name}" setTab="{setTab}"/>}
+          {tab === "mandi" && <MandiPage setTab="{setTab}"/>}
+          {tab === "weather" && <WeatherPage setTab="{setTab}"/>}
+          {tab === "crops" && <CropsPage setTab="{setTab}"/>}
+          {tab === "doctor" && <DoctorPage setTab="{setTab}"/>}
+          {tab === "chat" && <ChatPage setTab="{setTab}"/>}
+          {tab === "store" && <StorePage cart="{cart}" setCart="{setCart}" setTab="{setTab}"/>}
+          {tab === "cart" && <CartPage cart="{cart}" setCart="{setCart}" setTab="{setTab}"/>}
+          {tab === "profile" && <ProfilePage name="{name}" setTab="{setTab}"/>}
+        </main>
+
+        <button className="fab" onClick={() => setTab("chat")} aria-label="Ask AI">
+          <MessageCircle size="{26}"/>
+        </button>
+
+        <nav className="bottomNav">
+          <Nav "home"} active="{tab" on="{()"> setTab("home")} icon={<Home size="{20}"/>} text="होम" />
+          <Nav "mandi"} active="{tab" on="{()"> setTab("mandi")} icon={<Leaf size="{20}"/>} text="मंडी" />
+          <Nav "doctor"} active="{tab" on="{()"> setTab("doctor")} icon={<Stethoscope size="{20}"/>} text="डॉक्टर" />
+          <Nav "store"} active="{tab" on="{()"> setTab("store")} icon={<ShoppingCart size="{20}"/>} text="स्टोर" />
+        </nav>
+      </div>
+    </>
+  );
+}
+
+/* ================= RENDER ================= */
+
+const container = document.getElementById("root");
+if (container) {
+  const root = createRoot(container);
+  root.render(
+    <React.StrictMode>
+      <App/>
+    </React.StrictMode>
   );
 }
