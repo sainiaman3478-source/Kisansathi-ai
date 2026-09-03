@@ -548,6 +548,7 @@ main {
   min-height: 330px;
   max-height: 55vh;
   overflow: auto;
+  white-space: pre-wrap;
 }
 
 .bubble {
@@ -1481,7 +1482,10 @@ function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
 
 function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { from: "ai", text: "नमस्ते! मैं आपका Kisan AI सहायक हूँ। खेती, खाद, बीज या बीमारी से जुड़ा कोई भी सवाल पूछें।" },
+    {
+      from: "ai",
+      text: "नमस्ते! मैं आपका Kisan AI सहायक हूँ। खेती, खाद, बीज या बीमारी से जुड़ा कोई भी सवाल पूछें।",
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1499,12 +1503,42 @@ function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
       const res = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({
+          message: text,
+          prompt: text,
+          query: text,
+        }),
       });
+
       const data = await res.json();
-      setMessages([...newMsgs, { from: "ai", text: data.reply || "क्षमा करें, जवाब नहीं मिल सका।" }]);
+
+      const replyText =
+        data.reply ||
+        data.response ||
+        data.text ||
+        data.message ||
+        data.answer ||
+        (typeof data === "string" ? data : null);
+
+      if (replyText) {
+        setMessages([...newMsgs, { from: "ai", text: replyText }]);
+      } else {
+        setMessages([
+          ...newMsgs,
+          {
+            from: "ai",
+            text: "उत्तर: " + JSON.stringify(data),
+          },
+        ]);
+      }
     } catch {
-      setMessages([...newMsgs, { from: "ai", text: "सर्वर से कनेक्ट करने में परेशानी आ रही है।" }]);
+      setMessages([
+        ...newMsgs,
+        {
+          from: "ai",
+          text: "सर्वर से कनेक्ट करने में परेशानी आ रही है।",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -1512,11 +1546,20 @@ function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
 
   return (
     <>
-      <PageTitle setTab={setTab} sub="24x7 कृषि सलाह" title="AI Kisan Salahkar" />
+      <PageTitle
+        setTab={setTab}
+        sub="24x7 कृषि सलाह"
+        title="AI Kisan Salahkar"
+      />
 
       <div className="chatBox">
         {messages.map((m, idx) => (
-          <div key={idx} className={`bubble ${m.from === "ai" ? "aiBubble" : "userBubble"}`}>
+          <div
+            key={idx}
+            className={`bubble ${
+              m.from === "ai" ? "aiBubble" : "userBubble"
+            }`}
+          >
             {m.text}
           </div>
         ))}
@@ -1524,9 +1567,17 @@ function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
       </div>
 
       <div className="quick">
-        <button onClick={() => sendMessage("गेहूं में पहली सिंचाई कब करें?")}>🌾 गेहूं में सिंचाई</button>
-        <button onClick={() => sendMessage("खाद की मात्रा कैसे तय करें?")}>🌱 खाद प्रबंधन</button>
-        <button onClick={() => sendMessage("कीट नियंत्रण के घरेलू उपाय")}>🐛 कीट नियंत्रण</button>
+        <button
+          onClick={() => sendMessage("गेहूं में पहली सिंचाई कब करें?")}
+        >
+          🌾 गेहूं में सिंचाई
+        </button>
+        <button onClick={() => sendMessage("खाद की मात्रा कैसे तय करें?")}>
+          🌱 खाद प्रबंधन
+        </button>
+        <button onClick={() => sendMessage("कीट नियंत्रण के घरेलू उपाय")}>
+          🐛 कीट नियंत्रण
+        </button>
       </div>
 
       <div className="inputRow">
