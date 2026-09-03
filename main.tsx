@@ -68,14 +68,6 @@ type MandiRecord = {
   modalPrice: number;
 };
 
-type MandiResponse = {
-  ok: boolean;
-  source?: string;
-  count?: number;
-  mandi?: MandiRecord[];
-  error?: string;
-};
-
 type WeatherData = {
   current: {
     temperature_2m: number;
@@ -934,7 +926,7 @@ function HomePage({
   );
 }
 
-/* ================= MANDI (FIXED ONLY HERE) ================= */
+/* ================= MANDI (EXPANDED SEARCH LIMIT) ================= */
 
 function MandiPage({
   setTab,
@@ -960,14 +952,17 @@ function MandiPage({
     try {
       const params = new URLSearchParams();
 
-      params.set("limit", "100");
+      // Increased limit from 100 to 1000 for pan-India data
+      params.set("limit", "1000");
 
       if (state.trim()) {
         params.set("state", state.trim());
       }
 
-      if (commodity.trim()) {
-        params.set("commodity", commodity.trim());
+      // Priority to search box if commodity field is empty
+      const targetCommodity = commodity.trim() || search.trim();
+      if (targetCommodity) {
+        params.set("commodity", targetCommodity);
       }
 
       if (market.trim()) {
@@ -978,7 +973,7 @@ function MandiPage({
 
       const timeout = setTimeout(() => {
         controller.abort();
-      }, 30000);
+      }, 35000);
 
       const response = await fetch(
         `${API_BASE}/api/mandi?${params.toString()}`,
@@ -995,7 +990,6 @@ function MandiPage({
 
       const data: any = await response.json().catch(() => ({}));
 
-      // Flexibly extract mandi data whether returned as { mandi: [...] } or array directly
       const mandiData = Array.isArray(data.mandi)
         ? data.mandi
         : Array.isArray(data)
@@ -1008,7 +1002,7 @@ function MandiPage({
         setHasLoaded(true);
 
         if (!mandiData.length) {
-          setError("इस search के लिए अभी कोई mandi record नहीं मिला।");
+          setError("इस खोज के लिए अभी कोई मंडी रिकॉर्ड नहीं मिला। कृपया राज्य या फसल का नाम जांचें।");
         }
       } else {
         throw new Error(data.error || "Mandi data load नहीं हो पाया।");
@@ -1042,7 +1036,7 @@ function MandiPage({
     if (!s) return records;
 
     return records.filter((x) =>
-      `${x.state} ${x.district} ${x.market} ${x.commodity} ${x.variety} ${x.grade}`
+      `${x.state || ""} ${x.district || ""} ${x.market || ""} ${x.commodity || ""} ${x.variety || ""} ${x.grade || ""}`
         .toLowerCase()
         .includes(s)
     );
@@ -1053,12 +1047,12 @@ function MandiPage({
       <PageTitle
         setTab={setTab}
         title="मंडी भाव"
-        sub="Real Government Mandi Data"
+        sub="Real Government Mandi Data (Pan-India)"
       />
 
       <div className="section">
         <div className="mandiStatus">
-          🟢 <b>Real Mandi Data</b>
+          🟢 <b>Real Mandi Data (देशभर की मंडियां)</b>
           <br />
           Government of India - Data.gov.in / AGMARKNET
         </div>
@@ -1067,7 +1061,7 @@ function MandiPage({
           className="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔎 राज्य, फसल, मंडी या जिला खोजें..."
+          placeholder="🔎 राज्य, फसल, मंडी या जिला खोजें (उदा. Wheat, Rajasthan)"
         />
 
         <div className="filterGrid">
@@ -1075,16 +1069,14 @@ function MandiPage({
             className="search"
             value={state}
             onChange={(e) => setState(e.target.value)}
-            placeholder="राज्य जैसे Haryana"
+            placeholder="राज्य जैसे Haryana, Rajasthan"
           />
 
           <input
             className="search"
             value={commodity}
-            onChange={(e) =>
-              setCommodity(e.target.value)
-            }
-            placeholder="फसल जैसे Wheat"
+            onChange={(e) => setCommodity(e.target.value)}
+            placeholder="फसल जैसे Wheat, Paddy"
           />
 
           <input
@@ -1109,7 +1101,7 @@ function MandiPage({
           />
 
           {loading
-            ? "मंडी भाव लोड हो रहे हैं..."
+            ? "देशभर के मंडी भाव लोड हो रहे हैं..."
             : "🔍 Real Mandi Bhav देखें"}
         </button>
 
@@ -1118,7 +1110,7 @@ function MandiPage({
             className="muted"
             style={{ marginTop: 8 }}
           >
-            Source: {source}
+            Source: {source} | Total Loaded: {records.length}
           </div>
         )}
       </div>
@@ -1126,10 +1118,9 @@ function MandiPage({
       {!hasLoaded && !loading && (
         <div className="section empty">
           <div style={{ fontSize: 45 }}>🌾</div>
-          <h3>Real Mandi Bhav देखें</h3>
+          <h3>देशभर के मंडी भाव देखें</h3>
           <p>
-            राज्य, फसल या मंडी डालें और ऊपर वाला
-            बटन दबाएं।
+            फसल या राज्य डालकर ऊपर वाला बटन दबाएं।
           </p>
         </div>
       )}
@@ -1717,8 +1708,6 @@ function DoctorPage({
   const [symptoms, setSymptoms] =
     useState("");
 
-  /* ================= CHOOSE PHOTO ================= */
-
   const choose = (f: File | null) => {
     if (url) {
       URL.revokeObjectURL(url);
@@ -1736,8 +1725,6 @@ function DoctorPage({
     }
   };
 
-  /* ================= CLEAN PHOTO URL ================= */
-
   useEffect(() => {
     return () => {
       if (url) {
@@ -1745,8 +1732,6 @@ function DoctorPage({
       }
     };
   }, [url]);
-
-  /* ================= FILE TO BASE64 ================= */
 
   const fileToDataUrl = (
     input: File
@@ -1788,8 +1773,6 @@ function DoctorPage({
     );
   };
 
-  /* ================= AI ANALYZE ================= */
-
   const analyze = async () => {
     if (!file || loading) {
       if (!file) {
@@ -1805,17 +1788,9 @@ function DoctorPage({
     setResult("");
 
     try {
-      /*
-       * Step 1:
-       * Photo को छोटा करें
-       */
       const smallImage =
         await compressImage(file);
 
-      /*
-       * Step 2:
-       * Photo को Base64 Data URL में बदलें
-       */
       const imageData =
         await fileToDataUrl(
           smallImage
@@ -1827,10 +1802,6 @@ function DoctorPage({
         );
       }
 
-      /*
-       * Step 3:
-       * Render backend को JSON भेजें
-       */
       const controller =
         new AbortController();
 
@@ -1876,9 +1847,6 @@ function DoctorPage({
 
       clearTimeout(timeout);
 
-      /*
-       * Server response पढ़ें
-       */
       const contentType =
         response.headers.get(
           "content-type"
@@ -1919,7 +1887,7 @@ function DoctorPage({
         e.name === "AbortError"
       ) {
         setResult(
-          "❌ Crop Doctor server ने 90 सेकंड में जवाब नहीं दिया। Render backend या AI API की जांच करनी होगी।"
+          "❌ Crop Doctor server ने 90 सेकंड में जवाब नहीं दिया।"
         );
       } else {
         setResult(
@@ -2539,8 +2507,6 @@ function App() {
   const [q, setQ] =
     useState("");
 
-  /* ================= STORAGE ================= */
-
   useEffect(() => {
     localStorage.setItem(
       "ks_cart",
@@ -2561,8 +2527,6 @@ function App() {
       JSON.stringify(chat)
     );
   }, [chat]);
-
-  /* ================= CART ================= */
 
   const count =
     Object.values(cart).reduce(
@@ -2607,8 +2571,6 @@ function App() {
       return x;
     });
   };
-
-  /* ================= AI CHAT ================= */
 
   const send = async (
     text = q
@@ -2744,8 +2706,6 @@ function App() {
       });
     }
   };
-
-  /* ================= UI ================= */
 
   return (
     <>
