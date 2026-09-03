@@ -45,6 +45,83 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// ===== CROP DOCTOR (PHOTO ANALYSIS) ROUTE =====
+app.post("/api/crop-doctor", async (req, res) => {
+  try {
+    const key = process.env.GEMINI_API_KEY?.trim();
+    if (!key) throw new Error("GEMINI_API_KEY missing");
+
+    const { image, mimeType, cropName, symptoms } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: "Photo nahi mili." });
+    }
+
+    // Base64 Data URL se clean base64 string nikalna
+    const base64Data = image.includes(",") ? image.split(",")[1] : image;
+    const finalMime = mimeType || "image/jpeg";
+
+    const promptText = `Tum ek expert Krishi Doctor ho. Is photo aur details ko dekh kar Hindi me jawab do:
+- Fasal ka naam: ${cropName || 'Pata nahi'}
+- Kisaan dwara bataye gaye lakshan: ${symptoms || 'Koi nahi'}
+
+Kripya niche diye gaye format me chota aur saral jawab do:
+1. 🩺 **Bimari / Samasya:** (Bimari ka naam aur karan)
+2. 💊 **Upchar / Dawa:** (Kaun si dawa ya kitnashak kitna dalna hai)
+3. 🛡️ **B बचाव ke Upay:** (Aage ke liye savdhani)`;
+
+    const models = ["gemini-1.5-flash", "gemini-2.5-flash"];
+    let lastErr = "";
+    let replyText = "";
+
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: promptText },
+                  {
+                    inline_data: {
+                      mime_type: finalMime,
+                      data: base64Data
+                    }
+                  }
+                ]
+              }
+            ],
+            generationConfig: { maxOutputTokens: 800, temperature: 0.4 }
+          })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          lastErr = data.error?.message || JSON.stringify(data);
+          continue;
+        }
+
+        replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyText) break;
+      } catch (err) {
+        lastErr = err.message;
+      }
+    }
+
+    if (!replyText) {
+      throw new Error(lastErr || "Crop Doctor AI photo analyze nahi kar paya.");
+    }
+
+    return res.json({ reply: replyText });
+
+  } catch (e) {
+    console.error("Crop Doctor Error:", e.message);
+    return res.status(500).json({ error: e.message || "Crop Doctor server me dikkat aayi." });
+  }
+});
+
 // ===== MANDI - FIX FOR FRONTEND (ok: true Added) =====
 app.get("/api/mandi", async (req, res) => {
   try {
