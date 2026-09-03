@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-// ===== KISAN AI - TERA CHALU WALA - NO CHANGE =====
+// ===== KISAN AI - UNTOUCHED =====
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
@@ -45,49 +45,81 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ===== MANDI - FINAL FIX - RED ERROR KHATAM =====
+// ===== MANDI - FIX FOR FRONTEND (ok: true Added) =====
 app.get("/api/mandi", async (req, res) => {
   try {
     const apiKey = process.env.DATA_GOV_API_KEY;
-    const q = (req.query.commodity || "").toLowerCase();
+    const reqState = (req.query.state || "").toLowerCase().trim();
+    const reqCommodity = (req.query.commodity || "").toLowerCase().trim();
+    const reqMarket = (req.query.market || "").toLowerCase().trim();
+
     let liveRecords = [];
 
     try {
       const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${apiKey}&format=json&limit=100&offset=0`;
       const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
       const data = await r.json();
-      if (data.records && data.records.length > 0) liveRecords = data.records;
-      console.log("LIVE records:", liveRecords.length);
+      if (data && data.records && data.records.length > 0) {
+        liveRecords = data.records;
+      }
     } catch (e) {
-      console.log("Live fail:", e.message);
+      console.log("Data.gov API Fetch Fail:", e.message);
     }
 
     let records = liveRecords;
     if (records.length === 0) {
-      console.log("Using DEMO fallback");
       records = [
-        { commodity: "Tomato", state: "Uttar Pradesh", district: "Sambhal", market: "Chandausi", min_price: "1500", max_price: "2200", modal_price: "1800", arrival_date: "2026-09-03" },
-        { commodity: "Wheat", state: "Uttar Pradesh", district: "Sambhal", market: "Sambhal", min_price: "2150", max_price: "2400", modal_price: "2250", arrival_date: "2026-09-03" },
-        { commodity: "Potato", state: "UP", district: "Sambhal", market: "Sambhal", min_price: "1000", max_price: "1600", modal_price: "1300", arrival_date: "2026-09-03" },
-        { commodity: "Onion", state: "UP", district: "Moradabad", market: "Moradabad", min_price: "1200", max_price: "1800", modal_price: "1500", arrival_date: "2026-09-03" },
-        { commodity: "Mustard", state: "UP", district: "Sambhal", market: "Sambhal", min_price: "5200", max_price: "5800", modal_price: "5500", arrival_date: "2026-09-03" }
+        { commodity: "Tomato", state: "Uttar Pradesh", district: "Sambhal", market: "Chandausi", min_price: 1500, max_price: 2200, modal_price: 1800, arrival_date: "03/09/2026", variety: "Deshi", grade: "FAQ" },
+        { commodity: "Wheat", state: "Haryana", district: "Karnal", market: "Karnal", min_price: 2150, max_price: 2400, modal_price: 2250, arrival_date: "03/09/2026", variety: "Other", grade: "FAQ" },
+        { commodity: "Potato", state: "Uttar Pradesh", district: "Sambhal", market: "Sambhal", min_price: 1000, max_price: 1600, modal_price: 1300, arrival_date: "03/09/2026", variety: "Deshi", grade: "FAQ" },
+        { commodity: "Onion", state: "Maharashtra", district: "Nashik", market: "Lasalgaon", min_price: 1200, max_price: 1800, modal_price: 1500, arrival_date: "03/09/2026", variety: "Red", grade: "FAQ" },
+        { commodity: "Mustard", state: "Rajasthan", district: "Jaipur", market: "Jaipur", min_price: 5200, max_price: 5800, modal_price: 5500, arrival_date: "03/09/2026", variety: "Mustard", grade: "FAQ" }
       ];
     }
 
-    let mandi = records.map(x => ({
-      commodity: x.commodity, state: x.state, district: x.district, market: x.market,
-      min: x.min_price, max: x.max_price, modal: x.modal_price, date: x.arrival_date
+    let formattedMandi = records.map(x => ({
+      state: x.state || "",
+      district: x.district || "",
+      market: x.market || "",
+      commodity: x.commodity || "",
+      variety: x.variety || "General",
+      grade: x.grade || "FAQ",
+      arrivalDate: x.arrival_date || x.date || "Today",
+      minPrice: Number(x.min_price || x.min || 0),
+      maxPrice: Number(x.max_price || x.max || 0),
+      modalPrice: Number(x.modal_price || x.modal || 0)
     }));
 
-    if (q) {
-      const filtered = mandi.filter(x => (x.commodity || "").toLowerCase().includes(q));
-      if (filtered.length > 0) mandi = filtered;
+    // Filter Logic
+    if (reqState) {
+      formattedMandi = formattedMandi.filter(x => x.state.toLowerCase().includes(reqState));
+    }
+    if (reqCommodity) {
+      formattedMandi = formattedMandi.filter(x => x.commodity.toLowerCase().includes(reqCommodity));
+    }
+    if (reqMarket) {
+      formattedMandi = formattedMandi.filter(x => x.market.toLowerCase().includes(reqMarket));
     }
 
-    // HAMESHA 200 OK bhejega, kabhi error nahi
-    res.json({ mandi, total: mandi.length, source: liveRecords.length > 0 ? "LIVE GOV" : "DEMO" });
+    // FRONTEND COMPATIBLE RESPONSE (MUST CONTAIN ok: true)
+    return res.status(200).json({
+      ok: true,
+      count: formattedMandi.length,
+      mandi: formattedMandi,
+      source: liveRecords.length > 0 ? "LIVE GOV" : "DEMO"
+    });
+
   } catch (e) {
-    res.json({ mandi: [{ commodity: "Tomato", state: "UP", market: "Chandausi", min: "1500", max: "2200", modal: "1800", date: "today" }], total: 1, source: "Fallback" });
+    return res.status(200).json({
+      ok: true,
+      count: 1,
+      mandi: [{
+        state: "Uttar Pradesh", district: "Sambhal", market: "Chandausi",
+        commodity: "Tomato", variety: "Deshi", grade: "FAQ", arrivalDate: "Today",
+        minPrice: 1500, maxPrice: 2200, modalPrice: 1800
+      }],
+      source: "Fallback"
+    });
   }
 });
 
