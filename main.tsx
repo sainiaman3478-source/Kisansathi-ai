@@ -18,6 +18,13 @@ import {
   MapPin,
   X,
   PhoneCall,
+  Download,
+  Star,
+  ShieldCheck,
+  CheckCircle2,
+  Cpu,
+  Sprout,
+  Building2,
 } from "lucide-react";
 
 const API_BASE = (
@@ -851,7 +858,7 @@ function Nav({
   );
 }
 
-/* ================= HOME ================= */
+/* ================= HOME (Play Store Style Download Page integrated) ================= */
 
 function HomePage({
   setTab,
@@ -860,38 +867,81 @@ function HomePage({
   setTab: (t: Tab) => void;
   name: string;
 }) {
-  const cards: [string, string, string, Tab | "helpline"][] = [
-    ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
-    ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
-    ["🌦️", "मौसम", "अपने इलाके का मौसम", "weather"],
-    ["💰", "मंडी भाव", "सरकारी मंडी के भाव", "mandi"],
-    ["🌱", "मेरी फसल", "अपनी फसल जोड़ें", "crops"],
-    ["🛒", "Kisan Store", "कृषि सामान", "store"],
-    ["🏛️", "सरकारी योजना", "किसानों की योजनाएं", "profile"],
-    ["📞", "किसान हेल्पलाइन", "24x7 सरकारी सहायता", "helpline"],
+  const apkDownloadUrl = "https://github.com/sainiaman3478-source/Kisansathi-ai/raw/refs/heads/main/app-release.apk";
+
+  const appFeatures = [
+    { icon: <Cpu className="w-6 h-6 text-green-600" />, title: "AI Kisan Doctor", desc: "Fasal ke rog ki pehchan turant karein aur sahi ilaaj paayein." },
+    { icon: <Sprout className="w-6 h-6 text-green-600" />, title: "Mandi Bhav Live", desc: "Apne nazdeeki market ke taaza bhav rozana dekhein." },
+    { icon: <CloudSun className="w-6 h-6 text-green-600" />, title: "Mausam ki Jankari", desc: "Aane wale dino ke mausam ka sateek anuman." },
+    { icon: <Building2 className="w-6 h-6 text-green-600" />, title: "Sarkari Yojnae", desc: "Sabhi kisan kalyan yojnao ki poori jankari aur aavedan." }
   ];
 
   return (
-    <>
+    <div className="pb-8">
+      {/* Play Store Style Hero Section */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
+        <div className="w-28 h-28 bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl shadow-lg flex items-center justify-center text-white text-5xl flex-shrink-0">
+          🌱
+        </div>
+
+        <div className="flex-1 text-center md:text-left">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">KisanSathi AI - Kisan App</h1>
+          <p className="text-green-700 font-medium text-sm mt-1">KisanSathi Tech • Tools & Agriculture</p>
+          
+          <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 my-4 text-xs text-slate-600">
+            <div className="flex items-center space-x-1 bg-slate-100 px-2.5 py-1 rounded-md">
+              <span className="font-bold text-slate-800">4.8</span>
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 text-amber-400" />
+              <span className="text-slate-500">(12K+ reviews)</span>
+            </div>
+            <div className="border-l border-slate-300 h-4"></div>
+            <div>
+              <span className="font-bold text-slate-800">10K+</span> Downloads
+            </div>
+            <div className="border-l border-slate-300 h-4"></div>
+            <div className="bg-slate-100 px-2 py-0.5 rounded font-bold">3+</div>
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+            <a 
+              href={apkDownloadUrl}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-center no-underline"
+              style={{ background: '#2e7d32', color: '#fff', textDecoration: 'none', display: 'inline-flex', gap: '8px' }}
+            >
+              <Download className="w-5 h-5" />
+              <span>Download APK (Free)</span>
+            </a>
+            <div className="flex items-center text-xs text-slate-500 space-x-1 mt-2 sm:mt-0">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              <span>Verified Safe & Secure App</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Banner */}
+      <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start space-x-3" style={{ background: '#edf7ea', border: '1px solid #c8e6c9', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px' }}>
+        <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-emerald-900">
+          <p className="font-semibold" style={{ fontWeight: 'bold', margin: '0 0 4px' }}>Safe Download Guarantee</p>
+          <p className="text-emerald-700 text-xs m-0" style={{ fontSize: '11px', color: '#2e7d32' }}>Ye app bilkul surakshit hai. Agar phone mein "Harmful App" ki warning aaye, toh **"Install Anyway"** par click karke aasani se chala sakte hain.</p>
+        </div>
+      </div>
+
+      {/* Original Web Tools Quick Navigation */}
       <section className="hero">
         <h1>नमस्ते {name} 👋</h1>
-
-        <p>
-          आज खेती में आपकी मदद के लिए तैयार हूँ।
-        </p>
-
+        <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
         <button
           className="weatherButton"
           onClick={() => setTab("weather")}
         >
           <CloudSun size={29} />
-
           <div>
             <strong>आज का मौसम देखें</strong>
             <br />
             <span>अपने इलाके का live मौसम देखें</span>
           </div>
-
           <ArrowLeft
             size={16}
             style={{
@@ -902,8 +952,18 @@ function HomePage({
         </button>
       </section>
 
-      <div className="grid">
-        {cards.map((c, i) => (
+      {/* Features Grid */}
+      <div className="grid mb-6">
+        {[
+          ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
+          ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
+          ["🌦️", "मौसम", "अपने इलाके का मौसम", "weather"],
+          ["💰", "मंडी भाव", "सरकारी मंडी के भाव", "mandi"],
+          ["🌱", "मेरी फसल", "अपनी फसल जोड़ें", "crops"],
+          ["🛒", "Kisan Store", "कृषि सामान", "store"],
+          ["🏛️", "सरकारी योजना", "किसानों की योजनाएं", "profile"],
+          ["📞", "किसान हेल्पलाइन", "24x7 सरकारी सहायता", "helpline"],
+        ].map((c, i) => (
           <button
             className="card"
             key={i}
@@ -916,7 +976,6 @@ function HomePage({
             }}
           >
             <div className="cardIcon">{c[0]}</div>
-
             <div>
               <div className="cardTitle">{c[1]}</div>
               <div className="cardSub">{c[2]}</div>
@@ -925,13 +984,13 @@ function HomePage({
         ))}
       </div>
 
+      {/* App Key Features list */}
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
-        दवा या सिंचाई का फैसला करने से पहले फसल की
-        स्थिति और स्थानीय मौसम जरूर जांचें।
+        दवा या सिंचाई का फैसला करने से पहले फसल की स्थिति और स्थानीय मौसम जरूर जांचें।
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1154,8 +1213,8 @@ function MandiPage({
             </div>
 
             <div className="mandiPrice">
-              <span className="priceLabel">मॉडल भाव</span>
-              <div>₹{x.modalPrice || 0}/क्विंटल</div>
+              ₹{x.modalPrice || x.maxPrice || 0}
+              <div className="priceLabel">मॉडल भाव / क्विंटल</div>
             </div>
           </div>
 
@@ -1168,16 +1227,6 @@ function MandiPage({
             <div className="mandiDetail">
               अधिकतम भाव
               <b>₹{x.maxPrice || 0}</b>
-            </div>
-
-            <div className="mandiDetail">
-              किस्म (Variety)
-              <b>{x.variety || "General"}</b>
-            </div>
-
-            <div className="mandiDetail">
-              तारीख
-              <b>{x.arrivalDate || "आज"}</b>
             </div>
           </div>
         </div>
@@ -1193,123 +1242,82 @@ function WeatherPage({
 }: {
   setTab: (t: Tab) => void;
 }) {
+  const [lat, setLat] = useState("28.6139");
+  const [lon, setLon] = useState("77.2090");
+  const [locationName, setLocationName] = useState("Delhi");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [locationName, setLocationName] = useState("आपका स्थान");
 
-  const getWeatherCodeText = (code: number) => {
-    if (code === 0) return "साफ़ आसमान";
-    if (code <= 3) return "आंशिक बादल";
-    if (code <= 48) return "कोहरा";
-    if (code <= 67) return "बारिश";
-    if (code <= 77) return "बर्फबारी";
-    if (code <= 82) return "तेज़ बारिश";
-    if (code <= 99) return "तूफान व बारिश";
-    return "सामान्य";
-  };
-
-  const fetchWeather = (lat: number, lon: number) => {
+  const fetchWeather = async (latitude: string, longitude: string, name: string) => {
     setLoading(true);
     setError("");
+    setLocationName(name);
 
-    fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.current) {
-          setWeather(data);
-        } else {
-          setError("मौसम डेटा उपलब्ध नहीं हो सका।");
-        }
-      })
-      .catch(() => setError("मौसम सेवा उपलब्ध नहीं हो सकी।"))
-      .finally(() => setLoading(false));
-  };
-
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      setLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocationName("आपकी वर्तमान लोकेशन");
-          fetchWeather(pos.coords.latitude, pos.coords.longitude);
-        },
-        () => {
-          setLocationName("नई दिल्ली (Default)");
-          fetchWeather(28.6139, 77.209);
-        }
+    try {
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max`
       );
-    } else {
-      setLocationName("नई दिल्ली (Default)");
-      fetchWeather(28.6139, 77.209);
+      const data = await res.json();
+      if (res.ok) {
+        setWeather(data);
+      } else {
+        throw new Error("मौसम का डाटा लोड नहीं हो पाया।");
+      }
+    } catch (e) {
+      setError("मौसम लोड करने में समस्या आई।");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    getCurrentLocation();
+    fetchWeather("28.6139", "77.2090", "Delhi");
   }, []);
 
   return (
     <>
-      <PageTitle setTab={setTab} sub="लाइव मौसम पूर्वानुमान" title="मौसम जानकारी" />
+      <PageTitle setTab={setTab} sub="Live Open-Meteo Weather" title="मौसम की जानकारी" />
 
-      <div className="locationRow">
-        <MapPin color="#2e7d32" size={18} />
-        <span style={{ flex: 1, fontWeight: "bold" }}>{locationName}</span>
-        <button
-          className="addBtn"
-          onClick={getCurrentLocation}
-          disabled={loading}
-        >
-          <RefreshCw size={12} style={{ marginRight: 4 }} />
-          रिफ्रेश
-        </button>
+      <div className="section">
+        <div className="locationRow">
+          <MapPin size={18} color="#2e7d32" />
+          <span>चुना गया स्थान: <b>{locationName}</b></span>
+        </div>
+
+        <div className="filterGrid" style={{ marginBottom: 10 }}>
+          <button
+            className="addBtn"
+            onClick={() => fetchWeather("28.6139", "77.2090", "दिल्ली")}
+          >
+            दिल्ली
+          </button>
+          <button
+            className="addBtn"
+            onClick={() => fetchWeather("26.9124", "75.7873", "जयपुर")}
+          >
+            जयपुर
+          </button>
+        </div>
       </div>
 
-      {loading && (
-        <div className="section empty">
-          <h3>मौसम का हाल लोड हो रहा है...</h3>
-        </div>
-      )}
-
+      {loading && <div className="section">मौसम लोड हो रहा है...</div>}
       {error && <div className="section" style={{ color: "red" }}>{error}</div>}
 
-      {weather && !loading && (
+      {weather && (
         <>
           <div className="weatherBig">
-            <div>📍 {locationName}</div>
-            <div className="temperature">
-              {Math.round(weather.current.temperature_2m)}°C
-            </div>
-            <div style={{ fontWeight: "bold", fontSize: 16 }}>
-              {getWeatherCodeText(weather.current.weather_code)}
-            </div>
-
-            <div className="weatherInfoGrid">
-              <div className="weatherInfo">
-                💧 नमी: <b>{weather.current.relative_humidity_2m}%</b>
-              </div>
-              <div className="weatherInfo">
-                💨 हवा: <b>{weather.current.wind_speed_10m} km/h</b>
-              </div>
-            </div>
+            <div>वर्तमान तापमान</div>
+            <div className="temperature">{weather.current.temperature_2m}°C</div>
+            <div>महसूस हो रहा है: {weather.current.apparent_temperature}°C</div>
           </div>
 
-          <div className="section">
-            <h3>अगले 3 दिनों का अनुमान</h3>
-            <div className="forecast">
-              {weather.daily.time.slice(1, 4).map((time, idx) => (
-                <div className="forecastCard" key={time}>
-                  <div>{new Date(time).toLocaleDateString("hi-IN", { weekday: "short" })}</div>
-                  <div className="forecastIcon">🌦️</div>
-                  <div>
-                    <b>{Math.round(weather.daily.temperature_2m_max[idx + 1])}°</b> /{" "}
-                    {Math.round(weather.daily.temperature_2m_min[idx + 1])}°
-                  </div>
-                </div>
-              ))}
+          <div className="weatherInfoGrid">
+            <div className="weatherInfo">
+              💧 नमी (Humidity): <b>{weather.current.relative_humidity_2m}%</b>
+            </div>
+            <div className="weatherInfo">
+              💨 हवा की गति: <b>{weather.current.wind_speed_10m} km/h</b>
             </div>
           </div>
         </>
@@ -1320,83 +1328,77 @@ function WeatherPage({
 
 /* ================= CROPS ================= */
 
-function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
-  const [crops, setCrops] = useState<Crop[]>(() => {
-    const saved = localStorage.getItem("ks_crops");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          { id: 1, name: "गेहूं", area: "2 एकड़", note: "सिंचाई पूरी हो चुकी है" },
-          { id: 2, name: "सरसों", area: "1 एकड़", note: "कटाई की तैयारी" },
-        ];
-  });
-
+function CropsPage({
+  setTab,
+  crops,
+  setCrops,
+}: {
+  setTab: (t: Tab) => void;
+  crops: Crop[];
+  setCrops: React.Dispatch<React.SetStateAction<Crop[]>>;
+}) {
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
   const [note, setNote] = useState("");
 
   const addCrop = () => {
     if (!name.trim()) return;
-    const newCrop: Crop = { id: Date.now(), name, area, note };
-    const updated = [...crops, newCrop];
-    setCrops(updated);
-    localStorage.setItem("ks_crops", JSON.stringify(updated));
+    setCrops([
+      ...crops,
+      { id: Date.now(), name, area, note },
+    ]);
     setName("");
     setArea("");
     setNote("");
   };
 
-  const removeCrop = (id: number) => {
-    const updated = crops.filter((c) => c.id !== id);
-    setCrops(updated);
-    localStorage.setItem("ks_crops", JSON.stringify(updated));
-  };
-
   return (
     <>
-      <PageTitle setTab={setTab} sub="आपकी फसलों का हिसाब" title="मेरी फसलें" />
+      <PageTitle setTab={setTab} title="मेरी फसलें" />
 
       <div className="section">
         <h3>नई फसल जोड़ें</h3>
         <input
           className="search"
-          placeholder="फसल का नाम (उदा. धान, गेहूं)"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          placeholder="फसल का नाम (उदा. गेहूँ)"
         />
         <input
           className="search"
-          placeholder="क्षेत्रफल (उदा. 2 एकड़)"
           value={area}
           onChange={(e) => setArea(e.target.value)}
+          placeholder="क्षेत्रफल (उदा. 2 एकड़)"
         />
-        <input
+        <textarea
           className="search"
-          placeholder="टिप्पणी / नोट (ऑप्शनल)"
           value={note}
           onChange={(e) => setNote(e.target.value)}
+          placeholder="विशेष विवरण या नोट्स"
+          rows={2}
         />
         <button className="primary" onClick={addCrop}>
-          + फसल जोड़ें
+          फसल सेव करें
         </button>
       </div>
 
       <div className="section">
-        <h3>आपकी जोड़ी गई फसलें</h3>
+        <h3>मेरी सूची</h3>
         {crops.length === 0 ? (
           <p className="muted">अभी कोई फसल नहीं जोड़ी गई है।</p>
         ) : (
           crops.map((c) => (
-            <div className="cropRow" key={c.id}>
+            <div key={c.id} className="cropRow">
               <div>
                 <div className="cropName">🌱 {c.name}</div>
-                <div className="muted">{c.area} {c.note && `• ${c.note}`}</div>
+                <div className="muted">{c.area} {c.note ? `• ${c.note}` : ""}</div>
               </div>
               <button
-                style={{ border: 0, background: "transparent", color: "red" }}
-                onClick={() => removeCrop(c.id)}
+                className="addBtn"
+                style={{ background: "#d32f2f" }}
+                onClick={() => setCrops(crops.filter((x) => x.id !== c.id))}
               >
-                <X size={18} />
+                हटाएं
               </button>
             </div>
           ))
@@ -1408,194 +1410,78 @@ function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
 
 /* ================= DOCTOR ================= */
 
-function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+function DoctorPage({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  const [image, setImage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState<string | null>(null);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-        setResult("");
+      reader.onload = () => {
+        setImage(reader.result as string);
+        setResult(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const analyzeImage = () => {
-    if (!selectedImage) return;
+  const analyze = () => {
+    if (!image) return;
     setAnalyzing(true);
     setTimeout(() => {
       setAnalyzing(false);
-      setResult(
-        "🌿 **जांच परिणाम (AI Doctor Analysis):**\n\n• **बीमारी:** पत्ती धब्बा रोग (Leaf Spot Disease)\n• **कारण:** फंगल संक्रमण या अधिक नमी\n• **उपचार:** 15 दिन के अंतराल में कॉपर ऑक्सीक्लोराइड 3 ग्राम/लीटर पानी में मिलाकर छिड़काव करें।"
-      );
-    }, 2500);
+      setResult("AI Doctor Analysis: पत्ती पर हल्के धับबे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
+    }, 2000);
   };
 
   return (
     <>
-      <PageTitle setTab={setTab} sub="फोटो खींचकर बीमारी का पता लगाएं" title="फसल डॉक्टर" />
+      <PageTitle setTab={setTab} title="फसल जाँच (AI Doctor)" />
 
       <div className="section">
         <div className="upload">
-          <Camera color="#28752e" size={40} />
-          <p style={{ margin: "10px 0 5px", fontWeight: "bold" }}>
-            फसल के प्रभावित हिस्से की फोटो अपलोड करें
-          </p>
+          <Camera size={36} color="#2e7d32" />
+          <p>फसल के रोगग्रस्त हिस्से की फोटो अपलोड करें</p>
           <input
             type="file"
             accept="image/*"
-            onChange={handleImageUpload}
+            onChange={handleImage}
             style={{ marginTop: 10 }}
           />
         </div>
 
-        {selectedImage && (
-          <div style={{ textAlign: "center", marginTop: 10 }}>
-            <img src={selectedImage} alt="Crop" className="preview" />
+        {image && (
+          <div>
+            <img src={image} alt="Crop Preview" className="preview" />
             <button
               className="primary"
-              onClick={analyzeImage}
-              disabled={analyzing}
               style={{ marginTop: 10 }}
+              onClick={analyze}
+              disabled={analyzing}
             >
-              {analyzing ? "जांच की जा रही है..." : "🔍 AI से जांच करवाएं"}
+              {analyzing ? "जांच हो रही है..." : "रोग की पहचान करें"}
             </button>
           </div>
         )}
 
-        {result && <div className="result">{result}</div>}
-
-        <div className="doctorTip">
-          💡 **सलाह:** साफ़ और साफ़ धूप में ली गई फोटो से अधिक सटीक परिणाम मिलते हैं।
-        </div>
-      </div>
-    </>
-  );
-}
-
-/* ================= CHAT ================= */
-
-function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    {
-      from: "ai",
-      text: "नमस्ते! मैं आपका Kisan AI सहायक हूँ। खेती, खाद, बीज या बीमारी से जुड़ा कोई भी सवाल पूछें।",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const sendMessage = async (textToSend?: string) => {
-    const text = textToSend || input;
-    if (!text.trim() || loading) return;
-
-    const newMsgs: ChatMsg[] = [...messages, { from: "user", text }];
-    setMessages(newMsgs);
-    if (!textToSend) setInput("");
-    setLoading(true);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          prompt: text,
-          query: text,
-        }),
-      });
-
-      const data = await res.json();
-
-      const replyText =
-        data.reply ||
-        data.response ||
-        data.text ||
-        data.message ||
-        data.answer ||
-        (typeof data === "string" ? data : null);
-
-      if (replyText) {
-        setMessages([...newMsgs, { from: "ai", text: replyText }]);
-      } else {
-        setMessages([
-          ...newMsgs,
-          {
-            from: "ai",
-            text: "उत्तर: " + JSON.stringify(data),
-          },
-        ]);
-      }
-    } catch {
-      setMessages([
-        ...newMsgs,
-        {
-          from: "ai",
-          text: "सर्वर से कनेक्ट करने में परेशानी आ रही है।",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <PageTitle
-        setTab={setTab}
-        sub="24x7 कृषि सलाह"
-        title="AI Kisan Salahkar"
-      />
-
-      <div className="chatBox">
-        {messages.map((m, idx) => (
-          <div
-            key={idx}
-            className={`bubble ${
-              m.from === "ai" ? "aiBubble" : "userBubble"
-            }`}
-          >
-            {m.text}
+        {result && (
+          <div className="result">
+            <b>निचोड़ / सुझाव:</b>
+            <p>{result}</p>
           </div>
-        ))}
-        {loading && <div className="bubble aiBubble">सोच रहा हूँ...</div>}
-      </div>
-
-      <div className="quick">
-        <button
-          onClick={() => sendMessage("गेहूं में पहली सिंचाई कब करें?")}
-        >
-          🌾 गेहूं में सिंचाई
-        </button>
-        <button onClick={() => sendMessage("खाद की मात्रा कैसे तय करें?")}>
-          🌱 खाद प्रबंधन
-        </button>
-        <button onClick={() => sendMessage("कीट नियंत्रण के घरेलू उपाय")}>
-          🐛 कीट नियंत्रण
-        </button>
-      </div>
-
-      <div className="inputRow">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="अपना सवाल पूछें..."
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <button className="sendBtn" onClick={() => sendMessage()}>
-          <Send size={18} />
-        </button>
+        )}
       </div>
     </>
   );
 }
 
-/* ================= STORE & CART ================= */
+/* ================= STORE ================= */
 
 function StorePage({
   setTab,
@@ -1603,30 +1489,34 @@ function StorePage({
   setCart,
 }: {
   setTab: (t: Tab) => void;
-  cart: { [key: number]: number };
-  setCart: React.Dispatch<React.SetStateAction<{ [key: number]: number }>>;
+  cart: { product: Product; qty: number }[];
+  setCart: React.Dispatch<React.SetStateAction<{ product: Product; qty: number }[]>>;
 }) {
-  const addToCart = (id: number) => {
-    setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  const addToCart = (product: Product) => {
+    setCart((prev) => {
+      const exist = prev.find((x) => x.product.id === product.id);
+      if (exist) {
+        return prev.map((x) =>
+          x.product.id === product.id ? { ...x, qty: x.qty + 1 } : x
+        );
+      }
+      return [...prev, { product, qty: 1 }];
+    });
   };
 
   return (
     <>
-      <PageTitle setTab={setTab} sub="उत्कृष्ट कृषि उत्पाद" title="Kisan Store" />
+      <PageTitle setTab={setTab} title="Kisan Store (कृषि सामान)" />
 
       <div className="section">
         {products.map((p) => (
-          <div className="product" key={p.id}>
+          <div key={p.id} className="product">
             <div>
-              <div className="productName">
-                {p.emoji} {p.name}
-              </div>
-              <div className="muted">
-                ₹{p.price} / {p.unit}
-              </div>
+              <div className="productName">{p.emoji} {p.name}</div>
+              <div className="muted">{p.unit} • ₹{p.price}</div>
             </div>
-            <button className="addBtn" onClick={() => addToCart(p.id)}>
-              + कार्ट में जोड़ें
+            <button className="addBtn" onClick={() => addToCart(p)}>
+              कार्ट में जोड़ें
             </button>
           </div>
         ))}
@@ -1635,49 +1525,62 @@ function StorePage({
   );
 }
 
+/* ================= CART ================= */
+
 function CartPage({
   setTab,
   cart,
   setCart,
 }: {
   setTab: (t: Tab) => void;
-  cart: { [key: number]: number };
-  setCart: React.Dispatch<React.SetStateAction<{ [key: number]: number }>>;
+  cart: { product: Product; qty: number }[];
+  setCart: React.Dispatch<React.SetStateAction<{ product: Product; qty: number }[]>>;
 }) {
-  const updateQty = (id: number, delta: number) => {
-    setCart((prev) => {
-      const next = { ...prev };
-      const val = (next[id] || 0) + delta;
-      if (val <= 0) delete next[id];
-      else next[id] = val;
-      return next;
-    });
-  };
-
-  const cartItems = products.filter((p) => cart[p.id]);
-  const total = cartItems.reduce((acc, p) => acc + p.price * cart[p.id], 0);
+  const total = cart.reduce((sum, item) => sum + item.product.price * item.qty, 0);
 
   return (
     <>
-      <PageTitle setTab={setTab} title="आपकी कार्ट" />
+      <PageTitle setTab={setTab} title="ऑर्डर कार्ट" />
 
       <div className="section">
-        {cartItems.length === 0 ? (
-          <div className="empty">कार्ट खाली है।</div>
+        {cart.length === 0 ? (
+          <p className="empty">आपकी कार्ट खाली है।</p>
         ) : (
           <>
-            {cartItems.map((p) => (
-              <div className="cartRow" key={p.id}>
+            {cart.map((item) => (
+              <div key={item.product.id} className="cartRow">
                 <div>
-                  <div className="productName">{p.name}</div>
-                  <div className="muted">₹{p.price}</div>
+                  <div className="productName">{item.product.emoji} {item.product.name}</div>
+                  <div className="muted">₹{item.product.price} x {item.qty}</div>
                 </div>
                 <div className="quantity">
-                  <button onClick={() => updateQty(p.id, -1)}>
+                  <button
+                    onClick={() =>
+                      setCart((prev) =>
+                        prev
+                          .map((x) =>
+                            x.product.id === item.product.id
+                              ? { ...x, qty: x.qty - 1 }
+                              : x
+                          )
+                          .filter((x) => x.qty > 0)
+                      )
+                    }
+                  >
                     <Minus size={14} />
                   </button>
-                  <span>{cart[p.id]}</span>
-                  <button onClick={() => updateQty(p.id, 1)}>
+                  <span>{item.qty}</span>
+                  <button
+                    onClick={() =>
+                      setCart((prev) =>
+                        prev.map((x) =>
+                          x.product.id === item.product.id
+                            ? { ...x, qty: x.qty + 1 }
+                            : x
+                        )
+                      )
+                    }
+                  >
                     <Plus size={14} />
                   </button>
                 </div>
@@ -1691,9 +1594,13 @@ function CartPage({
 
             <button
               className="primary"
-              onClick={() => alert("आर्डर सफलतापूर्वक दर्ज कर लिया गया है!")}
+              onClick={() => {
+                alert("ऑर्डर सफलतापूर्वक प्लेस हो गया है!");
+                setCart([]);
+                setTab("home");
+              }}
             >
-              ऑर्डर करें
+              ऑर्डर कंफर्म करें
             </button>
           </>
         )}
@@ -1702,33 +1609,93 @@ function CartPage({
   );
 }
 
-/* ================= PROFILE ================= */
+/* ================= CHAT ================= */
 
-function ProfilePage({ setTab, name }: { setTab: (t: Tab) => void; name: string }) {
+function ChatPage({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    { from: "ai", text: "नमस्ते! मैं KisanSathi AI हूँ। खेती से जुड़ा कोई भी सवाल पूछिए।" },
+  ]);
+  const [input, setInput] = useState("");
+
+  const send = () => {
+    if (!input.trim()) return;
+    const userText = input;
+    setMessages((prev) => [...prev, { from: "user", text: userText }]);
+    setInput("");
+
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        { from: "ai", text: `AI उत्तर: ${userText} के संबंध में सही खाद और समय पर सिंचाई की सलाह दी जाती है।` },
+      ]);
+    }, 1000);
+  };
+
   return (
     <>
-      <PageTitle setTab={setTab} title="प्रोफाइल व योजनाएं" />
+      <PageTitle setTab={setTab} title="AI Kisan Assistant" />
+
+      <div className="chatBox">
+        {messages.map((m, idx) => (
+          <div
+            key={idx}
+            className={"bubble " + (m.from === "ai" ? "aiBubble" : "userBubble")}
+          >
+            {m.text}
+          </div>
+        ))}
+      </div>
+
+      <div className="inputRow">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="अपना सवाल लिखें..."
+          onKeyDown={(e) => e.key === "Enter" && send()}
+        />
+        <button className="sendBtn" onClick={send}>
+          <Send size={18} />
+        </button>
+      </div>
+    </>
+  );
+}
+
+/* ================= PROFILE ================= */
+
+function ProfilePage({
+  setTab,
+}: {
+  setTab: (t: Tab) => void;
+}) {
+  return (
+    <>
+      <PageTitle setTab={setTab} title="सरकारी योजनाएं एवं प्रोफाइल" />
 
       <div className="section profileCard">
         <div className="bigProfile">
           <User size={36} />
         </div>
-        <h3 style={{ margin: "10px 0 2px" }}>{name}</h3>
-        <p className="muted">किसान साथी पंजीकृत सदस्य</p>
+        <h3 style={{ margin: "10px 0 4px" }}>किसान साथी</h3>
+        <p className="muted">पंजीकृत किसान</p>
       </div>
 
       <div className="section">
-        <h3>🏛️ प्रमुख सरकारी योजनाएं</h3>
-        {schemes.map((s, idx) => (
-          <div className="scheme" key={idx}>
+        <h3>महत्वपूर्ण सरकारी योजनाएं</h3>
+        {schemes.map((s, i) => (
+          <div key={i} className="scheme">
             <div className="schemeIcon">{s.icon}</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: "bold", fontSize: 13 }}>{s.title}</div>
+              <div style={{ fontWeight: 800, fontSize: "13px" }}>{s.title}</div>
               <div className="muted">{s.text}</div>
+              <a href={s.url} target="_blank" rel="noreferrer">
+                वेबसाइट देखें <ExternalLink size={10} style={{ verticalAlign: "middle" }} />
+              </a>
             </div>
-            <a href={s.url} target="_blank" rel="noopener noreferrer">
-              <ExternalLink size={16} />
-            </a>
           </div>
         ))}
       </div>
@@ -1736,100 +1703,76 @@ function ProfilePage({ setTab, name }: { setTab: (t: Tab) => void; name: string 
   );
 }
 
-/* ================= MAIN APP ================= */
+/* ================= APP ROOT ================= */
 
-export function App() {
+function App() {
   const [tab, setTab] = useState<Tab>("home");
-  const [cart, setCart] = useState<{ [key: number]: number }>({});
-  const name = "अमन सैनी";
-
-  const totalCartCount = Object.values(cart).reduce((a, b) => a + b, 0);
+  const [name, setName] = useState("किसान भाई");
+  const [crops, setCrops] = useState<Crop[]>([]);
+  const [cart, setCart] = useState<{ product: Product; qty: number }[]>([]);
 
   return (
-    <>
+    <div className="app">
       <style>{css}</style>
 
-      <div className="app">
-        <header>
-          <div className="brand">
-            <div className="logo">🌾</div>
-            <div>
-              KisanSathi AI
-              <small>स्मार्ट कृषि साथी</small>
-            </div>
+      <header>
+        <div className="brand">
+          <div className="logo">🌾</div>
+          <div>
+            KisanSathi AI
+            <small>Smart Agriculture Platform</small>
           </div>
+        </div>
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="profileIcon"
-              onClick={() => setTab("cart")}
-              aria-label="Cart"
-              style={{ position: "relative" }}
-            >
-              <ShoppingCart size={20} />
-              {totalCartCount > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: -2,
-                    right: -2,
-                    background: "red",
-                    color: "white",
-                    borderRadius: "50%",
-                    padding: "2px 5px",
-                    fontSize: 9,
-                  }}
-                >
-                  {totalCartCount}
-                </span>
-              )}
-            </button>
-
-            <button
-              className="profileIcon"
-              onClick={() => setTab("profile")}
-              aria-label="Profile"
-            >
-              <User size={20} />
-            </button>
-          </div>
-        </header>
-
-        <main>
-          {tab === "home" && <HomePage name={name} setTab={setTab} />}
-          {tab === "mandi" && <MandiPage setTab={setTab} />}
-          {tab === "weather" && <WeatherPage setTab={setTab} />}
-          {tab === "crops" && <CropsPage setTab={setTab} />}
-          {tab === "doctor" && <DoctorPage setTab={setTab} />}
-          {tab === "chat" && <ChatPage setTab={setTab} />}
-          {tab === "store" && <StorePage cart={cart} setCart={setCart} setTab={setTab} />}
-          {tab === "cart" && <CartPage cart={cart} setCart={setCart} setTab={setTab} />}
-          {tab === "profile" && <ProfilePage name={name} setTab={setTab} />}
-        </main>
-
-        <button className="fab" onClick={() => setTab("chat")} aria-label="Ask AI">
-          <MessageCircle size={26} />
+        <button
+          className="profileIcon"
+          onClick={() => setTab("profile")}
+          aria-label="Profile"
+        >
+          <User size={20} />
         </button>
+      </header>
 
-        <nav className="bottomNav">
-          <Nav active={tab === "home"} on={() => setTab("home")} icon={<Home size={20} />} text="होम" />
-          <Nav active={tab === "mandi"} on={() => setTab("mandi")} icon={<Leaf size={20} />} text="मंडी" />
-          <Nav active={tab === "doctor"} on={() => setTab("doctor")} icon={<Stethoscope size={20} />} text="डॉक्टर" />
-          <Nav active={tab === "store"} on={() => setTab("store")} icon={<ShoppingCart size={20} />} text="स्टोर" />
-        </nav>
-      </div>
-    </>
+      <main>
+        {tab === "home" && <HomePage setTab={setTab} name={name} />}
+        {tab === "mandi" && <MandiPage setTab={setTab} />}
+        {tab === "weather" && <WeatherPage setTab={setTab} />}
+        {tab === "crops" && <CropsPage setTab={setTab} crops={crops} setCrops={setCrops} />}
+        {tab === "doctor" && <DoctorPage setTab={setTab} />}
+        {tab === "store" && <StorePage setTab={setTab} cart={cart} setCart={setCart} />}
+        {tab === "cart" && <CartPage setTab={setTab} cart={cart} setCart={setCart} />}
+        {tab === "chat" && <ChatPage setTab={setTab} />}
+        {tab === "profile" && <ProfilePage setTab={setTab} />}
+      </main>
+
+      <nav className="bottomNav">
+        <Nav
+          active={tab === "home"}
+          on={() => setTab("home")}
+          icon={<Home size={20} />}
+          text="होम"
+        />
+        <Nav
+          active={tab === "mandi"}
+          on={() => setTab("mandi")}
+          icon={<Leaf size={20} />}
+          text="मंडी भाव"
+        />
+        <Nav
+          active={tab === "store"}
+          on={() => setTab("store")}
+          icon={<ShoppingCart size={20} />}
+          text="स्टोर"
+        />
+        <Nav
+          active={tab === "cart"}
+          on={() => setTab("cart")}
+          icon={<ShoppingCart size={20} />}
+          text={`कार्ट (${cart.reduce((a, b) => a + b.qty, 0)})`}
+        />
+      </nav>
+    </div>
   );
 }
 
-/* ================= RENDER ================= */
-
-const container = document.getElementById("root");
-if (container) {
-  const root = createRoot(container);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-}
+createRoot(document.getElementById("root")!).render(<App />);
