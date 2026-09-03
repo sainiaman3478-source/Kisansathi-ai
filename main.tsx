@@ -926,7 +926,7 @@ function HomePage({
   );
 }
 
-/* ================= MANDI (EXPANDED SEARCH LIMIT) ================= */
+/* ================= MANDI ================= */
 
 function MandiPage({
   setTab,
@@ -951,15 +951,12 @@ function MandiPage({
 
     try {
       const params = new URLSearchParams();
-
-      // Increased limit from 100 to 1000 for pan-India data
       params.set("limit", "1000");
 
       if (state.trim()) {
         params.set("state", state.trim());
       }
 
-      // Priority to search box if commodity field is empty
       const targetCommodity = commodity.trim() || search.trim();
       if (targetCommodity) {
         params.set("commodity", targetCommodity);
@@ -970,7 +967,6 @@ function MandiPage({
       }
 
       const controller = new AbortController();
-
       const timeout = setTimeout(() => {
         controller.abort();
       }, 35000);
@@ -1153,323 +1149,181 @@ function MandiPage({
               </div>
 
               <div className="muted">
-                {x.district
-                  ? `${x.district}, `
-                  : ""}
+                {x.district ? `${x.district}, ` : ""}
                 {x.state}
               </div>
             </div>
 
             <div className="mandiPrice">
-              ₹
-              {Number(
-                x.modalPrice || 0
-              ).toLocaleString("en-IN")}
-
-              <div className="priceLabel">
-                Modal / क्विंटल
-              </div>
+              <span className="priceLabel">मॉडल भाव</span>
+              <div>₹{x.modalPrice || 0}</div>
+              <span className="priceLabel">/ क्विंटल</span>
             </div>
           </div>
 
           <div className="mandiDetails">
             <div className="mandiDetail">
               न्यूनतम भाव
-              <b>
-                ₹
-                {Number(
-                  x.minPrice || 0
-                ).toLocaleString("en-IN")}
-              </b>
+              <b>₹{x.minPrice || 0}</b>
             </div>
-
             <div className="mandiDetail">
               अधिकतम भाव
-              <b>
-                ₹
-                {Number(
-                  x.maxPrice || 0
-                ).toLocaleString("en-IN")}
-              </b>
+              <b>₹{x.maxPrice || 0}</b>
             </div>
-
             <div className="mandiDetail">
-              Variety
-              <b>{x.variety || "-"}</b>
+              किस्म (Variety)
+              <b>{x.variety || "General"}</b>
             </div>
-
             <div className="mandiDetail">
               तारीख
-              <b>{x.arrivalDate || "-"}</b>
+              <b>{x.arrivalDate || "आज"}</b>
             </div>
           </div>
         </div>
       ))}
+
+      {hasLoaded && !loading && records.length > 0 && filtered.length === 0 && (
+        <div className="section empty">
+          <p>कोई रिकॉर्ड मेल नहीं खाया। Search filter बदल कर देखें।</p>
+        </div>
+      )}
     </>
   );
 }
 
 /* ================= WEATHER ================= */
 
-function WeatherPage({
-  setTab,
-}: {
-  setTab: (t: Tab) => void;
-}) {
+function WeatherPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [data, setData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [w, setW] = useState<WeatherData | null>(null);
-  const [loc, setLoc] = useState("");
+  const [err, setErr] = useState("");
+  const [locName, setLocName] = useState("उत्तर प्रदेश, भारत");
 
-  const load = () => {
+  const getWeatherCodeText = (code: number) => {
+    if (code === 0) return "साफ़ आसमान ☀️";
+    if (code <= 3) return "आंशिक रूप से बादल ⛅";
+    if (code <= 48) return "कोहरा 🌫️";
+    if (code <= 67) return "बारिश / बूंदाबांदी 🌧️";
+    if (code <= 77) return "बर्फबारी ❄️";
+    if (code <= 82) return "तेज बारिश 🌧️";
+    if (code <= 99) return "तूफान और बारिश ⛈️";
+    return "मौसम सामान्य";
+  };
+
+  const fetchWeather = (lat: number, lon: number, locationLabel?: string) => {
+    setLoading(true);
+    setErr("");
+    if (locationLabel) setLocName(locationLabel);
+
+    fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`
+    )
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.current) {
+          setData(resData);
+        } else {
+          setErr("मौसम की जानकारी नहीं मिल सकी।");
+        }
+      })
+      .catch(() => setErr("मौसम सर्वर से कनेक्शन फेल हो गया।"))
+      .finally(() => setLoading(false));
+  };
+
+  const handleGPS = () => {
     if (!navigator.geolocation) {
-      setError(
-        "इस फोन में Location उपलब्ध नहीं है।"
-      );
+      setErr("आपके डिवाइस में GPS सपोर्ट नहीं है।");
       return;
     }
-
     setLoading(true);
-    setError("");
-
     navigator.geolocation.getCurrentPosition(
-      async (p) => {
-        try {
-          const { latitude, longitude } = p.coords;
-
-          const url =
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
-            `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
-            `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
-            `&timezone=auto&forecast_days=3`;
-
-          const r = await fetch(url);
-
-          if (!r.ok) throw new Error();
-
-          const d: WeatherData = await r.json();
-
-          setW(d);
-
-          setLoc(
-            `${latitude.toFixed(2)}°, ${longitude.toFixed(
-              2
-            )}°`
-          );
-        } catch {
-          setError(
-            "मौसम नहीं मिल पाया। Internet और Location जांचें।"
-          );
-        } finally {
-          setLoading(false);
-        }
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocName("आपकी लाइव लोकेशन");
+        fetchWeather(latitude, longitude, "आपकी लाइव लोकेशन 📍");
       },
       () => {
-        setError(
-          "Location की अनुमति दें, तभी आपके इलाके का live मौसम दिखेगा।"
-        );
-        setLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000,
+        setErr("GPS लोकेशन एक्सेस नहीं मिला। Default मौसम दिखाया जा रहा है।");
+        fetchWeather(26.8467, 80.9462, "उत्तर प्रदेश (Default)");
       }
     );
   };
 
-  const txt = (c: number) =>
-    c === 0
-      ? "साफ आसमान"
-      : c <= 3
-      ? "आंशिक बादल"
-      : c <= 48
-      ? "कोहरा"
-      : c <= 67
-      ? "बारिश"
-      : c <= 77
-      ? "बर्फ"
-      : c <= 82
-      ? "तेज बारिश"
-      : "गरज के साथ बारिश";
-
-  const emo = (c: number) =>
-    c === 0
-      ? "☀️"
-      : c <= 3
-      ? "🌤️"
-      : c <= 48
-      ? "🌫️"
-      : c <= 67
-      ? "🌧️"
-      : c <= 77
-      ? "❄️"
-      : "⛈️";
+  useEffect(() => {
+    fetchWeather(26.8467, 80.9462, "उत्तर प्रदेश (Default)");
+  }, []);
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="मौसम"
-        sub="Live Weather"
-      />
+      <PageTitle setTab={setTab} title="मौसम" sub="लाइव अपडेट और पूर्वाअनुमान" />
 
       <div className="locationRow">
-        <MapPin size={17} />
-
-        <span>
-          {loc || "Location अभी नहीं ली गई"}
-        </span>
-
+        <MapPin size={18} color="#28752e" />
+        <span style={{ fontWeight: "bold", flex: 1 }}>{locName}</span>
         <button
+          onClick={handleGPS}
           style={{
-            marginLeft: "auto",
             border: 0,
-            background: "transparent",
+            background: "#28752e",
+            color: "#fff",
+            borderRadius: 8,
+            padding: "6px 10px",
+            fontSize: 11,
+            fontWeight: "bold",
           }}
-          onClick={load}
         >
-          <RefreshCw size={17} />
+          📍 GPS अपडेट
         </button>
       </div>
 
-      {!w ? (
-        <div
-          className="section"
-          style={{
-            textAlign: "center",
-            padding: 30,
-          }}
-        >
-          <CloudSun size={52} />
-
-          <h3>अपने इलाके का मौसम देखें</h3>
-
-          <p className="muted">
-            Location अनुमति देने के बाद live forecast
-            आएगा।
-          </p>
-
-          <button
-            className="primary"
-            onClick={load}
-          >
-            {loading
-              ? "मौसम लोड हो रहा है..."
-              : "📍 मेरा मौसम देखें"}
-          </button>
-
-          {error && (
-            <p
-              style={{
-                color: "#b33",
-                fontSize: 12,
-              }}
-            >
-              {error}
-            </p>
-          )}
+      {loading && (
+        <div className="section empty">
+          <p>मौसम की जानकारी लोड हो रही है...</p>
         </div>
-      ) : (
+      )}
+
+      {err && <div className="section" style={{ color: "red" }}>{err}</div>}
+
+      {data && !loading && (
         <>
           <div className="weatherBig">
-            <div style={{ fontSize: 48 }}>
-              {emo(w.current.weather_code)}
+            <div style={{ fontSize: 13, color: "#555" }}>
+              {getWeatherCodeText(data.current.weather_code)}
             </div>
-
-            <div className="temperature">
-              {Math.round(
-                w.current.temperature_2m
-              )}
-              °C
+            <div className="temperature">{Math.round(data.current.temperature_2m)}°C</div>
+            <div style={{ fontSize: 12, color: "#666" }}>
+              महसूस हो रहा है: {Math.round(data.current.apparent_temperature)}°C
             </div>
-
-            <h3>
-              {txt(w.current.weather_code)}
-            </h3>
 
             <div className="weatherInfoGrid">
               <div className="weatherInfo">
-                💧 नमी
+                💧 नमी (Humidity)
                 <br />
-                <b>
-                  {w.current.relative_humidity_2m}%
-                </b>
+                <b>{data.current.relative_humidity_2m}%</b>
               </div>
-
               <div className="weatherInfo">
-                💨 हवा
+                💨 हवा की गति
                 <br />
-                <b>
-                  {Math.round(
-                    w.current.wind_speed_10m
-                  )}{" "}
-                  km/h
-                </b>
-              </div>
-
-              <div className="weatherInfo">
-                🌡️ महसूस
-                <br />
-                <b>
-                  {Math.round(
-                    w.current.apparent_temperature
-                  )}
-                  °C
-                </b>
-              </div>
-
-              <div className="weatherInfo">
-                🌧️ बारिश
-                <br />
-                <b>
-                  {w.current.precipitation} mm
-                </b>
+                <b>{data.current.wind_speed_10m} km/h</b>
               </div>
             </div>
           </div>
 
           <div className="section">
-            <h3>अगले 3 दिन</h3>
-
-            <div className="forecast">
-              {w.daily.time.map((d, i) => (
-                <div
-                  className="forecastCard"
-                  key={d}
-                >
-                  <b>
-                    {i === 0
-                      ? "आज"
-                      : i === 1
-                      ? "कल"
-                      : "परसों"}
-                  </b>
-
+            <h3>📅 अगले 3 दिनों का पूर्वानुमान</h3>
+            <div className="forecast" style={{ marginTop: 10 }}>
+              {data.daily.time.slice(0, 3).map((day, idx) => (
+                <div key={day} className="forecastCard">
+                  <b>{idx === 0 ? "आज" : idx === 1 ? "कल" : "परसों"}</b>
                   <div className="forecastIcon">
-                    {emo(
-                      w.daily.weather_code[i]
-                    )}
+                    {data.daily.weather_code[idx] <= 3 ? "☀️" : "🌧️"}
                   </div>
-
-                  <b>
-                    {Math.round(
-                      w.daily.temperature_2m_max[i]
-                    )}
-                    ° /{" "}
-                    {Math.round(
-                      w.daily.temperature_2m_min[i]
-                    )}
-                    °
-                  </b>
-
-                  <div className="muted">
-                    बारिश{" "}
-                    {
-                      w.daily
-                        .precipitation_probability_max[i]
-                    }
-                    %
+                  <div>
+                    {Math.round(data.daily.temperature_2m_max[idx])}° /{" "}
+                    {Math.round(data.daily.temperature_2m_min[idx])}°C
+                  </div>
+                  <div style={{ color: "#28752e", fontSize: 10, marginTop: 4 }}>
+                    🌧️ {data.daily.precipitation_probability_max[idx]}%
                   </div>
                 </div>
               ))}
@@ -1483,419 +1337,134 @@ function WeatherPage({
 
 /* ================= CROPS ================= */
 
-function CropsPage({
-  setTab,
-  crops,
-  setCrops,
-}: {
-  setTab: (t: Tab) => void;
-  crops: Crop[];
-  setCrops: React.Dispatch<
-    React.SetStateAction<Crop[]>
-  >;
-}) {
+function CropsPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [crops, setCrops] = useState<Crop[]>([
+    { id: 1, name: "गेहूँ", area: "2 एकड़", note: "सिंचाई की आवश्यकता 5 दिन में" },
+    { id: 2, name: "सरसों", area: "1 एकड़", note: "कीटनाशक स्प्रे पूरा हुआ" },
+  ]);
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
+  const [note, setNote] = useState("");
 
-  const save = () => {
+  const addCrop = () => {
     if (!name.trim()) return;
-
-    setCrops((c) => [
-      ...c,
-      {
-        id: Date.now(),
-        name: name.trim(),
-        area: area.trim(),
-        note: "नियमित निगरानी करें",
-      },
-    ]);
-
+    setCrops([...crops, { id: Date.now(), name, area, note }]);
     setName("");
     setArea("");
+    setNote("");
+  };
+
+  const removeCrop = (id: number) => {
+    setCrops(crops.filter((c) => c.id !== id));
   };
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="मेरी फसल"
-        sub="आपकी Saved Crops"
-      />
+      <PageTitle setTab={setTab} title="मेरी फसलें" sub="फसलों का प्रबंधन करें" />
 
       <div className="section">
         <h3>🌱 नई फसल जोड़ें</h3>
-
         <input
           className="search"
+          placeholder="फसल का नाम (उदा. धान, गेहूँ)"
           value={name}
-          onChange={(e) =>
-            setName(e.target.value)
-          }
-          placeholder="फसल का नाम (गेहूं, धान...)"
+          onChange={(e) => setName(e.target.value)}
         />
-
-        <input
-          className="search"
-          value={area}
-          onChange={(e) =>
-            setArea(e.target.value)
-          }
-          placeholder="खेत/क्षेत्र (जैसे 2 एकड़)"
-        />
-
-        <button
-          className="primary"
-          onClick={save}
-        >
-          <Plus size={16} /> फसल सेव करें
+        <div className="filterGrid">
+          <input
+            className="search"
+            placeholder="क्षेत्रफल (उदा. 2 एकड़)"
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
+          />
+          <input
+            className="search"
+            placeholder="नोट्स (उदा. खाद देना बाकी है)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
+        <button className="primary" onClick={addCrop}>
+          + फसल जोड़ें
         </button>
       </div>
 
-      {crops.length === 0 ? (
-        <div className="section empty">
-          <div style={{ fontSize: 45 }}>🌱</div>
-          <h3>अभी कोई फसल सेव नहीं है</h3>
-          <p>ऊपर से अपनी फसल जोड़ें।</p>
-        </div>
-      ) : (
-        <div className="section">
-          {crops.map((c) => (
-            <div
-              className="cropRow"
-              key={c.id}
-            >
+      <div className="section">
+        <h3>📋 जोड़ी गई फसलें ({crops.length})</h3>
+        {crops.length === 0 ? (
+          <p className="muted">कोई फसल नहीं जोड़ी गई है।</p>
+        ) : (
+          crops.map((c) => (
+            <div className="cropRow" key={c.id}>
               <div>
-                <div className="cropName">
-                  🌾 {c.name}
-                </div>
-
+                <div className="cropName">{c.name}</div>
                 <div className="muted">
-                  {c.area || "क्षेत्र नहीं दिया"} ·{" "}
-                  {c.note}
+                  क्षेत्रफल: {c.area || "N/A"} | {c.note}
                 </div>
               </div>
-
               <button
-                onClick={() =>
-                  setCrops((x) =>
-                    x.filter(
-                      (y) => y.id !== c.id
-                    )
-                  )
-                }
+                onClick={() => removeCrop(c.id)}
                 style={{
                   border: 0,
-                  background: "transparent",
-                  color: "#a33",
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  borderRadius: 8,
+                  padding: "6px 10px",
                 }}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </>
   );
 }
 
-/* ================= IMAGE COMPRESS ================= */
-
-async function compressImage(
-  file: File
-): Promise<File> {
-  const image = new Image();
-
-  const objectUrl = URL.createObjectURL(file);
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-
-      image.onerror = () =>
-        reject(
-          new Error("Image load नहीं हुई")
-        );
-
-      image.src = objectUrl;
-    });
-
-    const maxSize = 1280;
-
-    let width = image.naturalWidth;
-    let height = image.naturalHeight;
-
-    if (width > maxSize || height > maxSize) {
-      if (width > height) {
-        height = Math.round(
-          (height / width) * maxSize
-        );
-
-        width = maxSize;
-      } else {
-        width = Math.round(
-          (width / height) * maxSize
-        );
-
-        height = maxSize;
-      }
-    }
-
-    const canvas =
-      document.createElement("canvas");
-
-    canvas.width = width;
-    canvas.height = height;
-
-    const ctx =
-      canvas.getContext("2d");
-
-    if (!ctx) return file;
-
-    ctx.drawImage(
-      image,
-      0,
-      0,
-      width,
-      height
-    );
-
-    const blob =
-      await new Promise<Blob | null>(
-        (resolve) =>
-          canvas.toBlob(
-            resolve,
-            "image/jpeg",
-            0.78
-          )
-      );
-
-    if (!blob) return file;
-
-    return new File(
-      [blob],
-      "crop-photo.jpg",
-      {
-        type: "image/jpeg",
-      }
-    );
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
 /* ================= CROP DOCTOR ================= */
 
-function DoctorPage({
-  setTab,
-}: {
-  setTab: (t: Tab) => void;
-}) {
-  const [file, setFile] =
-    useState<File | null>(null);
+function DoctorPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [image, setImage] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState("image/jpeg");
+  const [cropName, setCropName] = useState("");
+  const [symptoms, setSymptoms] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState("");
+  const [error, setError] = useState("");
 
-  const [url, setUrl] = useState("");
-
-  const [result, setResult] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [crop, setCrop] =
-    useState("");
-
-  const [symptoms, setSymptoms] =
-    useState("");
-
-  const choose = (f: File | null) => {
-    if (url) {
-      URL.revokeObjectURL(url);
+  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMimeType(file.type || "image/jpeg");
+      const reader = new FileReader();
+      reader.onloadend = () => setImage(reader.result as string);
+      reader.readAsDataURL(file);
     }
-
-    setFile(f);
-    setResult("");
-
-    if (f) {
-      setUrl(
-        URL.createObjectURL(f)
-      );
-    } else {
-      setUrl("");
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    };
-  }, [url]);
-
-  const fileToDataUrl = (
-    input: File
-  ): Promise<string> => {
-    return new Promise(
-      (resolve, reject) => {
-        const reader =
-          new FileReader();
-
-        reader.onload = () => {
-          if (
-            typeof reader.result ===
-            "string"
-          ) {
-            resolve(
-              reader.result
-            );
-          } else {
-            reject(
-              new Error(
-                "फोटो को पढ़ा नहीं जा सका।"
-              )
-            );
-          }
-        };
-
-        reader.onerror = () => {
-          reject(
-            new Error(
-              "फोटो पढ़ने में समस्या हुई।"
-            )
-          );
-        };
-
-        reader.readAsDataURL(
-          input
-        );
-      }
-    );
   };
 
   const analyze = async () => {
-    if (!file || loading) {
-      if (!file) {
-        setResult(
-          "❌ पहले फसल की फोटो चुनें।"
-        );
-      }
-
+    if (!image) {
+      setError("कृपया पहले फसल की फोटो अपलोड करें।");
       return;
     }
 
     setLoading(true);
+    setError("");
     setResult("");
 
     try {
-      const smallImage =
-        await compressImage(file);
+      const res = await fetch(`${API_BASE}/api/crop-doctor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image, mimeType, cropName, symptoms }),
+      });
 
-      const imageData =
-        await fileToDataUrl(
-          smallImage
-        );
-
-      if (!imageData) {
-        throw new Error(
-          "फसल की फोटो तैयार नहीं हो पाई।"
-        );
-      }
-
-      const controller =
-        new AbortController();
-
-      const timeout =
-        setTimeout(() => {
-          controller.abort();
-        }, 90000);
-
-      const response =
-        await fetch(
-          `${API_BASE}/api/crop-doctor`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-
-              Accept:
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              image: imageData,
-
-              mimeType:
-                smallImage.type ||
-                "image/jpeg",
-
-              cropName:
-                crop.trim() ||
-                "फसल का नाम नहीं बताया गया",
-
-              symptoms:
-                symptoms.trim() ||
-                "कोई अतिरिक्त लक्षण नहीं बताया गया",
-            }),
-
-            signal:
-              controller.signal,
-          }
-        );
-
-      clearTimeout(timeout);
-
-      const contentType =
-        response.headers.get(
-          "content-type"
-        ) || "";
-
-      const data =
-        contentType.includes(
-          "application/json"
-        )
-          ? await response
-              .json()
-              .catch(() => ({}))
-          : {};
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            `Crop Doctor server error (${response.status})`
-        );
-      }
-
-      const reply =
-        data.reply ||
-        data.result ||
-        data.message ||
-        "";
-
-      if (!reply) {
-        throw new Error(
-          "AI ने कोई रिपोर्ट नहीं भेजी।"
-        );
-      }
-
-      setResult(reply);
-    } catch (e) {
-      if (
-        e instanceof DOMException &&
-        e.name === "AbortError"
-      ) {
-        setResult(
-          "❌ Crop Doctor server ने 90 सेकंड में जवाब नहीं दिया।"
-        );
-      } else {
-        setResult(
-          e instanceof Error
-            ? "❌ " + e.message
-            : "❌ Crop Doctor से connection नहीं हो पाया।"
-        );
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "जाँच नहीं हो सकी।");
+      setResult(data.reply);
+    } catch (err: any) {
+      setError(err.message || "सर्वर से कनेक्ट करने में दिक्कत आई।");
     } finally {
       setLoading(false);
     }
@@ -1903,348 +1472,201 @@ function DoctorPage({
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="फसल जाँचें"
-        sub="AI Crop Doctor"
-      />
+      <PageTitle setTab={setTab} title="फसल डॉक्टर" sub="AI फोटो पहचान व उपचार" />
 
       <div className="section">
         <div className="upload">
-          <Camera size={48} />
-
-          <h3>
-            🌱 फसल की फोटो लें
-          </h3>
-
-          <p className="muted">
-            पत्ती या पौधे की साफ और
-            अच्छी रोशनी वाली फोटो लें।
+          <Camera size={38} color="#28752e" />
+          <p style={{ margin: "8px 0 12px", fontSize: 13 }}>
+            प्रभावित पत्ती या पौधे की साफ़ फोटो लें
           </p>
-
           <input
             type="file"
             accept="image/*"
             capture="environment"
-            onChange={(e) =>
-              choose(
-                e.target.files?.[0] ||
-                  null
-              )
-            }
+            onChange={handleImage}
+            style={{ display: "none" }}
+            id="cropPic"
           />
-
-          {url && (
-            <img
-              className="preview"
-              src={url}
-              alt="फसल preview"
-            />
-          )}
+          <label htmlFor="cropPic" className="addBtn" style={{ cursor: "pointer" }}>
+            📷 फोटो अपलोड / फोटो खींचें
+          </label>
         </div>
 
-        <input
-          className="search"
-          style={{
-            marginTop: 10,
-          }}
-          value={crop}
-          onChange={(e) =>
-            setCrop(
-              e.target.value
-            )
-          }
-          placeholder="🌾 फसल का नाम (गेहूं, धान, कपास...)"
-        />
+        {image && (
+          <div style={{ textAlign: "center" }}>
+            <img src={image} alt="Crop Preview" className="preview" />
+          </div>
+        )}
 
-        <textarea
-          value={symptoms}
-          onChange={(e) =>
-            setSymptoms(
-              e.target.value
-            )
-          }
-          placeholder="📝 क्या समस्या दिख रही है? जैसे पत्तियां पीली हैं, दाग हैं, कीड़े हैं..."
-          style={{
-            width: "100%",
-            minHeight: 90,
-            border:
-              "1px solid #ddd",
-            borderRadius: 11,
-            padding: 11,
-            resize: "vertical",
-            outline: "none",
-            background: "#fff",
-          }}
-        />
+        <div style={{ marginTop: 12 }}>
+          <input
+            className="search"
+            placeholder="🌾 फसल का नाम (गेहूँ, धान, कपास...)"
+            value={cropName}
+            onChange={(e) => setCropName(e.target.value)}
+          />
+          <textarea
+            className="search"
+            rows={3}
+            placeholder="📝 क्या समस्या दिख रही है? जैसे पत्तियां पीली हैं, दाग हैं, कीड़े हैं..."
+            value={symptoms}
+            onChange={(e) => setSymptoms(e.target.value)}
+          />
+        </div>
 
-        {file && (
-          <button
-            className="primary"
-            style={{
-              marginTop: 10,
-            }}
-            onClick={analyze}
-            disabled={loading}
-          >
-            {loading
-              ? "🤖 AI फसल की जांच कर रहा है..."
-              : "🔍 AI से फसल की जांच करें"}
-          </button>
+        <button
+          className="primary"
+          onClick={analyze}
+          disabled={loading || !image}
+          style={{ marginTop: 6 }}
+        >
+          {loading ? "🔬 AI फसल की जाँच कर रहा है..." : "🔍 AI से फसल की जांच करें"}
+        </button>
+
+        {error && (
+          <div className="section" style={{ color: "red", marginTop: 10 }}>
+            ❌ {error}
+          </div>
         )}
 
         {result && (
           <div className="result">
-            <b>
-              🤖 AI Crop Doctor रिपोर्ट
-            </b>
-
-            <div
-              style={{
-                marginTop: 7,
-                whiteSpace:
-                  "pre-wrap",
-              }}
-            >
-              {result}
-            </div>
+            <b>🤖 AI Crop Doctor रिपोर्ट:</b>
+            <div style={{ marginTop: 8, whitespace: "pre-line" }}>{result}</div>
           </div>
         )}
-      </div>
-
-      <div className="section">
-        <Stethoscope size={28} />
-
-        <h3>
-          ⚠️ जरूरी सावधानी
-        </h3>
-
-        <p className="muted">
-          AI की फोटो पहचान शुरुआती
-          सहायता के लिए है। दवा की
-          मात्रा और अंतिम उपचार तय
-          करने से पहले स्थानीय कृषि
-          विशेषज्ञ से पुष्टि करें।
-        </p>
 
         <div className="doctorTip">
-          💡 बेहतर परिणाम के लिए:
-          पूरी पत्ती, प्रभावित हिस्सा,
-          पौधे का आकार और खेत की
-          स्थिति साफ दिखाई देने वाली
-          फोटो भेजें।
+          💡 <b>बेहतर परिणाम के लिए:</b> पूरी पत्ती, प्रभावित हिस्सा, पौधे का आकार और खेत की स्थिति साफ़ दिखाई देने वाली फोटो भेजें।
         </div>
       </div>
     </>
   );
 }
 
-/* ================= STORE ================= */
+/* ================= KISAN STORE (WITH WHATSAPP ORDER INTEGRATION) ================= */
 
 function StorePage({
   setTab,
   cart,
-  add,
+  setCart,
 }: {
   setTab: (t: Tab) => void;
-  cart: Record<number, number>;
-  add: (id: number) => void;
+  cart: { [id: number]: number };
+  setCart: React.Dispatch<React.SetStateAction<{ [id: number]: number }>>;
 }) {
-  const count =
-    Object.values(cart).reduce(
-      (a, b) => a + b,
-      0
-    );
+  const WHATSAPP_NUMBER = "917830210996";
+
+  const addToCart = (id: number) => {
+    setCart((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart((prev) => {
+      const next = { ...prev };
+      if (next[id] > 1) {
+        next[id] -= 1;
+      } else {
+        delete next[id];
+      }
+      return next;
+    });
+  };
+
+  const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+
+  const totalAmount = Object.entries(cart).reduce((sum, [id, qty]) => {
+    const p = products.find((x) => x.id === Number(id));
+    return sum + (p ? p.price * qty : 0);
+  }, 0);
+
+  const handleWhatsAppOrder = () => {
+    const itemsInCart = Object.entries(cart)
+      .map(([id, qty]) => {
+        const product = products.find((p) => p.id === Number(id));
+        return product ? { ...product, qty } : null;
+      })
+      .filter(Boolean);
+
+    if (itemsInCart.length === 0) {
+      alert("आपकी कार्ट खाली है! कृपया पहले सामान जोड़ें।");
+      return;
+    }
+
+    let message = `🛒 *KisanSaathi AI - Naya Order*\n\n`;
+    message += `*Items:*\n`;
+
+    itemsInCart.forEach((item, index) => {
+      if (item) {
+        message += `${index + 1}. ${item.name} (${item.unit}) - ${item.qty}x = ₹${item.price * item.qty}\n`;
+      }
+    });
+
+    message += `\n*Kul Kimat:* ₹${totalAmount}\n\n`;
+    message += `Kripya mera order confirm karein aur delivery ki jankari dein.`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`, "_blank");
+  };
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="Kisan Store"
-        sub="कृषि सामान"
-      />
+      <PageTitle setTab={setTab} title="Kisan Store" sub="जैविक खाद व कृषि सुरक्षा" />
 
       <div className="section">
-        {products.map((p) => (
-          <div
-            className="product"
-            key={p.id}
-          >
-            <div
-              style={{
-                display: "flex",
-                gap: 9,
-                alignItems: "center",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 28,
-                }}
-              >
-                {p.emoji}
-              </span>
-
-              <div>
-                <div className="productName">
-                  {p.name}
-                </div>
-
-                <div className="muted">
-                  ₹{p.price} · {p.unit}
-                </div>
-              </div>
-            </div>
-
-            <button
-              className="addBtn"
-              onClick={() =>
-                add(p.id)
-              }
-            >
-              कार्ट में डालें
-            </button>
-          </div>
-        ))}
-
-        <button
-          className="primary"
-          style={{
-            marginTop: 12,
-          }}
-          onClick={() =>
-            setTab("cart")
-          }
-        >
-          🛒 कार्ट देखें{" "}
-          {count
-            ? `(${count})`
-            : ""}
-        </button>
-      </div>
-    </>
-  );
-}
-
-/* ================= CART ================= */
-
-function CartPage({
-  setTab,
-  cart,
-  add,
-  remove,
-  total,
-}: {
-  setTab: (t: Tab) => void;
-  cart: Record<number, number>;
-  add: (id: number) => void;
-  remove: (id: number) => void;
-  total: number;
-}) {
-  const ids =
-    Object.keys(cart).map(
-      Number
-    );
-
-  return (
-    <>
-      <PageTitle
-        setTab={setTab}
-        title="Cart"
-        sub="आपका सामान"
-      />
-
-      {!ids.length ? (
-        <div className="section empty">
-          <ShoppingCart size={50} />
-
-          <h3>
-            Cart खाली है
-          </h3>
-
-          <button
-            className="addBtn"
-            onClick={() =>
-              setTab("store")
-            }
-          >
-            Store देखें
-          </button>
-        </div>
-      ) : (
-        <div className="section">
-          {ids.map((id) => {
-            const p =
-              products.find(
-                (x) =>
-                  x.id === id
-              );
-
-            if (!p) return null;
-
-            return (
-              <div
-                className="cartRow"
-                key={id}
-              >
+        {products.map((p) => {
+          const qty = cart[p.id] || 0;
+          return (
+            <div className="product" key={p.id}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <span style={{ fontSize: 28 }}>{p.emoji}</span>
                 <div>
-                  <b>
-                    {p.name}
-                  </b>
-
+                  <div className="productName">{p.name}</div>
                   <div className="muted">
-                    ₹{p.price} ×{" "}
-                    {cart[id]}
+                    {p.unit} | ₹{p.price}
                   </div>
                 </div>
+              </div>
 
+              {qty === 0 ? (
+                <button className="addBtn" onClick={() => addToCart(p.id)}>
+                  + कार्ट में जोड़ें
+                </button>
+              ) : (
                 <div className="quantity">
-                  <button
-                    onClick={() =>
-                      remove(id)
-                    }
-                  >
-                    <Minus size={15} />
+                  <button onClick={() => removeFromCart(p.id)}>
+                    <Minus size={14} />
                   </button>
-
-                  <b>
-                    {cart[id]}
-                  </b>
-
-                  <button
-                    onClick={() =>
-                      add(id)
-                    }
-                  >
-                    <Plus size={15} />
+                  <b>{qty}</b>
+                  <button onClick={() => addToCart(p.id)}>
+                    <Plus size={14} />
                   </button>
                 </div>
-              </div>
-            );
-          })}
-
-          <div className="total">
-            <span>
-              कुल राशि
-            </span>
-
-            <span>
-              ₹
-              {total.toLocaleString(
-                "en-IN"
               )}
-            </span>
-          </div>
+            </div>
+          );
+        })}
+      </div>
 
+      {totalItems > 0 && (
+        <div className="section" style={{ background: "#edf7ea" }}>
+          <div className="total">
+            <span>कुल सामान ({totalItems}):</span>
+            <span style={{ color: "#28752e" }}>₹{totalAmount}</span>
+          </div>
           <button
             className="primary"
-            onClick={() =>
-              alert(
-                "Demo order: अभी payment/delivery backend जोड़ना बाकी है।"
-              )
-            }
+            onClick={handleWhatsAppOrder}
+            style={{
+              background: "#25D366",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
           >
-            ऑर्डर करें
+            💬 Direct WhatsApp Par Order Karein
           </button>
         </div>
       )}
@@ -2252,111 +1674,86 @@ function CartPage({
   );
 }
 
-/* ================= CHAT ================= */
+/* ================= CHAT (AI KISAN) ================= */
 
-function ChatPage({
-  setTab,
-  chat,
-  q,
-  setQ,
-  send,
-}: {
-  setTab: (t: Tab) => void;
-  chat: ChatMsg[];
-  q: string;
-  setQ: (s: string) => void;
-  send: (s?: string) => void;
-}) {
-  const quick = [
-    "गेहूं में खाद कब डालें?",
-    "धान में पत्तियां पीली हैं",
-    "आज बारिश होगी?",
-    "सरसों में कीड़ा लग गया",
-    "आज मंडी में गेहूं का भाव क्या है?",
+function ChatPage({ setTab }: { setTab: (t: Tab) => void }) {
+  const [messages, setMessages] = useState<ChatMsg[]>([
+    {
+      from: "ai",
+      text: "नमस्ते! मैं KisanSaathi AI हूँ। आपकी खेती, फसल, बीमारी या खाद से जुड़ा कोई भी सवाल पूछें।",
+    },
+  ]);
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const quickPrompts = [
+    "गेहूँ में खाद कब डालें?",
+    "कीटनाशक छिड़कने का सही समय?",
+    "धान की बीमारी कैसे रोकें?",
   ];
+
+  const send = async (msgToSend?: string) => {
+    const query = msgToSend || text;
+    if (!query.trim() || loading) return;
+
+    const newMsgs: ChatMsg[] = [...messages, { from: "user", text: query }];
+    setMessages(newMsgs);
+    if (!msgToSend) setText("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: query }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI उत्तर नहीं दे सका।");
+
+      setMessages([...newMsgs, { from: "ai", text: data.reply }]);
+    } catch (e: any) {
+      setMessages([
+        ...newMsgs,
+        { from: "ai", text: "माफ़ कीजिये, अभी AI सर्वर में तकनीकी दिक्कत है।" },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="AI Kisan"
-        sub="खेती से जुड़े सवाल पूछें"
-      />
+      <PageTitle setTab={setTab} title="AI Kisan Companion" sub="24/7 Krishi Sallaah" />
 
       <div className="chatBox">
-        {!chat.length ? (
-          <div className="empty">
-            <MessageCircle size={48} />
-
-            <h3>
-              नमस्ते किसान भाई 👋
-            </h3>
-
-            <p>
-              फसल, मौसम, मंडी या खेती
-              के बारे में पूछें।
-            </p>
+        {messages.map((m, i) => (
+          <div
+            className={`bubble ${m.from === "ai" ? "aiBubble" : "userBubble"}`}
+            key={i}
+          >
+            {m.text}
           </div>
-        ) : (
-          chat.map((m, i) => (
-            <div
-              className={
-                "bubble " +
-                (m.from === "user"
-                  ? "userBubble"
-                  : "aiBubble")
-              }
-              key={i}
-            >
-              <b>
-                {m.from === "user"
-                  ? "आप"
-                  : "🤖 AI Kisan"}
-              </b>
-
-              <br />
-
-              {m.text}
-            </div>
-          ))
-        )}
+        ))}
+        {loading && <div className="bubble aiBubble">🤖 AI सोच रहा है...</div>}
       </div>
 
       <div className="quick">
-        {quick.map((x) => (
-          <button
-            key={x}
-            onClick={() =>
-              send(x)
-            }
-          >
-            {x}
+        {quickPrompts.map((q) => (
+          <button key={q} onClick={() => send(q)}>
+            {q}
           </button>
         ))}
       </div>
 
       <div className="inputRow">
         <input
-          value={q}
-          onChange={(e) =>
-            setQ(e.target.value)
-          }
-          onKeyDown={(e) => {
-            if (
-              e.key === "Enter"
-            ) {
-              send();
-            }
-          }}
-          placeholder="अपना सवाल लिखें..."
+          placeholder="खेती से जुड़ा सवाल यहाँ लिखें..."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
         />
-
-        <button
-          className="sendBtn"
-          onClick={() =>
-            send()
-          }
-        >
+        <button className="sendBtn" onClick={() => send()} disabled={loading}>
           <Send size={18} />
         </button>
       </div>
@@ -2364,559 +1761,129 @@ function ChatPage({
   );
 }
 
-/* ================= PROFILE ================= */
+/* ================= PROFILE & SCHEMES ================= */
 
 function ProfilePage({
   setTab,
   name,
-  crops,
+  setName,
 }: {
   setTab: (t: Tab) => void;
   name: string;
-  crops: Crop[];
+  setName: (n: string) => void;
 }) {
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        title="Profile"
-        sub="किसान प्रोफाइल"
-      />
+      <PageTitle setTab={setTab} title="प्रोफाइल व योजनाएं" sub="सरकारी सुविधाएं" />
 
       <div className="section profileCard">
         <div className="bigProfile">
           <User size={36} />
         </div>
-
-        <h2>{name}</h2>
-
-        <p className="muted">
-          {crops.length} फसल सेव हैं
+        <h3 style={{ margin: "10px 0 4px" }}>{name}</h3>
+        <p className="muted" style={{ margin: 0 }}>
+          डिजिटल किसान साथी यूजर
         </p>
       </div>
 
       <div className="section">
-        <h3>
-          🏛️ सरकारी योजनाएं
-        </h3>
-
+        <h3>🏛️ प्रमुख सरकारी कृषि योजनाएं</h3>
         {schemes.map((s) => (
-          <div
-            className="scheme"
-            key={s.title}
-          >
-            <div className="schemeIcon">
-              {s.icon}
+          <div className="scheme" key={s.title}>
+            <span className="schemeIcon">{s.icon}</span>
+            <div style={{ flex: 1 }}>
+              <b>{s.title}</b>
+              <div className="muted">{s.text}</div>
             </div>
-
-            <div
-              style={{
-                flex: 1,
-              }}
-            >
-              <b>
-                {s.title}
-              </b>
-
-              <div className="muted">
-                {s.text}
-              </div>
-
-              <a
-                href={s.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                आधिकारिक वेबसाइट{" "}
-                <ExternalLink size={11} />
-              </a>
-            </div>
+            <a href={s.url} target="_blank" rel="noreferrer">
+              देखें <ExternalLink size={12} />
+            </a>
           </div>
         ))}
       </div>
-
-      <div className="section">
-        <h3>
-          ℹ️ ऐप की स्थिति
-        </h3>
-
-        <p className="muted">
-          ✅ Real Mandi Bhav
-          <br />
-          ✅ AI Kisan - Render backend
-          <br />
-          ✅ Weather - live forecast
-          <br />
-          ✅ Crop Doctor - AI photo analysis
-        </p>
-      </div>
     </>
   );
 }
 
-/* ================= APP ================= */
+/* ================= MAIN APP ================= */
 
-function App() {
-  const [tab, setTab] =
-    useState<Tab>("home");
+export function App() {
+  const [tab, setTab] = useState<Tab>("home");
+  const [name, setName] = useState("किसान भाई");
+  const [cart, setCart] = useState<{ [id: number]: number }>({});
 
-  const [name] =
-    useState("किसान भाई");
-
-  const [cart, setCart] =
-    useState<Record<number, number>>(
-      () => {
-        try {
-          return JSON.parse(
-            localStorage.getItem(
-              "ks_cart"
-            ) || "{}"
-          );
-        } catch {
-          return {};
-        }
-      }
-    );
-
-  const [crops, setCrops] =
-    useState<Crop[]>(() => {
-      try {
-        return JSON.parse(
-          localStorage.getItem(
-            "ks_crops"
-          ) || "[]"
-        );
-      } catch {
-        return [];
-      }
-    });
-
-  const [chat, setChat] =
-    useState<ChatMsg[]>(() => {
-      try {
-        return JSON.parse(
-          localStorage.getItem(
-            "ks_chat"
-          ) || "[]"
-        );
-      } catch {
-        return [];
-      }
-    });
-
-  const [q, setQ] =
-    useState("");
-
-  useEffect(() => {
-    localStorage.setItem(
-      "ks_cart",
-      JSON.stringify(cart)
-    );
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "ks_crops",
-      JSON.stringify(crops)
-    );
-  }, [crops]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "ks_chat",
-      JSON.stringify(chat)
-    );
-  }, [chat]);
-
-  const count =
-    Object.values(cart).reduce(
-      (a, b) => a + b,
-      0
-    );
-
-  const total =
-    Object.entries(cart).reduce(
-      (s, [id, n]) =>
-        s +
-        (products.find(
-          (p) =>
-            p.id === Number(id)
-        )?.price || 0) *
-          n,
-      0
-    );
-
-  const add = (id: number) => {
-    setCart((c) => ({
-      ...c,
-      [id]:
-        (c[id] || 0) + 1,
-    }));
-  };
-
-  const remove = (
-    id: number
-  ) => {
-    setCart((c) => {
-      const x = {
-        ...c,
-      };
-
-      if (x[id] > 1) {
-        x[id]--;
-      } else {
-        delete x[id];
-      }
-
-      return x;
-    });
-  };
-
-  const send = async (
-    text = q
-  ) => {
-    const t =
-      text.trim();
-
-    if (!t) return;
-
-    setChat((c) => [
-      ...c,
-      {
-        from: "user",
-        text: t,
-      },
-      {
-        from: "ai",
-        text:
-          "AI Kisan सोच रहा है...",
-      },
-    ]);
-
-    setQ("");
-
-    try {
-      const controller =
-        new AbortController();
-
-      const timeout =
-        setTimeout(
-          () =>
-            controller.abort(),
-          30000
-        );
-
-      const r =
-        await fetch(
-          `${API_BASE}/api/chat`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                message: t,
-              }),
-
-            signal:
-              controller.signal,
-          }
-        );
-
-      clearTimeout(timeout);
-
-      const data =
-        await r
-          .json()
-          .catch(() => ({}));
-
-      if (!r.ok) {
-        throw new Error(
-          data.error ||
-            "AI service error"
-        );
-      }
-
-      setChat((c) => {
-        const copy = [
-          ...c,
-        ];
-
-        const i =
-          copy
-            .map(
-              (x) =>
-                x.from
-            )
-            .lastIndexOf(
-              "ai"
-            );
-
-        if (i >= 0) {
-          copy[i] = {
-            from: "ai",
-            text:
-              data.reply ||
-              "AI से जवाब नहीं मिला।",
-          };
-        }
-
-        return copy;
-      });
-    } catch (e) {
-      const msg =
-        e instanceof
-          DOMException &&
-        e.name ===
-          "AbortError"
-          ? "AI server ने समय पर जवाब नहीं दिया।"
-          : e instanceof
-            Error
-          ? e.message
-          : "AI सेवा से कनेक्शन नहीं हो पाया।";
-
-      setChat((c) => {
-        const copy = [
-          ...c,
-        ];
-
-        const i =
-          copy
-            .map(
-              (x) =>
-                x.from
-            )
-            .lastIndexOf(
-              "ai"
-            );
-
-        if (i >= 0) {
-          copy[i] = {
-            from: "ai",
-            text:
-              "❌ " + msg,
-          };
-        }
-
-        return copy;
-      });
-    }
-  };
+  const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
 
   return (
-    <>
-      <style>
-        {css}
-      </style>
+    <div className="app">
+      <style>{css}</style>
 
-      <div className="app">
+      <header>
+        <div className="brand" onClick={() => setTab("home")}>
+          <div className="logo">🌾</div>
+          <div>
+            KisanSaathi AI
+            <small>आपका डिजिटल किसान दोस्त</small>
+          </div>
+        </div>
 
-        <header>
-          <button
-            className="brand"
-            style={{
-              border: 0,
-              background:
-                "transparent",
-              padding: 0,
-            }}
-            onClick={() =>
-              setTab("home")
-            }
-          >
-            <span className="logo">
-              🌾
-            </span>
-
-            <span>
-              KisanSaathi AI
-
-              <small>
-                आपका डिजिटल किसान दोस्त
-              </small>
-            </span>
-          </button>
-
-          <button
-            className="profileIcon"
-            onClick={() =>
-              setTab(
-                "profile"
-              )
-            }
-          >
-            <User size={20} />
-          </button>
-        </header>
-
-        <main>
-
-          {tab === "home" && (
-            <HomePage
-              setTab={setTab}
-              name={name}
-            />
-          )}
-
-          {tab === "mandi" && (
-            <MandiPage
-              setTab={setTab}
-            />
-          )}
-
-          {tab === "weather" && (
-            <WeatherPage
-              setTab={setTab}
-            />
-          )}
-
-          {tab === "crops" && (
-            <CropsPage
-              setTab={setTab}
-              crops={crops}
-              setCrops={
-                setCrops
-              }
-            />
-          )}
-
-          {tab === "doctor" && (
-            <DoctorPage
-              setTab={setTab}
-            />
-          )}
-
-          {tab === "store" && (
-            <StorePage
-              setTab={setTab}
-              cart={cart}
-              add={add}
-            />
-          )}
-
-          {tab === "cart" && (
-            <CartPage
-              setTab={setTab}
-              cart={cart}
-              add={add}
-              remove={remove}
-              total={total}
-            />
-          )}
-
-          {tab === "chat" && (
-            <ChatPage
-              setTab={setTab}
-              chat={chat}
-              q={q}
-              setQ={setQ}
-              send={send}
-            />
-          )}
-
-          {tab === "profile" && (
-            <ProfilePage
-              setTab={setTab}
-              name={name}
-              crops={crops}
-            />
-          )}
-
-        </main>
-
-        <button
-          className="fab"
-          onClick={() =>
-            setTab("chat")
-          }
-          aria-label="AI Kisan"
-        >
-          <MessageCircle size={23} />
+        <button className="profileIcon" onClick={() => setTab("profile")}>
+          <User size={20} />
         </button>
+      </header>
 
-        <nav className="bottomNav">
+      <main>
+        {tab === "home" && <HomePage setTab={setTab} name={name} />}
+        {tab === "mandi" && <MandiPage setTab={setTab} />}
+        {tab === "weather" && <WeatherPage setTab={setTab} />}
+        {tab === "crops" && <CropsPage setTab={setTab} />}
+        {tab === "doctor" && <DoctorPage setTab={setTab} />}
+        {tab === "store" && <StorePage setTab={setTab} cart={cart} setCart={setCart} />}
+        {tab === "chat" && <ChatPage setTab={setTab} />}
+        {tab === "profile" && <ProfilePage setTab={setTab} name={name} setName={setName} />}
+      </main>
 
-          <Nav
-            active={
-              tab === "home"
-            }
-            on={() =>
-              setTab("home")
-            }
-            icon={
-              <Home size={19} />
-            }
-            text="Home"
-          />
+      {/* Floating Chat FAB */}
+      {tab !== "chat" && (
+        <button className="fab" onClick={() => setTab("chat")}>
+          <MessageCircle size={26} />
+        </button>
+      )}
 
-          <Nav
-            active={
-              tab === "crops"
-            }
-            on={() =>
-              setTab("crops")
-            }
-            icon={
-              <Leaf size={19} />
-            }
-            text="मेरी फसल"
-          />
-
-          <Nav
-            active={
-              tab === "store"
-            }
-            on={() =>
-              setTab("store")
-            }
-            icon={
-              <ShoppingCart
-                size={19}
-              />
-            }
-            text={
-              count
-                ? `Store (${count})`
-                : "Store"
-            }
-          />
-
-          <Nav
-            active={
-              tab === "profile"
-            }
-            on={() =>
-              setTab(
-                "profile"
-              )
-            }
-            icon={
-              <User size={19} />
-            }
-            text="Profile"
-          />
-
-        </nav>
-      </div>
-    </>
+      {/* Bottom Navigation */}
+      <nav className="bottomNav">
+        <Nav
+          active={tab === "home"}
+          on={() => setTab("home")}
+          icon={<Home size={20} />}
+          text="Home"
+        />
+        <Nav
+          active={tab === "crops"}
+          on={() => setTab("crops")}
+          icon={<Leaf size={20} />}
+          text="मेरी फसल"
+        />
+        <Nav
+          active={tab === "store"}
+          on={() => setTab("store")}
+          icon={<ShoppingCart size={20} />}
+          text={`Store ${cartCount > 0 ? `(${cartCount})` : ""}`}
+        />
+        <Nav
+          active={tab === "profile"}
+          on={() => setTab("profile")}
+          icon={<User size={20} />}
+          text="Profile"
+        />
+      </nav>
+    </div>
   );
 }
 
-/* ================= START ================= */
-
-const root =
-  document.getElementById(
-    "root"
-  );
-
-if (root) {
-  createRoot(root).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+// Render App
+const container = document.getElementById("root");
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
 }
