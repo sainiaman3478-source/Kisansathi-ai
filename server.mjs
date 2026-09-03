@@ -14,7 +14,7 @@ app.use(express.json({ limit: "10mb" }));
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
   const r = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -37,7 +37,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ===== CROP DOCTOR (PERFECTED FOR GEMINI 2.5 FLASH) =====
+// ===== CROP DOCTOR (FIXED TO GEMINI 3.6 FLASH) =====
 app.post("/api/crop-doctor", async (req, res) => {
   try {
     const key = process.env.GEMINI_API_KEY?.trim();
@@ -60,7 +60,7 @@ Kripya niche diye gaye format me chota aur saral jawab do:
 2. 💊 **Upchar / Dawa:** (Kaun si dawa ya kitnashak kitna dalna hai)
 3. 🛡️ **Bachav ke Upay:** (Aage ke liye savdhani)`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -100,7 +100,7 @@ Kripya niche diye gaye format me chota aur saral jawab do:
   }
 });
 
-// ===== MANDI - FIX FOR FRONTEND (ok: true Added) - UNTOUCHED =====
+// ===== MANDI - UNTOUCHED =====
 app.get("/api/mandi", async (req, res) => {
   try {
     const apiKey = process.env.DATA_GOV_API_KEY;
