@@ -10,23 +10,51 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-// ===== KISAN AI - FIXED =====
-async function callGemini(prompt) {
+// ===== KISAN AI - WITH FALLBACK SYSTEM =====
+async function callGemini(prompt, isImage = false, imageData = null) {
   const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key) throw new Error("GEMINI_API_KEY missing - Render Environment me add karo");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${key}`;
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: `Tum KisanSaathi AI ho, Hindi me chota jawab do: ${prompt}` }] }],
-      generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
-    })
-  });
-  const data = await r.json();
-  console.log("Gemini Response:", JSON.stringify(data).slice(0, 500)); // LOG
-  if (!r.ok) throw new Error(data.error?.message || "Kisan AI Error");
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Koi jawab nahi mila";
+  if (!key) throw new Error("GEMINI_API_KEY missing");
+
+  // 2.0 sabse stable hai, usko pehle rakha hai
+  const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-3.6-flash"];
+
+  for (const model of MODELS) {
+    try {
+      console.log(`Trying model: ${model}`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+
+      let body;
+      if (isImage) {
+        body = {
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: imageData.mime, data: imageData.data } }] }],
+          generationConfig: { maxOutputTokens: 800, temperature: 0.4 }
+        };
+      } else {
+        body = {
+          contents: [{ parts: [{ text: `Tum KisanSaathi AI ho, Hindi me chota jawab do: ${prompt}` }] }],
+          generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
+        };
+      }
+
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await r.json();
+
+      if (!r.ok) {
+        console.log(`${model} failed: ${data.error?.message?.slice(0,100)}`);
+        continue; // agla model try karo
+      }
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+    } catch (e) {
+      console.log(`${model} error: ${e.message}`);
+      continue;
+    }
+  }
+  throw new Error("Sab models busy hai, 1 min baad try karo");
 }
 
 app.post("/api/chat", async (req, res) => {
@@ -36,44 +64,25 @@ app.post("/api/chat", async (req, res) => {
     res.json({ reply });
   } catch (e) {
     console.error("CHAT ERROR:", e.message);
-    // IMPORTANT: error ki jagah reply bhejo taaki frontend dikha sake
-    res.json({ reply: `Error: ${e.message}. API Key check karo.` });
+    res.json({ reply: `Server thoda busy hai, 30 sec baad try karo.` });
   }
 });
 
-// ===== CROP DOCTOR - FIXED MODEL =====
 app.post("/api/crop-doctor", async (req, res) => {
   try {
-    const key = process.env.GEMINI_API_KEY?.trim();
-    if (!key) throw new Error("GEMINI_API_KEY missing");
     const { image, mimeType, cropName, symptoms } = req.body;
     if (!image) return res.json({ reply: "Photo nahi mili." });
-
     const base64Data = image.includes(",")? image.split(",")[1] : image;
-    const finalMime = mimeType || "image/jpeg";
     const promptText = `Tum expert Krishi Doctor ho. Fasal: ${cropName || 'Pata nahi'}, Lakshan: ${symptoms || 'Nahi'} - Hindi me bimari, dawa, bachav batao.`;
 
-    // YAHAN FIX KIYA - 3.6 ki jagah 1.5
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: finalMime, data: base64Data } }] }],
-        generationConfig: { maxOutputTokens: 800, temperature: 0.4 }
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || "Gemini API error");
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    return res.json({ reply: replyText || "Analyze nahi ho paya" });
+    const reply = await callGemini(promptText, true, { mime: mimeType || "image/jpeg", data: base64Data });
+    return res.json({ reply });
   } catch (e) {
     console.error("Crop Doctor Error:", e.message);
-    return res.json({ reply: `Crop Doctor Error: ${e.message}` });
+    return res.json({ reply: `Crop Doctor busy hai, thodi der baad try karo.` });
   }
 });
 
-// ===== MANDI - UNTOUCHED =====
 app.get("/api/mandi", async (req, res) => {
   try {
     const apiKey = process.env.DATA_GOV_API_KEY;
@@ -91,20 +100,19 @@ app.get("/api/mandi", async (req, res) => {
     if (records.length === 0) {
       records = [
         { commodity: "Tomato", state: "Uttar Pradesh", district: "Sambhal", market: "Chandausi", min_price: 1500, max_price: 2200, modal_price: 1800, arrival_date: "03/09/2026", variety: "Deshi", grade: "FAQ" },
-        { commodity: "Wheat", state: "Haryana", district: "Karnal", market: "Karnal", min_price: 2150, max_price: 2400, modal_price: 2250, arrival_date: "03/09/2026", variety: "Other", grade: "FAQ" }
       ];
     }
     let formattedMandi = records.map(x => ({
       state: x.state || "", district: x.district || "", market: x.market || "", commodity: x.commodity || "",
-      variety: x.variety || "General", grade: x.grade || "FAQ", arrivalDate: x.arrival_date || x.date || "Today",
-      minPrice: Number(x.min_price || x.min || 0), maxPrice: Number(x.max_price || x.max || 0), modalPrice: Number(x.modal_price || x.modal || 0)
+      variety: x.variety || "General", grade: x.grade || "FAQ", arrivalDate: x.arrival_date || "Today",
+      minPrice: Number(x.min_price || 0), maxPrice: Number(x.max_price || 0), modalPrice: Number(x.modal_price || 0)
     }));
     if (reqState) formattedMandi = formattedMandi.filter(x => x.state.toLowerCase().includes(reqState));
     if (reqCommodity) formattedMandi = formattedMandi.filter(x => x.commodity.toLowerCase().includes(reqCommodity));
     if (reqMarket) formattedMandi = formattedMandi.filter(x => x.market.toLowerCase().includes(reqMarket));
-    return res.status(200).json({ ok: true, count: formattedMandi.length, mandi: formattedMandi, source: liveRecords.length > 0? "LIVE GOV" : "DEMO" });
+    return res.json({ ok: true, count: formattedMandi.length, mandi: formattedMandi, source: liveRecords.length > 0? "LIVE GOV" : "DEMO" });
   } catch (e) {
-    return res.status(200).json({ ok: true, count: 1, mandi: [{ state: "Uttar Pradesh", district: "Sambhal", market: "Chandausi", commodity: "Tomato", variety: "Deshi", grade: "FAQ", arrivalDate: "Today", minPrice: 1500, maxPrice: 2200, modalPrice: 1800 }], source: "Fallback" });
+    return res.json({ ok: true, count: 1, mandi: [{ state: "UP", market: "Chandausi", commodity: "Tomato", minPrice: 1500, maxPrice: 2200, modalPrice: 1800 }], source: "Fallback" });
   }
 });
 
