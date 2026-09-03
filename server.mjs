@@ -14,26 +14,18 @@ app.use(express.json({ limit: "10mb" }));
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
-  const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
-  let lastErr = "";
-  for (const model of models) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-      const r = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Tum KisanSaathi AI ho, Hindi me chota jawab do: ${prompt}` }] }],
-          generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
-        })
-      });
-      const data = await r.json();
-      if (!r.ok) { lastErr = data.error?.message || JSON.stringify(data); continue; }
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) return text;
-    } catch (e) { lastErr = e.message; }
-  }
-  throw new Error(lastErr);
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `Tum KisanSaathi AI ho, Hindi me chota jawab do: ${prompt}` }] }],
+      generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
+    })
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error?.message || "Kisan AI Error");
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Koi jawab nahi mila";
 }
 
 app.post("/api/chat", async (req, res) => {
@@ -45,7 +37,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ===== CROP DOCTOR (MODEL FIXED TO STABLE GEMINI 1.5 FLASH) =====
+// ===== CROP DOCTOR (PERFECTED FOR GEMINI 2.5 FLASH) =====
 app.post("/api/crop-doctor", async (req, res) => {
   try {
     const key = process.env.GEMINI_API_KEY?.trim();
@@ -63,54 +55,41 @@ app.post("/api/crop-doctor", async (req, res) => {
 - Fasal ka naam: ${cropName || 'Pata nahi'}
 - Kisaan dwara bataye gaye lakshan: ${symptoms || 'Koi nahi'}
 
-Kripya niche दिए गए format me chota aur saral jawab do:
+Kripya niche diye gaye format me chota aur saral jawab do:
 1. 🩺 **Bimari / Samasya:** (Bimari ka naam aur karan)
 2. 💊 **Upchar / Dawa:** (Kaun si dawa ya kitnashak kitna dalna hai)
 3. 🛡️ **Bachav ke Upay:** (Aage ke liye savdhani)`;
 
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro"];
-    let lastErr = "";
-    let replyText = "";
-
-    for (const model of models) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-        const response = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: promptText },
               {
-                parts: [
-                  { text: promptText },
-                  {
-                    inline_data: {
-                      mime_type: finalMime,
-                      data: base64Data
-                    }
-                  }
-                ]
+                inline_data: {
+                  mime_type: finalMime,
+                  data: base64Data
+                }
               }
-            ],
-            generationConfig: { maxOutputTokens: 800, temperature: 0.4 }
-          })
-        });
+            ]
+          }
+        ],
+        generationConfig: { maxOutputTokens: 800, temperature: 0.4 }
+      })
+    });
 
-        const data = await response.json();
-        if (!response.ok) {
-          lastErr = data.error?.message || JSON.stringify(data);
-          continue;
-        }
-
-        replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyText) break;
-      } catch (err) {
-        lastErr = err.message;
-      }
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Gemini API error");
     }
 
+    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!replyText) {
-      throw new Error(lastErr || "Crop Doctor AI photo analyze nahi kar paya.");
+      throw new Error("Crop Doctor AI photo analyze nahi kar paya.");
     }
 
     return res.json({ reply: replyText });
@@ -166,7 +145,6 @@ app.get("/api/mandi", async (req, res) => {
       modalPrice: Number(x.modal_price || x.modal || 0)
     }));
 
-    // Filter Logic
     if (reqState) {
       formattedMandi = formattedMandi.filter(x => x.state.toLowerCase().includes(reqState));
     }
@@ -177,7 +155,6 @@ app.get("/api/mandi", async (req, res) => {
       formattedMandi = formattedMandi.filter(x => x.market.toLowerCase().includes(reqMarket));
     }
 
-    // FRONTEND COMPATIBLE RESPONSE (MUST CONTAIN ok: true)
     return res.status(200).json({
       ok: true,
       count: formattedMandi.length,
