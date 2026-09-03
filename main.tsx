@@ -1510,7 +1510,7 @@ function WeatherPage({
                 marginBottom: "12px",
               }}
             >
-              📅 अगले 5 दिन का लाइव मौसम
+               अगले 10 दिन का लाइव मौसम
             </h3>
 
             <div className="forecast">
