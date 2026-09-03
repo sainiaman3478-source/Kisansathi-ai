@@ -867,71 +867,24 @@ function HomePage({
   setTab: (t: Tab) => void;
   name: string;
 }) {
-  const apkDownloadUrl = "https://github.com/sainiaman3478-source/Kisansathi-ai/raw/refs/heads/main/app-release.apk";
-
   return (
     <div className="pb-8">
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
-        <div className="w-28 h-28 bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl shadow-lg flex items-center justify-center text-white text-5xl flex-shrink-0">
-          🌱
-        </div>
-
-        <div className="flex-1 text-center md:text-left">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">KisanSathi AI - Kisan App</h1>
-          <p className="text-green-700 font-medium text-sm mt-1">KisanSathi Tech • Tools & Agriculture</p>
-          
-          <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 my-4 text-xs text-slate-600">
-            <div className="flex items-center space-x-1 bg-slate-100 px-2.5 py-1 rounded-md">
-              <span className="font-bold text-slate-800">4.8</span>
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-              <span className="text-slate-500">(12K+ reviews)</span>
-            </div>
-            <div className="border-l border-slate-300 h-4"></div>
-            <div>
-              <span className="font-bold text-slate-800">10K+</span> Downloads
-            </div>
-            <div className="border-l border-slate-300 h-4"></div>
-            <div className="bg-slate-100 px-2 py-0.5 rounded font-bold">3+</div>
-          </div>
-
-          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
-            <a 
-              href={apkDownloadUrl}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-center no-underline"
-              style={{ background: '#2e7d32', color: '#fff', textDecoration: 'none', display: 'inline-flex', gap: '8px' }}
-            >
-              <Download className="w-5 h-5" />
-              <span>Download APK (Free)</span>
-            </a>
-            <div className="flex items-center text-xs text-slate-500 space-x-1 mt-2 sm:mt-0">
-              <ShieldCheck className="w-4 h-4 text-green-600" />
-              <span>Verified Safe & Secure App</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start space-x-3" style={{ background: '#edf7ea', border: '1px solid #c8e6c9', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px' }}>
-        <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-emerald-900">
-          <p className="font-semibold" style={{ fontWeight: 'bold', margin: '0 0 4px' }}>Safe Download Guarantee</p>
-          <p className="text-emerald-700 text-xs m-0" style={{ fontSize: '11px', color: '#2e7d32' }}>Ye app bilkul surakshit hai. Agar phone mein "Harmful App" ki warning aaye, toh **"Install Anyway"** par click karke aasani se chala sakte hain.</p>
-        </div>
-      </div>
-
       <section className="hero">
         <h1>नमस्ते {name} 👋</h1>
         <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
+
         <button
           className="weatherButton"
           onClick={() => setTab("weather")}
         >
           <CloudSun size={29} />
+
           <div>
             <strong>आज का मौसम देखें</strong>
             <br />
             <span>अपने इलाके का live मौसम देखें</span>
           </div>
+
           <ArrowLeft
             size={16}
             style={{
@@ -965,6 +918,7 @@ function HomePage({
             }}
           >
             <div className="cardIcon">{c[0]}</div>
+
             <div>
               <div className="cardTitle">{c[1]}</div>
               <div className="cardSub">{c[2]}</div>
@@ -981,7 +935,6 @@ function HomePage({
     </div>
   );
 }
-
 /* ================= MANDI ================= */
 
 function MandiPage({
