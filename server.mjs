@@ -12,7 +12,7 @@ async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
 
-  // SIRF NAYE MODELS - 2026
+  // TERA CHALU WALA AI - NO CHANGE
   const models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"];
 
   let lastErr = "";
@@ -46,26 +46,36 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// MANDI - AB KABHI 200 ERROR NAHI DEGA
+// MANDI - DEBUG + LIVE + DEMO - UPDATED
 app.get("/api/mandi", async (req, res) => {
   try {
     const apiKey = process.env.DATA_GOV_API_KEY;
-    let records = [];
+    const q = (req.query.commodity || req.query.fasal || "").toLowerCase();
+    let liveMandi = [];
+
     if (apiKey) {
       try {
         const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${apiKey}&format=json&limit=100`;
         const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
         const data = await r.json();
-        if (data.records && data.records.length > 0) records = data.records;
-      } catch (e) { console.log("gov api fail", e.message); }
+        
+        console.log("GOV RESPONSE:", JSON.stringify(data).slice(0, 800));
+
+        if (data.records && data.records.length > 0) {
+          liveMandi = data.records;
+        }
+      } catch (e) {
+        console.log("GOV API FETCH FAIL:", e.message);
+      }
     }
 
-    // Fallback data - hamesha chalega
+    let records = liveMandi;
     if (records.length === 0) {
+      console.log("Using DEMO data, Live empty");
       records = [
         { commodity: "Wheat", state: "Uttar Pradesh", district: "Sambhal", market: "Sambhal", min_price: "2150", max_price: "2400", modal_price: "2250", arrival_date: "2026-09-02" },
-        { commodity: "Wheat", state: "Haryana", district: "Karnal", market: "Karnal", min_price: "2200", max_price: "2500", modal_price: "2350", arrival_date: "2026-09-02" },
-        { commodity: "Tomato", state: "UP", district: "Sambhal", market: "Sambhal", min_price: "1200", max_price: "2000", modal_price: "1600", arrival_date: "2026-09-02" }
+        { commodity: "Tomato", state: "UP", district: "Sambhal", market: "Sambhal", min_price: "1200", max_price: "2000", modal_price: "1600", arrival_date: "2026-09-02" },
+        { commodity: "Potato", state: "UP", district: "Sambhal", market: "Sambhal", min_price: "800", max_price: "1500", modal_price: "1100", arrival_date: "2026-09-02" }
       ];
     }
 
@@ -74,12 +84,14 @@ app.get("/api/mandi", async (req, res) => {
       min: rec.min_price, max: rec.max_price, modal: rec.modal_price, date: rec.arrival_date
     }));
 
-    const q = (req.query.commodity || req.query.fasal || "").toLowerCase();
-    if (q) { const f = mandi.filter(x => (x.commodity||"").toLowerCase().includes(q)); if (f.length > 0) mandi = f; }
+    if (q) {
+      const f = mandi.filter(x => (x.commodity||"").toLowerCase().includes(q));
+      if (f.length > 0) mandi = f;
+    }
 
-    res.json({ mandi, total: mandi.length, source: "Live" });
+    res.json({ mandi, total: mandi.length, source: liveMandi.length > 0 ? "LIVE" : "DEMO" });
   } catch (e) {
-    // Important: Hamesha 200 pe mandi array bhejo, taki frontend error na dikhaye
+    console.log("Mandi Crash:", e.message);
     res.json({ mandi: [{ commodity: "Wheat", state: "UP", market: "Sambhal", min: "2150", max: "2400", modal: "2250", date: "today" }], source: "Fallback" });
   }
 });
