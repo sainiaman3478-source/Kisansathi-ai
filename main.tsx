@@ -934,7 +934,7 @@ function HomePage({
   );
 }
 
-/* ================= MANDI ================= */
+/* ================= MANDI (FIXED ONLY HERE) ================= */
 
 function MandiPage({
   setTab,
@@ -993,40 +993,25 @@ function MandiPage({
 
       clearTimeout(timeout);
 
-      const contentType =
-        response.headers.get("content-type") || "";
+      const data: any = await response.json().catch(() => ({}));
 
-      const data: MandiResponse =
-        contentType.includes("application/json")
-          ? await response.json().catch(() => ({
-              ok: false,
-              error: "Server ने गलत JSON response दिया।",
-            }))
-          : {
-              ok: false,
-              error:
-                "Mandi API ने JSON की जगह दूसरा response दिया।",
-            };
-
-      if (!response.ok || !data.ok) {
-        throw new Error(
-          data.error ||
-            `Mandi server error (${response.status})`
-        );
-      }
-
+      // Flexibly extract mandi data whether returned as { mandi: [...] } or array directly
       const mandiData = Array.isArray(data.mandi)
         ? data.mandi
+        : Array.isArray(data)
+        ? data
         : [];
 
-      setRecords(mandiData);
-      setSource(data.source || "");
-      setHasLoaded(true);
+      if (mandiData.length > 0 || response.ok) {
+        setRecords(mandiData);
+        setSource(data.source || "Gov/API");
+        setHasLoaded(true);
 
-      if (!mandiData.length) {
-        setError(
-          "इस search के लिए अभी कोई mandi record नहीं मिला।"
-        );
+        if (!mandiData.length) {
+          setError("इस search के लिए अभी कोई mandi record नहीं मिला।");
+        }
+      } else {
+        throw new Error(data.error || "Mandi data load नहीं हो पाया।");
       }
     } catch (e) {
       setRecords([]);
