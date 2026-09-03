@@ -14,7 +14,7 @@ app.use(express.json({ limit: "10mb" }));
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
-  const models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"];
+  const models = ["gemini-1.5-flash", "gemini-2.0-flash"];
   let lastErr = "";
   for (const model of models) {
     try {
@@ -45,7 +45,7 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// ===== CROP DOCTOR (PHOTO ANALYSIS) ROUTE =====
+// ===== CROP DOCTOR (UPDATED WORKING MODELS) =====
 app.post("/api/crop-doctor", async (req, res) => {
   try {
     const key = process.env.GEMINI_API_KEY?.trim();
@@ -56,7 +56,6 @@ app.post("/api/crop-doctor", async (req, res) => {
       return res.status(400).json({ error: "Photo nahi mili." });
     }
 
-    // Base64 Data URL se clean base64 string nikalna
     const base64Data = image.includes(",") ? image.split(",")[1] : image;
     const finalMime = mimeType || "image/jpeg";
 
@@ -67,9 +66,9 @@ app.post("/api/crop-doctor", async (req, res) => {
 Kripya niche diye gaye format me chota aur saral jawab do:
 1. 🩺 **Bimari / Samasya:** (Bimari ka naam aur karan)
 2. 💊 **Upchar / Dawa:** (Kaun si dawa ya kitnashak kitna dalna hai)
-3. 🛡️ **B बचाव ke Upay:** (Aage ke liye savdhani)`;
+3. 🛡️ **Bachav ke Upay:** (Aage ke liye savdhani)`;
 
-    const models = ["gemini-1.5-flash", "gemini-2.5-flash"];
+    const models = ["gemini-1.5-flash", "gemini-2.0-flash"];
     let lastErr = "";
     let replyText = "";
 
