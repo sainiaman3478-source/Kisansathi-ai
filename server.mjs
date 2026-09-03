@@ -14,7 +14,7 @@ app.use(express.json({ limit: "10mb" }));
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing - Render Environment me add karo");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
   const r = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
