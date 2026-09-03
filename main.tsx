@@ -1811,7 +1811,7 @@ export default function App() {
         {tab === "home" && <HomePage setTab={setTab} name={name} />}
         {tab === "mandi" && <MandiPage setTab={setTab} />}
         {tab === "weather" && <WeatherPage setTab={setTab} />}
-        {tab === "crops" && <CropPage setTab={setTab} />}
+        {tab === "crops" && <CropsPage setTab={setTab} />}
         {tab === "doctor" && <DoctorPage setTab={setTab} />}
         {tab === "store" && <StorePage setTab={setTab} cart={cart} setCart={setCart} />}
         {tab === "cart" && <CartPage setTab={setTab} cart={cart} setCart={setCart} />}
