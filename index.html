@@ -4,8 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KisanSaathi AI</title>
+    <style>
+      #lakdi-mandi-ALAG { font-family: sans-serif; max-width: 400px; margin: 20px auto; background: white; border-radius: 20px; padding: 18px; border: 2px solid #ff9800; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    </style>
   </head>
-  <body>
+  <body style="background:#f1f8e9; margin:0; padding:10px;">
+    
+    <!-- ============ NAYA - LAKDI MANDI BHAV - BILKUL ALAG - PURANE KO TOUCH NAHI ============ -->
+    <div id="lakdi-mandi-ALAG">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0; color:#e65100; font-size:20px;">🪵 लकड़ी मंडी भाव</h2>
+        <span style="background:#fff3e0; color:#e65100; padding:4px 10px; border-radius:15px; font-size:12px; font-weight:bold;">NEW • LIVE</span>
+      </div>
+      <p style="margin:5px 0; color:gray; font-size:13px;">📍 Yamunanagar Mandi • <span id="lakdiDate">5 Sept</span></p>
+      <div style="font-size:32px; font-weight:900; color:#0a4d1e; margin-top:10px;">₹ 1600 / क्विंटल</div>
+      <p style="font-size:12px; background:#e8f5e9; display:inline-block; padding:4px 8px; border-radius:6px; margin:5px 0;">🍃 Poplar / Safeda</p>
+      <div style="font-size:12px; color:green; margin-top:5px;">🕒 अपडेटेड: आज 6:30 शाम</div>
+      <button onclick="alert('Detail page Screen 2 yahan khulega')" style="width:100%; background:#e65100; color:white; border:none; padding:12px; border-radius:10px; margin-top:12px; font-weight:bold; font-size:16px;">विस्तृत विवरण देखें →</button>
+    </div>
+    <script>
+      document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
+    </script>
+    <!-- ============ NAYA KHATAM ============ -->
+
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
   </body>
