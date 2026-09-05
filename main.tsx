@@ -858,7 +858,7 @@ function Nav({
   );
 }
 
-/* ================= HOME (Play Store Style Download Page integrated) ================= */
+/* ================= HOME ================= */
 
 function HomePage({
   setTab,
@@ -867,81 +867,24 @@ function HomePage({
   setTab: (t: Tab) => void;
   name: string;
 }) {
-  const apkDownloadUrl = "https://github.com/sainiaman3478-source/Kisansathi-ai/raw/refs/heads/main/app-release.apk";
-
-  const appFeatures = [
-    { icon: <Cpu className="w-6 h-6 text-green-600" />, title: "AI Kisan Doctor", desc: "Fasal ke rog ki pehchan turant karein aur sahi ilaaj paayein." },
-    { icon: <Sprout className="w-6 h-6 text-green-600" />, title: "Mandi Bhav Live", desc: "Apne nazdeeki market ke taaza bhav rozana dekhein." },
-    { icon: <CloudSun className="w-6 h-6 text-green-600" />, title: "Mausam ki Jankari", desc: "Aane wale dino ke mausam ka sateek anuman." },
-    { icon: <Building2 className="w-6 h-6 text-green-600" />, title: "Sarkari Yojnae", desc: "Sabhi kisan kalyan yojnao ki poori jankari aur aavedan." }
-  ];
-
   return (
     <div className="pb-8">
-      {/* Play Store Style Hero Section */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
-        <div className="w-28 h-28 bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl shadow-lg flex items-center justify-center text-white text-5xl flex-shrink-0">
-          🌱
-        </div>
-
-        <div className="flex-1 text-center md:text-left">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">KisanSathi AI - Kisan App</h1>
-          <p className="text-green-700 font-medium text-sm mt-1">KisanSathi Tech • Tools & Agriculture</p>
-          
-          <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 my-4 text-xs text-slate-600">
-            <div className="flex items-center space-x-1 bg-slate-100 px-2.5 py-1 rounded-md">
-              <span className="font-bold text-slate-800">4.8</span>
-              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 text-amber-400" />
-              <span className="text-slate-500">(12K+ reviews)</span>
-            </div>
-            <div className="border-l border-slate-300 h-4"></div>
-            <div>
-              <span className="font-bold text-slate-800">10K+</span> Downloads
-            </div>
-            <div className="border-l border-slate-300 h-4"></div>
-            <div className="bg-slate-100 px-2 py-0.5 rounded font-bold">3+</div>
-          </div>
-
-          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
-            <a 
-              href={apkDownloadUrl}
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-center no-underline"
-              style={{ background: '#2e7d32', color: '#fff', textDecoration: 'none', display: 'inline-flex', gap: '8px' }}
-            >
-              <Download className="w-5 h-5" />
-              <span>Download APK (Free)</span>
-            </a>
-            <div className="flex items-center text-xs text-slate-500 space-x-1 mt-2 sm:mt-0">
-              <ShieldCheck className="w-4 h-4 text-green-600" />
-              <span>Verified Safe & Secure App</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Security Banner */}
-      <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start space-x-3" style={{ background: '#edf7ea', border: '1px solid #c8e6c9', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px' }}>
-        <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-emerald-900">
-          <p className="font-semibold" style={{ fontWeight: 'bold', margin: '0 0 4px' }}>Safe Download Guarantee</p>
-          <p className="text-emerald-700 text-xs m-0" style={{ fontSize: '11px', color: '#2e7d32' }}>Ye app bilkul surakshit hai. Agar phone mein "Harmful App" ki warning aaye, toh **"Install Anyway"** par click karke aasani se chala sakte hain.</p>
-        </div>
-      </div>
-
-      {/* Original Web Tools Quick Navigation */}
       <section className="hero">
         <h1>नमस्ते {name} 👋</h1>
         <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
+
         <button
           className="weatherButton"
           onClick={() => setTab("weather")}
         >
           <CloudSun size={29} />
+
           <div>
             <strong>आज का मौसम देखें</strong>
             <br />
             <span>अपने इलाके का live मौसम देखें</span>
           </div>
+
           <ArrowLeft
             size={16}
             style={{
@@ -952,7 +895,6 @@ function HomePage({
         </button>
       </section>
 
-      {/* Features Grid */}
       <div className="grid mb-6">
         {[
           ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
@@ -976,6 +918,7 @@ function HomePage({
             }}
           >
             <div className="cardIcon">{c[0]}</div>
+
             <div>
               <div className="cardTitle">{c[1]}</div>
               <div className="cardSub">{c[2]}</div>
@@ -984,7 +927,6 @@ function HomePage({
         ))}
       </div>
 
-      {/* App Key Features list */}
       <div className="advice">
         ⚠️ <b>किसान सलाह</b>
         <br />
@@ -993,7 +935,6 @@ function HomePage({
     </div>
   );
 }
-
 /* ================= MANDI ================= */
 
 function MandiPage({
@@ -1235,97 +1176,367 @@ function MandiPage({
   );
 }
 
-/* ================= WEATHER ================= */
+/* ==/* ================= WEATHER ================= */
 
 function WeatherPage({
   setTab,
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [lat, setLat] = useState("28.6139");
-  const [lon, setLon] = useState("77.2090");
-  const [locationName, setLocationName] = useState("Delhi");
+  const [lat, setLat] = useState("");
+  const [lon, setLon] = useState("");
+  const [locationName, setLocationName] = useState("लोकेशन प्राप्त की जा रही है...");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const fetchWeather = async (latitude: string, longitude: string, name: string) => {
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return "☀️";
+
+    if ([1, 2].includes(code)) return "🌤️";
+
+    if (code === 3) return "☁️";
+
+    if ([45, 48].includes(code)) return "🌫️";
+
+    if ([51, 53, 55, 56, 57].includes(code)) return "🌦️";
+
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "🌧️";
+
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return "❄️";
+
+    if ([95, 96, 99].includes(code)) return "⛈️";
+
+    return "🌤️";
+  };
+
+  const getWeatherText = (code: number) => {
+    if (code === 0) return "साफ आसमान";
+
+    if ([1, 2].includes(code)) return "आंशिक बादल";
+
+    if (code === 3) return "बादल छाए हैं";
+
+    if ([45, 48].includes(code)) return "कोहरा";
+
+    if ([51, 53, 55, 56, 57].includes(code)) return "हल्की बारिश";
+
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "बारिश";
+
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return "बर्फबारी";
+
+    if ([95, 96, 99].includes(code)) return "तूफान";
+
+    return "मौसम की जानकारी";
+  };
+
+  const getDayName = (date: string) => {
+    const days = [
+      "रविवार",
+      "सोमवार",
+      "मंगलवार",
+      "बुधवार",
+      "गुरुवार",
+      "शुक्रवार",
+      "शनिवार",
+    ];
+
+    const d = new Date(`${date}T12:00:00`);
+
+    return days[d.getDay()];
+  };
+
+  const fetchWeather = async (
+    latitude: string,
+    longitude: string,
+    name: string
+  ) => {
     setLoading(true);
     setError("");
-    setLocationName(name);
 
     try {
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max`
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setWeather(data);
-      } else {
-        throw new Error("मौसम का डाटा लोड नहीं हो पाया।");
+      const url =
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${latitude}` +
+        `&longitude=${longitude}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
+        `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
+        `&timezone=auto` +
+        `&forecast_days=5`;
+
+      const res = await fetch(url, {
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error("Weather API error");
       }
+
+      const data: WeatherData = await res.json();
+
+      setLat(latitude);
+      setLon(longitude);
+      setWeather(data);
+      setLocationName(name);
     } catch (e) {
-      setError("मौसम लोड करने में समस्या आई।");
+      setError("मौसम का लाइव डाटा लोड नहीं हो पाया। कृपया दोबारा कोशिश करें।");
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchLiveLocationWeather = () => {
+    if (!navigator.geolocation) {
+      setError("आपका browser Live Location support नहीं करता।");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setLocationName("आपकी लाइव लोकेशन प्राप्त की जा रही है...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude.toString();
+        const longitude = position.coords.longitude.toString();
+
+        await fetchWeather(
+          latitude,
+          longitude,
+          "आपकी लाइव लोकेशन"
+        );
+      },
+
+      (err) => {
+        setLoading(false);
+
+        if (err.code === 1) {
+          setError(
+            "Live Location की permission नहीं मिली। कृपया browser में Location Allow करें।"
+          );
+        } else if (err.code === 2) {
+          setError(
+            "आपकी Live Location प्राप्त नहीं हो पाई। कृपया दोबारा कोशिश करें।"
+          );
+        } else if (err.code === 3) {
+          setError(
+            "Live Location प्राप्त करने में समय समाप्त हो गया। कृपया दोबारा कोशिश करें।"
+          );
+        } else {
+          setError(
+            "Live Location प्राप्त नहीं हो पाई।"
+          );
+        }
+
+        setLocationName("कोई Live Location नहीं चुनी गई");
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   useEffect(() => {
-    fetchWeather("28.6139", "77.2090", "Delhi");
+    fetchLiveLocationWeather();
   }, []);
 
   return (
     <>
-      <PageTitle setTab={setTab} sub="Live Open-Meteo Weather" title="मौसम की जानकारी" />
+      <PageTitle
+        setTab={setTab}
+        sub="Real Live Open-Meteo Weather"
+        title="मौसम की जानकारी"
+      />
 
       <div className="section">
-        <div className="locationRow">
-          <MapPin size={18} color="#2e7d32" />
-          <span>चुना गया स्थान: <b>{locationName}</b></span>
-        </div>
+        <div
+          className="locationRow"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "7px",
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            <MapPin size={18} color="#2e7d32" />
 
-        <div className="filterGrid" style={{ marginBottom: 10 }}>
+            <span>
+              चुना गया स्थान: <b>{locationName}</b>
+            </span>
+          </div>
+
           <button
-            className="addBtn"
-            onClick={() => fetchWeather("28.6139", "77.2090", "दिल्ली")}
+            onClick={fetchLiveLocationWeather}
+            disabled={loading}
+            style={{
+              background: "#2e7d32",
+              color: "#fff",
+              border: "none",
+              padding: "8px 11px",
+              borderRadius: "8px",
+              fontSize: "11px",
+              cursor: loading ? "not-allowed" : "pointer",
+              marginLeft: "8px",
+              opacity: loading ? 0.7 : 1,
+            }}
           >
-            दिल्ली
-          </button>
-          <button
-            className="addBtn"
-            onClick={() => fetchWeather("26.9124", "75.7873", "जयपुर")}
-          >
-            जयपुर
+            🔄 Live Location
           </button>
         </div>
       </div>
 
-      {loading && <div className="section">मौसम लोड हो रहा है...</div>}
-      {error && <div className="section" style={{ color: "red" }}>{error}</div>}
+      {loading && (
+        <div className="section">
+          📍 आपकी Live Location और मौसम की जानकारी लोड हो रही है...
+        </div>
+      )}
 
-      {weather && (
+      {error && (
+        <div
+          className="section"
+          style={{
+            color: "#c62828",
+            background: "#fff0f0",
+          }}
+        >
+          ❌ {error}
+        </div>
+      )}
+
+      {weather && !loading && (
         <>
           <div className="weatherBig">
+            <div style={{ fontSize: "34px" }}>
+              {getWeatherIcon(weather.current.weather_code)}
+            </div>
+
             <div>वर्तमान तापमान</div>
-            <div className="temperature">{weather.current.temperature_2m}°C</div>
-            <div>महसूस हो रहा है: {weather.current.apparent_temperature}°C</div>
+
+            <div className="temperature">
+              {weather.current.temperature_2m}°C
+            </div>
+
+            <div>
+              {getWeatherText(weather.current.weather_code)}
+            </div>
+
+            <div style={{ marginTop: "8px" }}>
+              महसूस हो रहा है:{" "}
+              {weather.current.apparent_temperature}°C
+            </div>
           </div>
 
           <div className="weatherInfoGrid">
             <div className="weatherInfo">
-              💧 नमी (Humidity): <b>{weather.current.relative_humidity_2m}%</b>
+              💧 नमी (Humidity):{" "}
+              <b>
+                {weather.current.relative_humidity_2m}%
+              </b>
             </div>
+
             <div className="weatherInfo">
-              💨 हवा की गति: <b>{weather.current.wind_speed_10m} km/h</b>
+              💨 हवा की गति:{" "}
+              <b>
+                {weather.current.wind_speed_10m} km/h
+              </b>
+            </div>
+          </div>
+
+          <div
+            className="section"
+            style={{ marginTop: "12px" }}
+          >
+            <h3
+              style={{
+                marginTop: 0,
+                marginBottom: "12px",
+              }}
+            >
+               अगले 10 दिन का लाइव मौसम
+            </h3>
+
+            <div className="forecast">
+              {weather.daily.time
+                .slice(0, 5)
+                .map((date, index) => (
+                  <div
+                    className="forecastCard"
+                    key={date}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 800,
+                      }}
+                    >
+                      {index === 0
+                        ? "आज"
+                        : getDayName(date)}
+                    </div>
+
+                    <div className="forecastIcon">
+                      {getWeatherIcon(
+                        weather.daily.weather_code[index]
+                      )}
+                    </div>
+
+                    <div>
+                      <b>
+                        {Math.round(
+                          weather.daily
+                            .temperature_2m_max[index]
+                        )}°C
+                      </b>
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#777",
+                        marginTop: "3px",
+                      }}
+                    >
+                      न्यूनतम:{" "}
+                      {Math.round(
+                        weather.daily
+                          .temperature_2m_min[index]
+                      )}°C
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#2e7d32",
+                        marginTop: "5px",
+                        fontSize: "10px",
+                      }}
+                    >
+                      🌧️ बारिश:{" "}
+                      {
+                        weather.daily
+                          .precipitation_probability_max[
+                            index
+                          ]
+                      }
+                      %
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </>
       )}
     </>
   );
-}
-
+              }
 /* ================= CROPS ================= */
 
 function CropsPage({
@@ -1436,7 +1647,7 @@ function DoctorPage({
     setAnalyzing(true);
     setTimeout(() => {
       setAnalyzing(false);
-      setResult("AI Doctor Analysis: पत्ती पर हल्के धับबे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
+      setResult("AI Doctor Analysis: पत्ती पर हल्के धब्बे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
     }, 2000);
   };
 
@@ -1609,7 +1820,7 @@ function CartPage({
   );
 }
 
-/* ================= CHAT ================= */
+/* ================= CHAT (FIXED & REAL API CONNECTED) ================= */
 
 function ChatPage({
   setTab,
@@ -1620,19 +1831,35 @@ function ChatPage({
     { from: "ai", text: "नमस्ते! मैं KisanSathi AI हूँ। खेती से जुड़ा कोई भी सवाल पूछिए।" },
   ]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const send = () => {
-    if (!input.trim()) return;
+  const send = async () => {
+    if (!input.trim() || loading) return;
     const userText = input;
     setMessages((prev) => [...prev, { from: "user", text: userText }]);
     setInput("");
+    setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${API_BASE}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userText }),
+      });
+      const data = await res.json();
+      
+      const aiReply = data.reply || data.answer || data.message || "माफ कीजिए, अभी जवाब देने में समस्या आ रही है।";
+      setMessages((prev) => [...prev, { from: "ai", text: aiReply }]);
+    } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { from: "ai", text: `AI उत्तर: ${userText} के संबंध में सही खाद और समय पर सिंचाई की सलाह दी जाती है।` },
+        { from: "ai", text: "सर्वर से संपर्क नहीं हो पाया। कृपया दोबारा कोशिश करें।" },
       ]);
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1648,6 +1875,11 @@ function ChatPage({
             {m.text}
           </div>
         ))}
+        {loading && (
+          <div className="bubble aiBubble" style={{ color: "#666" }}>
+            AI सोच रहा है...
+          </div>
+        )}
       </div>
 
       <div className="inputRow">
@@ -1655,9 +1887,10 @@ function ChatPage({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="अपना सवाल लिखें..."
+          disabled={loading}
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
-        <button className="sendBtn" onClick={send}>
+        <button className="sendBtn" onClick={send} disabled={loading}>
           <Send size={18} />
         </button>
       </div>
