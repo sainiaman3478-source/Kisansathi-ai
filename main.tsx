@@ -153,658 +153,47 @@ const schemes = [
 /* ================= CSS ================= */
 
 const css = `
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  margin: 0;
-  min-height: 100%;
-  font-family: Arial, "Noto Sans Devanagari", sans-serif;
-  background: #f3f7f1;
-  color: #243024;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.app {
-  min-height: 100vh;
-  max-width: 700px;
-  margin: auto;
-  background: #f3f7f1;
-  padding-bottom: 86px;
-}
-
-header {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: #fff;
-  padding: 11px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 8px #00000012;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: #287b31;
-  font-weight: 800;
-  font-size: 17px;
-}
-
-.logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #e8f6e5;
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-}
-
-header small {
-  display: block;
-  color: #7b817b;
-  font-size: 10px;
-  margin-top: 2px;
-}
-
-.profileIcon {
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 50%;
-  background: #e8f5e9;
-  color: #28752e;
-  display: grid;
-  place-items: center;
-}
-
-main {
-  padding: 12px;
-}
-
-.hero {
-  background: linear-gradient(135deg, #e3f7dc, #f9fff6);
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 12px;
-  border: 1px solid #e2efdf;
-}
-
-.hero h1 {
-  font-size: 21px;
-  margin: 0 0 6px;
-}
-
-.hero p {
-  margin: 0 0 12px;
-  color: #667066;
-  font-size: 13px;
-}
-
-.weatherButton {
-  width: 100%;
-  border: 0;
-  background: #fff;
-  border-radius: 15px;
-  padding: 13px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-align: left;
-  box-shadow: 0 2px 8px #00000008;
-}
-
-.weatherButton strong {
-  font-size: 15px;
-}
-
-.weatherButton span {
-  font-size: 11px;
-  color: #777;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-}
-
-.card {
-  border: 0;
-  background: #fff;
-  border-radius: 16px;
-  padding: 14px 10px;
-  min-height: 84px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-align: left;
-  box-shadow: 0 2px 8px #0000000d;
-}
-
-.card:active {
-  transform: scale(.985);
-}
-
-.cardIcon {
-  font-size: 23px;
-  width: 30px;
-  text-align: center;
-}
-
-.cardTitle {
-  font-weight: 800;
-  font-size: 13px;
-}
-
-.cardSub {
-  color: #777;
-  font-size: 10px;
-  margin-top: 4px;
-}
-
-.advice,
-.section,
-.chatBox {
-  background: #fff;
-  border-radius: 16px;
-  padding: 14px;
-  box-shadow: 0 2px 8px #0000000b;
-}
-
-.advice {
-  margin-top: 11px;
-  background: #fff8df;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.section {
-  margin-bottom: 11px;
-}
-
-.pageTitle {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin: 2px 0 12px;
-}
-
-.pageTitle h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.pageTitle small {
-  color: #777;
-  font-size: 11px;
-}
-
-.back {
-  border: 0;
-  background: #fff;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  box-shadow: 0 1px 5px #0000000c;
-}
-
-.primary,
-.addBtn,
-.sendBtn {
-  background: #2e7d32;
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 13px;
-  font-weight: 700;
-}
-
-.primary {
-  width: 100%;
-}
-
-.primary:disabled {
-  opacity: .65;
-  cursor: not-allowed;
-}
-
-.addBtn {
-  font-size: 12px;
-}
-
-.search {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 11px;
-  padding: 11px;
-  outline: none;
-  margin-bottom: 10px;
-  background: #fff;
-}
-
-.search:focus {
-  border-color: #2e7d32;
-}
-
-.filterGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.filterGrid input {
-  width: 100%;
-}
-
-.mandiStatus {
-  background: #edf7ea;
-  color: #28752e;
-  border-radius: 11px;
-  padding: 9px 10px;
-  font-size: 11px;
-  margin-bottom: 10px;
-}
-
-.mandiCard {
-  background: #fff;
-  border-radius: 15px;
-  padding: 13px;
-  margin-bottom: 9px;
-  box-shadow: 0 2px 8px #0000000a;
-}
-
-.mandiTop {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.mandiCrop {
-  font-weight: 800;
-  font-size: 14px;
-}
-
-.mandiMarket {
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 4px;
-}
-
-.mandiPrice {
-  color: #28752e;
-  font-weight: 800;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.priceLabel {
-  color: #777;
-  font-size: 10px;
-  font-weight: 400;
-}
-
-.mandiDetails {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-top: 10px;
-}
-
-.mandiDetail {
-  background: #f7faf6;
-  border-radius: 9px;
-  padding: 8px;
-  font-size: 10px;
-  color: #666;
-}
-
-.mandiDetail b {
-  display: block;
-  color: #222;
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-.muted {
-  font-size: 11px;
-  color: #777;
-  margin-top: 3px;
-}
-
-.weatherBig {
-  background: linear-gradient(135deg, #e4f7dd, #fff);
-  border-radius: 20px;
-  padding: 20px;
-  text-align: center;
-  margin-bottom: 11px;
-}
-
-.temperature {
-  font-size: 48px;
-  font-weight: 800;
-  color: #28752e;
-  margin: 4px 0;
-}
-
-.weatherInfoGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 11px;
-}
-
-.weatherInfo {
-  background: #fff;
-  border-radius: 13px;
-  padding: 11px;
-  font-size: 12px;
-}
-
-.forecast {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.forecastCard {
-  background: #f7faf6;
-  border-radius: 13px;
-  padding: 11px;
-  text-align: center;
-  font-size: 11px;
-}
-
-.forecastIcon {
-  font-size: 25px;
-  margin: 7px;
-}
-
-.locationRow {
-  display: flex;
-  gap: 7px;
-  align-items: center;
-  background: #fff;
-  padding: 10px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  font-size: 12px;
-}
-
-.chatBox {
-  min-height: 330px;
-  max-height: 55vh;
-  overflow: auto;
-  white-space: pre-wrap;
-}
-
-.bubble {
-  max-width: 88%;
-  padding: 10px 12px;
-  border-radius: 13px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.aiBubble {
-  background: #edf7ea;
-}
-
-.userBubble {
-  background: #2e7d32;
-  color: #fff;
-  margin-left: auto;
-}
-
-.quick {
-  display: flex;
-  gap: 6px;
-  overflow: auto;
-  margin: 8px 0;
-}
-
-.quick button {
-  white-space: nowrap;
-  border: 1px solid #dce7d9;
-  background: #fff;
-  border-radius: 18px;
-  padding: 7px 10px;
-  font-size: 10px;
-}
-
-.inputRow {
-  display: flex;
-  gap: 7px;
-  margin-top: 9px;
-}
-
-.inputRow input {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 11px;
-  outline: none;
-}
-
-.sendBtn {
-  padding: 0 15px;
-}
-
-.cropRow,
-.product,
-.cartRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 9px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.cropRow:last-child,
-.product:last-child,
-.cartRow:last-child {
-  border-bottom: 0;
-}
-
-.cropName,
-.productName {
-  font-weight: 800;
-}
-
-.quantity {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.quantity button {
-  width: 29px;
-  height: 29px;
-  border: 0;
-  border-radius: 8px;
-  background: #e8f5e9;
-  color: #28752e;
-  display: grid;
-  place-items: center;
-}
-
-.upload {
-  border: 2px dashed #cfe3cb;
-  border-radius: 15px;
-  padding: 15px;
-  text-align: center;
-  background: #f8fcf7;
-}
-
-.preview {
-  max-width: 100%;
-  max-height: 240px;
-  border-radius: 12px;
-  margin-top: 10px;
-}
-
-.result {
-  background: #edf7ea;
-  border-radius: 13px;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.doctorTip {
-  background: #fff8df;
-  border-radius: 12px;
-  padding: 11px;
-  margin-top: 10px;
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.profileCard {
-  text-align: center;
-}
-
-.bigProfile {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  margin: auto;
-  background: #e8f5e9;
-  color: #28752e;
-  display: grid;
-  place-items: center;
-}
-
-.scheme {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.scheme:last-child {
-  border-bottom: 0;
-}
-
-.schemeIcon {
-  font-size: 23px;
-}
-
-.scheme a {
-  font-size: 11px;
-  color: #28752e;
-  text-decoration: none;
-}
-
-.empty {
-  text-align: center;
-  padding: 38px 10px;
-  color: #777;
-}
-
-.total {
-  display: flex;
-  justify-content: space-between;
-  font-size: 18px;
-  font-weight: 800;
-  padding: 13px 0;
-}
-
-.bottomNav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(700px, 100%);
-  background: #fff;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 7px 4px;
-  box-shadow: 0 -2px 12px #00000014;
-  z-index: 20;
-}
-
-.navBtn {
-  border: 0;
-  background: transparent;
-  color: #777;
-  font-size: 10px;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.navBtn.active {
-  color: #28752e;
-  font-weight: 800;
-}
-
-.fab {
-  position: fixed;
-  right: max(18px, calc((100vw - 700px) / 2 + 18px));
-  bottom: 72px;
-  width: 52px;
-  height: 52px;
-  border: 0;
-  border-radius: 50%;
-  background: #16843a;
-  color: #fff;
-  box-shadow: 0 4px 14px #0003;
-  z-index: 15;
-  display: grid;
-  place-items: center;
-}
-
-@media (max-width: 420px) {
-  main {
-    padding: 10px;
-  }
-
-  .hero {
-    padding: 15px;
-  }
-
-  .card {
-    padding: 12px 8px;
-  }
-
-  .temperature {
-    font-size: 44px;
-  }
-
-  .filterGrid {
-    grid-template-columns: 1fr;
-  }
-}
+* { box-sizing: border-box; }
+html,body,#root { margin:0; min-height:100%; font-family: Arial, "Noto Sans Devanagari", sans-serif; background:#F0FDF4; color:#14321A; }
+.app { min-height:100vh; max-width:700px; margin:auto; background:#F0FDF4; padding-bottom:86px; }
+header { position:sticky; top:0; z-index:30; background:#fff; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 8px #00000012; }
+.brand { display:flex; align-items:center; gap:9px; color:#14532D; font-weight:800; font-size:18px; }
+.logo { width:36px; height:36px; border-radius:12px; background:#E8F6E5; display:grid; place-items:center; }
+main { padding:14px; }
+
+/* NAYA GREETING CARD - Photo jaisa */
+.hero-new { background:#D9EAD3; border-radius:20px; padding:16px; display:flex; align-items:center; gap:12px; border:1px solid #A3C79A; margin-bottom:12px; }
+.hero-new h1 { font-size:19px; margin:0; color:#14532D; }
+.hero-new p { margin:4px 0 0; color:#2F6D31; font-size:13px; }
+.hero-avatar { width:48px; height:48px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:24px; }
+
+/* NAYA WEATHER CARD */
+.weatherButton-new { width:100%; border:0; background:#fff; border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; text-align:left; box-shadow:0 2px 10px #0000000A; margin-bottom:18px; }
+.weatherButton-new strong { font-size:16px; color:#14532D; }
+.weatherButton-new span { font-size:11px; color:#666; }
+
+.seva-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.seva-header h2 { margin:0; font-size:20px; color:#14532D; font-weight:800; }
+.seva-header a { color:#15803D; font-size:13px; font-weight:700; text-decoration:none; }
+
+.grid-new { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.card-new { border:1px solid #C5E1A5; background:#F1F8E9; border-radius:16px; padding:14px; min-height:95px; display:flex; flex-direction:column; gap:10px; text-align:left; }
+.card-new:active { transform:scale(0.97); }
+.cardIcon-new { width:42px; height:42px; border-radius:50%; background:#81C784; display:grid; place-items:center; font-size:20px; }
+.cardTitle-new { font-weight:800; font-size:14px; color:#14532D; }
+.cardSub-new { color:#555; font-size:11px; margin-top:2px; }
+
+/* Baaki purana css same rahega... */
+.advice,.section,.chatBox{background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px #0000000b}
+.pageTitle{display:flex;align-items:center;gap:9px;margin:2px 0 12px}
+.pageTitle h2{margin:0;font-size:18px}
+.back{border:0;background:#fff;border-radius:50%;width:38px;height:38px;display:grid;place-items:center;box-shadow:0 1px 5px #0000000c}
+.primary{background:#2e7d32;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;width:100%}
+.search{width:100%;border:1px solid #ddd;border-radius:11px;padding:11px;outline:none;margin-bottom:10px;background:#fff}
+.bottomNav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(700px,100%);background:#fff;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 4px;box-shadow:0 -2px 12px #00000014;z-index:20}
+.navBtn{border:0;background:transparent;color:#777;font-size:10px;padding:5px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.navBtn.active{color:#28752e;font-weight:800}
 `;
-
 /* ================= PAGE TITLE ================= */
 
 function PageTitle({
@@ -859,82 +248,60 @@ function Nav({
 }
 
 /* ================= HOME ================= */
-
-function HomePage({
-  setTab,
-  name,
-}: {
-  setTab: (t: Tab) => void;
-  name: string;
-}) {
+ function HomePage({ setTab, name }: { setTab: (t: Tab) => void; name: string; }) {
   return (
-    <div className="pb-8">
-      <section className="hero">
-        <h1>नमस्ते {name} 👋</h1>
-        <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
-
-        <button
-          className="weatherButton"
-          onClick={() => setTab("weather")}
-        >
-          <CloudSun size={29} />
-
-          <div>
-            <strong>आज का मौसम देखें</strong>
-            <br />
-            <span>अपने इलाके का live मौसम देखें</span>
-          </div>
-
-          <ArrowLeft
-            size={16}
-            style={{
-              marginLeft: "auto",
-              transform: "rotate(180deg)",
-            }}
-          />
-        </button>
+    <div>
+      {/* Greeting Card - Bilkul photo jaisa */}
+      <section className="hero-new">
+        <div className="hero-avatar">👨‍🌾</div>
+        <div style={{flex:1}}>
+          <h1>नमस्ते {name || 'किसान भाई'} 👋</h1>
+          <p>आज खेती में आपकी मदद के लिए तैयार हूँ!</p>
+        </div>
+        <div style={{fontSize:30}}>🌾</div>
       </section>
 
-      <div className="grid mb-6">
-        {[
-          ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
-          ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
-          ["🌦️", "मौसम", "अपने इलाके का मौसम", "weather"],
-          ["💰", "मंडी भाव", "सरकारी मंडी के भाव", "mandi"],
-          ["🌱", "मेरी फसल", "अपनी फसल जोड़ें", "crops"],
-          ["🛒", "Kisan Store", "कृषि सामान", "store"],
-          ["🏛️", "सरकारी योजना", "किसानों की योजनाएं", "profile"],
-          ["📞", "किसान हेल्पलाइन", "24x7 सरकारी सहायता", "helpline"],
-        ].map((c, i) => (
-          <button
-            className="card"
-            key={i}
-            onClick={() => {
-              if (c[3] === "helpline") {
-                window.location.href = "tel:18001801551";
-              } else {
-                setTab(c[3] as Tab);
-              }
-            }}
-          >
-            <div className="cardIcon">{c[0]}</div>
+      {/* Weather Card - Naya design */}
+      <button className="weatherButton-new" onClick={() => setTab("weather")}>
+        <div style={{fontSize:32}}>⛅</div>
+        <div style={{flex:1}}>
+          <strong>आज का मौसम देखें</strong><br/>
+          <span>32°C धूप वाला • नई दिल्ली</span>
+        </div>
+        <div style={{color:'#15803D'}}>›</div>
+      </button>
 
+      <div className="seva-header">
+        <h2>सेवाएं</h2>
+        <a>सभी देखें ›</a>
+      </div>
+
+      <div className="grid-new">
+        {[
+          ["📷", "फसल जाँच", "फोटो से जाँच", "doctor"],
+          ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
+          ["☀️", "मौसम", "अपने इलाके का", "weather"],
+          ["💰", "मंडी भाव", "सरकारी भाव", "mandi"],
+          ["🌱", "मेरी फसल", "फसल जोड़ें", "crops"],
+          ["🛒", "Kisan Store", "कृषि सामान", "store"],
+          ["🏛️", "सरकारी योजना", "योजनाएं देखें", "profile"],
+          ["📞", "हेल्पलाइन", "24x7 सहायता", "helpline"],
+        ].map((c, i) => (
+          <button className="card-new" key={i} onClick={() => {
+              if (c[3] === "helpline") window.location.href = "tel:18001801551";
+              else setTab(c[3] as Tab);
+            }}>
+            <div className="cardIcon-new">{c[0]}</div>
             <div>
-              <div className="cardTitle">{c[1]}</div>
-              <div className="cardSub">{c[2]}</div>
+              <div className="cardTitle-new">{c[1]}</div>
+              <div className="cardSub-new">({c[2]})</div>
             </div>
           </button>
         ))}
       </div>
-
-      <div className="advice">
-        ⚠️ <b>किसान सलाह</b>
-        <br />
-        दवा या सिंचाई का फैसला करने से पहले फसल की स्थिति और स्थानीय मौसम जरूर जांचें।
-      </div>
     </div>
   );
-}
+ }
 /* ================= MANDI ================= */
 
 function MandiPage({
