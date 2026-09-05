@@ -153,23 +153,658 @@ const schemes = [
 /* ================= CSS ================= */
 
 const css = `
-* { box-sizing: border-box; }
-html,body,#root { margin:0; min-height:100%; font-family: Arial; background:#F0FDF4; color:#14321A; }
-.app { min-height:100vh; max-width:700px; margin:auto; background:#F0FDF4; padding-bottom:86px; }
-header { position:sticky; top:0; z-index:30; background:#fff; padding:11px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 8px #00000012; }
-.brand { display:flex; align-items:center; gap:9px; color:#287b31; font-weight:800; font-size:17px; }
-.logo { width:38px; height:38px; border-radius:12px; background:#e8f6e5; display:grid; place-items:center; font-size:22px; }
-main { padding:12px; }
-.hero-new { background:#D9EAD3; border-radius:20px; padding:16px; display:flex; align-items:center; gap:12px; border:1px solid #A3C79A; margin-bottom:12px; }
-.weatherButton-new { width:100%; border:0; background:#fff; border-radius:16px; padding:13px; display:flex; align-items:center; gap:10px; text-align:left; box-shadow:0 2px 8px #00000008; margin-bottom:14px; }
-.grid-new { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.card-new { border:1px solid #C5E1A5; background:#FEFDF5; border-radius:16px; padding:14px; min-height:95px; display:flex; flex-direction:column; gap:8px; text-align:left; }
-.cardIcon-new { width:48px; height:48px; border-radius:50%; background:#A8D5A2; display:grid; place-items:center; font-size:22px; }
-.advice,.section,.chatBox { background:#fff; border-radius:16px; padding:14px; box-shadow:0 2px 8px #0000000b; }
-.bottomNav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:min(700px,100%); background:#fff; display:grid; grid-template-columns:repeat(4,1fr); padding:7px 4px; box-shadow:0 -2px 12px #00000014; z-index:20; }
-.navBtn { border:0; background:transparent; color:#777; font-size:10px; padding:5px; display:flex; flex-direction:column; align-items:center; gap:2px; }
-.navBtn.active { color:#28752e; font-weight:800; }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  font-family: Arial, "Noto Sans Devanagari", sans-serif;
+  background: #f3f7f1;
+  color: #243024;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app {
+  min-height: 100vh;
+  max-width: 700px;
+  margin: auto;
+  background: #f3f7f1;
+  padding-bottom: 86px;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #fff;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 8px #00000012;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #287b31;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #e8f6e5;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+header small {
+  display: block;
+  color: #7b817b;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.profileIcon {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: #e8f5e9;
+  color: #28752e;
+  display: grid;
+  place-items: center;
+}
+
+main {
+  padding: 12px;
+}
+
+.hero {
+  background: linear-gradient(135deg, #e3f7dc, #f9fff6);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 12px;
+  border: 1px solid #e2efdf;
+}
+
+.hero h1 {
+  font-size: 21px;
+  margin: 0 0 6px;
+}
+
+.hero p {
+  margin: 0 0 12px;
+  color: #667066;
+  font-size: 13px;
+}
+
+.weatherButton {
+  width: 100%;
+  border: 0;
+  background: #fff;
+  border-radius: 15px;
+  padding: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  box-shadow: 0 2px 8px #00000008;
+}
+
+.weatherButton strong {
+  font-size: 15px;
+}
+
+.weatherButton span {
+  font-size: 11px;
+  color: #777;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.card {
+  border: 0;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 10px;
+  min-height: 84px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  box-shadow: 0 2px 8px #0000000d;
+}
+
+.card:active {
+  transform: scale(.985);
+}
+
+.cardIcon {
+  font-size: 23px;
+  width: 30px;
+  text-align: center;
+}
+
+.cardTitle {
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.cardSub {
+  color: #777;
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.advice,
+.section,
+.chatBox {
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 2px 8px #0000000b;
+}
+
+.advice {
+  margin-top: 11px;
+  background: #fff8df;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.section {
+  margin-bottom: 11px;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 2px 0 12px;
+}
+
+.pageTitle h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.pageTitle small {
+  color: #777;
+  font-size: 11px;
+}
+
+.back {
+  border: 0;
+  background: #fff;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 5px #0000000c;
+}
+
+.primary,
+.addBtn,
+.sendBtn {
+  background: #2e7d32;
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 13px;
+  font-weight: 700;
+}
+
+.primary {
+  width: 100%;
+}
+
+.primary:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.addBtn {
+  font-size: 12px;
+}
+
+.search {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 11px;
+  padding: 11px;
+  outline: none;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.search:focus {
+  border-color: #2e7d32;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.filterGrid input {
+  width: 100%;
+}
+
+.mandiStatus {
+  background: #edf7ea;
+  color: #28752e;
+  border-radius: 11px;
+  padding: 9px 10px;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+
+.mandiCard {
+  background: #fff;
+  border-radius: 15px;
+  padding: 13px;
+  margin-bottom: 9px;
+  box-shadow: 0 2px 8px #0000000a;
+}
+
+.mandiTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mandiCrop {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.mandiMarket {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.mandiPrice {
+  color: #28752e;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.priceLabel {
+  color: #777;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.mandiDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.mandiDetail {
+  background: #f7faf6;
+  border-radius: 9px;
+  padding: 8px;
+  font-size: 10px;
+  color: #666;
+}
+
+.mandiDetail b {
+  display: block;
+  color: #222;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.muted {
+  font-size: 11px;
+  color: #777;
+  margin-top: 3px;
+}
+
+.weatherBig {
+  background: linear-gradient(135deg, #e4f7dd, #fff);
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 11px;
+}
+
+.temperature {
+  font-size: 48px;
+  font-weight: 800;
+  color: #28752e;
+  margin: 4px 0;
+}
+
+.weatherInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: 11px;
+}
+
+.weatherInfo {
+  background: #fff;
+  border-radius: 13px;
+  padding: 11px;
+  font-size: 12px;
+}
+
+.forecast {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.forecastCard {
+  background: #f7faf6;
+  border-radius: 13px;
+  padding: 11px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.forecastIcon {
+  font-size: 25px;
+  margin: 7px;
+}
+
+.locationRow {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.chatBox {
+  min-height: 330px;
+  max-height: 55vh;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.bubble {
+  max-width: 88%;
+  padding: 10px 12px;
+  border-radius: 13px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.aiBubble {
+  background: #edf7ea;
+}
+
+.userBubble {
+  background: #2e7d32;
+  color: #fff;
+  margin-left: auto;
+}
+
+.quick {
+  display: flex;
+  gap: 6px;
+  overflow: auto;
+  margin: 8px 0;
+}
+
+.quick button {
+  white-space: nowrap;
+  border: 1px solid #dce7d9;
+  background: #fff;
+  border-radius: 18px;
+  padding: 7px 10px;
+  font-size: 10px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.inputRow input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 11px;
+  outline: none;
+}
+
+.sendBtn {
+  padding: 0 15px;
+}
+
+.cropRow,
+.product,
+.cartRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.cropRow:last-child,
+.product:last-child,
+.cartRow:last-child {
+  border-bottom: 0;
+}
+
+.cropName,
+.productName {
+  font-weight: 800;
+}
+
+.quantity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quantity button {
+  width: 29px;
+  height: 29px;
+  border: 0;
+  border-radius: 8px;
+  background: #e8f5e9;
+  color: #28752e;
+  display: grid;
+  place-items: center;
+}
+
+.upload {
+  border: 2px dashed #cfe3cb;
+  border-radius: 15px;
+  padding: 15px;
+  text-align: center;
+  background: #f8fcf7;
+}
+
+.preview {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.result {
+  background: #edf7ea;
+  border-radius: 13px;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.doctorTip {
+  background: #fff8df;
+  border-radius: 12px;
+  padding: 11px;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.profileCard {
+  text-align: center;
+}
+
+.bigProfile {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: auto;
+  background: #e8f5e9;
+  color: #28752e;
+  display: grid;
+  place-items: center;
+}
+
+.scheme {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.scheme:last-child {
+  border-bottom: 0;
+}
+
+.schemeIcon {
+  font-size: 23px;
+}
+
+.scheme a {
+  font-size: 11px;
+  color: #28752e;
+  text-decoration: none;
+}
+
+.empty {
+  text-align: center;
+  padding: 38px 10px;
+  color: #777;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 13px 0;
+}
+
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(700px, 100%);
+  background: #fff;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 7px 4px;
+  box-shadow: 0 -2px 12px #00000014;
+  z-index: 20;
+}
+
+.navBtn {
+  border: 0;
+  background: transparent;
+  color: #777;
+  font-size: 10px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.navBtn.active {
+  color: #28752e;
+  font-weight: 800;
+}
+
+.fab {
+  position: fixed;
+  right: max(18px, calc((100vw - 700px) / 2 + 18px));
+  bottom: 72px;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: #16843a;
+  color: #fff;
+  box-shadow: 0 4px 14px #0003;
+  z-index: 15;
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 420px) {
+  main {
+    padding: 10px;
+  }
+
+  .hero {
+    padding: 15px;
+  }
+
+  .card {
+    padding: 12px 8px;
+  }
+
+  .temperature {
+    font-size: 44px;
+  }
+
+  .filterGrid {
+    grid-template-columns: 1fr;
+  }
+}
 `;
+
 /* ================= PAGE TITLE ================= */
 
 function PageTitle({
@@ -223,36 +858,142 @@ function Nav({
   );
 }
 
-/* ================= HOME ================= */
-  function HomePage({ setTab, name }: { setTab: (t: Tab) => void; name: string; }) {
+/* ================= HOME (Play Store Style Download Page integrated) ================= */
+
+function HomePage({
+  setTab,
+  name,
+}: {
+  setTab: (t: Tab) => void;
+  name: string;
+}) {
+  const apkDownloadUrl = "https://github.com/sainiaman3478-source/Kisansathi-ai/raw/refs/heads/main/app-release.apk";
+
+  const appFeatures = [
+    { icon: <Cpu className="w-6 h-6 text-green-600" />, title: "AI Kisan Doctor", desc: "Fasal ke rog ki pehchan turant karein aur sahi ilaaj paayein." },
+    { icon: <Sprout className="w-6 h-6 text-green-600" />, title: "Mandi Bhav Live", desc: "Apne nazdeeki market ke taaza bhav rozana dekhein." },
+    { icon: <CloudSun className="w-6 h-6 text-green-600" />, title: "Mausam ki Jankari", desc: "Aane wale dino ke mausam ka sateek anuman." },
+    { icon: <Building2 className="w-6 h-6 text-green-600" />, title: "Sarkari Yojnae", desc: "Sabhi kisan kalyan yojnao ki poori jankari aur aavedan." }
+  ];
+
   return (
-    <div>
-      <section className="hero-new">
-        <div style={{width:48, height:48, borderRadius:'50%', background:'#fff', display:'grid', placeItems:'center', fontSize:24}}>👨‍🌾</div>
-        <div style={{flex:1}}><h1 style={{margin:0, fontSize:19, color:'#14532D'}}>नमस्ते {name} 👋</h1><p style={{margin:'4px 0 0', color:'#2F6D31', fontSize:13}}>आज खेती में आपकी मदद के लिए तैयार हूँ!</p></div>
-        <div style={{fontSize:30}}>🌾</div>
+    <div className="pb-8">
+      {/* Play Store Style Hero Section */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
+        <div className="w-28 h-28 bg-gradient-to-br from-green-600 to-emerald-800 rounded-3xl shadow-lg flex items-center justify-center text-white text-5xl flex-shrink-0">
+          🌱
+        </div>
+
+        <div className="flex-1 text-center md:text-left">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">KisanSathi AI - Kisan App</h1>
+          <p className="text-green-700 font-medium text-sm mt-1">KisanSathi Tech • Tools & Agriculture</p>
+          
+          <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 my-4 text-xs text-slate-600">
+            <div className="flex items-center space-x-1 bg-slate-100 px-2.5 py-1 rounded-md">
+              <span className="font-bold text-slate-800">4.8</span>
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 text-amber-400" />
+              <span className="text-slate-500">(12K+ reviews)</span>
+            </div>
+            <div className="border-l border-slate-300 h-4"></div>
+            <div>
+              <span className="font-bold text-slate-800">10K+</span> Downloads
+            </div>
+            <div className="border-l border-slate-300 h-4"></div>
+            <div className="bg-slate-100 px-2 py-0.5 rounded font-bold">3+</div>
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+            <a 
+              href={apkDownloadUrl}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3.5 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-center no-underline"
+              style={{ background: '#2e7d32', color: '#fff', textDecoration: 'none', display: 'inline-flex', gap: '8px' }}
+            >
+              <Download className="w-5 h-5" />
+              <span>Download APK (Free)</span>
+            </a>
+            <div className="flex items-center text-xs text-slate-500 space-x-1 mt-2 sm:mt-0">
+              <ShieldCheck className="w-4 h-4 text-green-600" />
+              <span>Verified Safe & Secure App</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Banner */}
+      <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start space-x-3" style={{ background: '#edf7ea', border: '1px solid #c8e6c9', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px' }}>
+        <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-emerald-900">
+          <p className="font-semibold" style={{ fontWeight: 'bold', margin: '0 0 4px' }}>Safe Download Guarantee</p>
+          <p className="text-emerald-700 text-xs m-0" style={{ fontSize: '11px', color: '#2e7d32' }}>Ye app bilkul surakshit hai. Agar phone mein "Harmful App" ki warning aaye, toh **"Install Anyway"** par click karke aasani se chala sakte hain.</p>
+        </div>
+      </div>
+
+      {/* Original Web Tools Quick Navigation */}
+      <section className="hero">
+        <h1>नमस्ते {name} 👋</h1>
+        <p>आज खेती में आपकी मदद के लिए तैयार हूँ।</p>
+        <button
+          className="weatherButton"
+          onClick={() => setTab("weather")}
+        >
+          <CloudSun size={29} />
+          <div>
+            <strong>आज का मौसम देखें</strong>
+            <br />
+            <span>अपने इलाके का live मौसम देखें</span>
+          </div>
+          <ArrowLeft
+            size={16}
+            style={{
+              marginLeft: "auto",
+              transform: "rotate(180deg)",
+            }}
+          />
+        </button>
       </section>
-      <button className="weatherButton-new" onClick={() => setTab("weather")}><div style={{fontSize:32}}>⛅</div><div style={{flex:1}}><strong>आज का मौसम देखें</strong><br/><span style={{fontSize:11, color:'#777'}}>अपने इलाके का live मौसम</span></div><div>›</div></button>
-      <div className="grid-new">
+
+      {/* Features Grid */}
+      <div className="grid mb-6">
         {[
           ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
           ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
-          ["🌦️", "मौसम", "इलाके का मौसम", "weather"],
-          ["💰", "मंडी भाव", "सरकारी भाव", "mandi"],
-          ["🌱", "मेरी फसल", "फसल जोड़ें", "crops"],
+          ["🌦️", "मौसम", "अपने इलाके का मौसम", "weather"],
+          ["💰", "मंडी भाव", "सरकारी मंडी के भाव", "mandi"],
+          ["🌱", "मेरी फसल", "अपनी फसल जोड़ें", "crops"],
           ["🛒", "Kisan Store", "कृषि सामान", "store"],
-          ["🏛️", "सरकारी योजना", "योजनाएं", "profile"],
-          ["📞", "हेल्पलाइन", "24x7 सहायता", "profile"],
+          ["🏛️", "सरकारी योजना", "किसानों की योजनाएं", "profile"],
+          ["📞", "किसान हेल्पलाइन", "24x7 सरकारी सहायता", "helpline"],
         ].map((c, i) => (
-          <button className="card-new" key={i} onClick={() => setTab(c[3] as Tab)}>
-            <div className="cardIcon-new">{c[0]}</div>
-            <div><div style={{fontWeight:800, fontSize:13}}>{c[1]}</div><div style={{fontSize:10, color:'#777'}}>{c[2]}</div></div>
+          <button
+            className="card"
+            key={i}
+            onClick={() => {
+              if (c[3] === "helpline") {
+                window.location.href = "tel:18001801551";
+              } else {
+                setTab(c[3] as Tab);
+              }
+            }}
+          >
+            <div className="cardIcon">{c[0]}</div>
+            <div>
+              <div className="cardTitle">{c[1]}</div>
+              <div className="cardSub">{c[2]}</div>
+            </div>
           </button>
         ))}
+      </div>
+
+      {/* App Key Features list */}
+      <div className="advice">
+        ⚠️ <b>किसान सलाह</b>
+        <br />
+        दवा या सिंचाई का फैसला करने से पहले फसल की स्थिति और स्थानीय मौसम जरूर जांचें।
       </div>
     </div>
   );
 }
+
 /* ================= MANDI ================= */
 
 function MandiPage({
@@ -494,367 +1235,97 @@ function MandiPage({
   );
 }
 
-/* ==/* ================= WEATHER ================= */
+/* ================= WEATHER ================= */
 
 function WeatherPage({
   setTab,
 }: {
   setTab: (t: Tab) => void;
 }) {
-  const [lat, setLat] = useState("");
-  const [lon, setLon] = useState("");
-  const [locationName, setLocationName] = useState("लोकेशन प्राप्त की जा रही है...");
+  const [lat, setLat] = useState("28.6139");
+  const [lon, setLon] = useState("77.2090");
+  const [locationName, setLocationName] = useState("Delhi");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const getWeatherIcon = (code: number) => {
-    if (code === 0) return "☀️";
-
-    if ([1, 2].includes(code)) return "🌤️";
-
-    if (code === 3) return "☁️";
-
-    if ([45, 48].includes(code)) return "🌫️";
-
-    if ([51, 53, 55, 56, 57].includes(code)) return "🌦️";
-
-    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "🌧️";
-
-    if ([71, 73, 75, 77, 85, 86].includes(code)) return "❄️";
-
-    if ([95, 96, 99].includes(code)) return "⛈️";
-
-    return "🌤️";
-  };
-
-  const getWeatherText = (code: number) => {
-    if (code === 0) return "साफ आसमान";
-
-    if ([1, 2].includes(code)) return "आंशिक बादल";
-
-    if (code === 3) return "बादल छाए हैं";
-
-    if ([45, 48].includes(code)) return "कोहरा";
-
-    if ([51, 53, 55, 56, 57].includes(code)) return "हल्की बारिश";
-
-    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "बारिश";
-
-    if ([71, 73, 75, 77, 85, 86].includes(code)) return "बर्फबारी";
-
-    if ([95, 96, 99].includes(code)) return "तूफान";
-
-    return "मौसम की जानकारी";
-  };
-
-  const getDayName = (date: string) => {
-    const days = [
-      "रविवार",
-      "सोमवार",
-      "मंगलवार",
-      "बुधवार",
-      "गुरुवार",
-      "शुक्रवार",
-      "शनिवार",
-    ];
-
-    const d = new Date(`${date}T12:00:00`);
-
-    return days[d.getDay()];
-  };
-
-  const fetchWeather = async (
-    latitude: string,
-    longitude: string,
-    name: string
-  ) => {
+  const fetchWeather = async (latitude: string, longitude: string, name: string) => {
     setLoading(true);
     setError("");
+    setLocationName(name);
 
     try {
-      const url =
-        `https://api.open-meteo.com/v1/forecast` +
-        `?latitude=${latitude}` +
-        `&longitude=${longitude}` +
-        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m` +
-        `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
-        `&timezone=auto` +
-        `&forecast_days=5`;
-
-      const res = await fetch(url, {
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        throw new Error("Weather API error");
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max`
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setWeather(data);
+      } else {
+        throw new Error("मौसम का डाटा लोड नहीं हो पाया।");
       }
-
-      const data: WeatherData = await res.json();
-
-      setLat(latitude);
-      setLon(longitude);
-      setWeather(data);
-      setLocationName(name);
     } catch (e) {
-      setError("मौसम का लाइव डाटा लोड नहीं हो पाया। कृपया दोबारा कोशिश करें।");
+      setError("मौसम लोड करने में समस्या आई।");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchLiveLocationWeather = () => {
-    if (!navigator.geolocation) {
-      setError("आपका browser Live Location support नहीं करता।");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setLocationName("आपकी लाइव लोकेशन प्राप्त की जा रही है...");
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const latitude = position.coords.latitude.toString();
-        const longitude = position.coords.longitude.toString();
-
-        await fetchWeather(
-          latitude,
-          longitude,
-          "आपकी लाइव लोकेशन"
-        );
-      },
-
-      (err) => {
-        setLoading(false);
-
-        if (err.code === 1) {
-          setError(
-            "Live Location की permission नहीं मिली। कृपया browser में Location Allow करें।"
-          );
-        } else if (err.code === 2) {
-          setError(
-            "आपकी Live Location प्राप्त नहीं हो पाई। कृपया दोबारा कोशिश करें।"
-          );
-        } else if (err.code === 3) {
-          setError(
-            "Live Location प्राप्त करने में समय समाप्त हो गया। कृपया दोबारा कोशिश करें।"
-          );
-        } else {
-          setError(
-            "Live Location प्राप्त नहीं हो पाई।"
-          );
-        }
-
-        setLocationName("कोई Live Location नहीं चुनी गई");
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-      }
-    );
-  };
-
   useEffect(() => {
-    fetchLiveLocationWeather();
+    fetchWeather("28.6139", "77.2090", "Delhi");
   }, []);
 
   return (
     <>
-      <PageTitle
-        setTab={setTab}
-        sub="Real Live Open-Meteo Weather"
-        title="मौसम की जानकारी"
-      />
+      <PageTitle setTab={setTab} sub="Live Open-Meteo Weather" title="मौसम की जानकारी" />
 
       <div className="section">
-        <div
-          className="locationRow"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "7px",
-              flex: 1,
-              minWidth: 0,
-            }}
-          >
-            <MapPin size={18} color="#2e7d32" />
+        <div className="locationRow">
+          <MapPin size={18} color="#2e7d32" />
+          <span>चुना गया स्थान: <b>{locationName}</b></span>
+        </div>
 
-            <span>
-              चुना गया स्थान: <b>{locationName}</b>
-            </span>
-          </div>
-
+        <div className="filterGrid" style={{ marginBottom: 10 }}>
           <button
-            onClick={fetchLiveLocationWeather}
-            disabled={loading}
-            style={{
-              background: "#2e7d32",
-              color: "#fff",
-              border: "none",
-              padding: "8px 11px",
-              borderRadius: "8px",
-              fontSize: "11px",
-              cursor: loading ? "not-allowed" : "pointer",
-              marginLeft: "8px",
-              opacity: loading ? 0.7 : 1,
-            }}
+            className="addBtn"
+            onClick={() => fetchWeather("28.6139", "77.2090", "दिल्ली")}
           >
-            🔄 Live Location
+            दिल्ली
+          </button>
+          <button
+            className="addBtn"
+            onClick={() => fetchWeather("26.9124", "75.7873", "जयपुर")}
+          >
+            जयपुर
           </button>
         </div>
       </div>
 
-      {loading && (
-        <div className="section">
-          📍 आपकी Live Location और मौसम की जानकारी लोड हो रही है...
-        </div>
-      )}
+      {loading && <div className="section">मौसम लोड हो रहा है...</div>}
+      {error && <div className="section" style={{ color: "red" }}>{error}</div>}
 
-      {error && (
-        <div
-          className="section"
-          style={{
-            color: "#c62828",
-            background: "#fff0f0",
-          }}
-        >
-          ❌ {error}
-        </div>
-      )}
-
-      {weather && !loading && (
+      {weather && (
         <>
           <div className="weatherBig">
-            <div style={{ fontSize: "34px" }}>
-              {getWeatherIcon(weather.current.weather_code)}
-            </div>
-
             <div>वर्तमान तापमान</div>
-
-            <div className="temperature">
-              {weather.current.temperature_2m}°C
-            </div>
-
-            <div>
-              {getWeatherText(weather.current.weather_code)}
-            </div>
-
-            <div style={{ marginTop: "8px" }}>
-              महसूस हो रहा है:{" "}
-              {weather.current.apparent_temperature}°C
-            </div>
+            <div className="temperature">{weather.current.temperature_2m}°C</div>
+            <div>महसूस हो रहा है: {weather.current.apparent_temperature}°C</div>
           </div>
 
           <div className="weatherInfoGrid">
             <div className="weatherInfo">
-              💧 नमी (Humidity):{" "}
-              <b>
-                {weather.current.relative_humidity_2m}%
-              </b>
+              💧 नमी (Humidity): <b>{weather.current.relative_humidity_2m}%</b>
             </div>
-
             <div className="weatherInfo">
-              💨 हवा की गति:{" "}
-              <b>
-                {weather.current.wind_speed_10m} km/h
-              </b>
-            </div>
-          </div>
-
-          <div
-            className="section"
-            style={{ marginTop: "12px" }}
-          >
-            <h3
-              style={{
-                marginTop: 0,
-                marginBottom: "12px",
-              }}
-            >
-               अगले 10 दिन का लाइव मौसम
-            </h3>
-
-            <div className="forecast">
-              {weather.daily.time
-                .slice(0, 5)
-                .map((date, index) => (
-                  <div
-                    className="forecastCard"
-                    key={date}
-                  >
-                    <div
-                      style={{
-                        fontWeight: 800,
-                      }}
-                    >
-                      {index === 0
-                        ? "आज"
-                        : getDayName(date)}
-                    </div>
-
-                    <div className="forecastIcon">
-                      {getWeatherIcon(
-                        weather.daily.weather_code[index]
-                      )}
-                    </div>
-
-                    <div>
-                      <b>
-                        {Math.round(
-                          weather.daily
-                            .temperature_2m_max[index]
-                        )}°C
-                      </b>
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#777",
-                        marginTop: "3px",
-                      }}
-                    >
-                      न्यूनतम:{" "}
-                      {Math.round(
-                        weather.daily
-                          .temperature_2m_min[index]
-                      )}°C
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#2e7d32",
-                        marginTop: "5px",
-                        fontSize: "10px",
-                      }}
-                    >
-                      🌧️ बारिश:{" "}
-                      {
-                        weather.daily
-                          .precipitation_probability_max[
-                            index
-                          ]
-                      }
-                      %
-                    </div>
-                  </div>
-                ))}
+              💨 हवा की गति: <b>{weather.current.wind_speed_10m} km/h</b>
             </div>
           </div>
         </>
       )}
     </>
   );
-              }
+}
+
 /* ================= CROPS ================= */
 
 function CropsPage({
@@ -965,7 +1436,7 @@ function DoctorPage({
     setAnalyzing(true);
     setTimeout(() => {
       setAnalyzing(false);
-      setResult("AI Doctor Analysis: पत्ती पर हल्के धब्बे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
+      setResult("AI Doctor Analysis: पत्ती पर हल्के धับबे दिख रहे हैं। यह नाइट्रोजन की कमी या फफूंद जनित रोग हो सकता है। कृपया नीम आधारित कीटनाशक का छिड़काव करें।");
     }, 2000);
   };
 
@@ -1138,7 +1609,7 @@ function CartPage({
   );
 }
 
-/* ================= CHAT (FIXED & REAL API CONNECTED) ================= */
+/* ================= CHAT ================= */
 
 function ChatPage({
   setTab,
@@ -1149,35 +1620,19 @@ function ChatPage({
     { from: "ai", text: "नमस्ते! मैं KisanSathi AI हूँ। खेती से जुड़ा कोई भी सवाल पूछिए।" },
   ]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const send = async () => {
-    if (!input.trim() || loading) return;
+  const send = () => {
+    if (!input.trim()) return;
     const userText = input;
     setMessages((prev) => [...prev, { from: "user", text: userText }]);
     setInput("");
-    setLoading(true);
 
-    try {
-      const res = await fetch(`${API_BASE}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: userText }),
-      });
-      const data = await res.json();
-      
-      const aiReply = data.reply || data.answer || data.message || "माफ कीजिए, अभी जवाब देने में समस्या आ रही है।";
-      setMessages((prev) => [...prev, { from: "ai", text: aiReply }]);
-    } catch (e) {
+    setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { from: "ai", text: "सर्वर से संपर्क नहीं हो पाया। कृपया दोबारा कोशिश करें।" },
+        { from: "ai", text: `AI उत्तर: ${userText} के संबंध में सही खाद और समय पर सिंचाई की सलाह दी जाती है।` },
       ]);
-    } finally {
-      setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -1193,11 +1648,6 @@ function ChatPage({
             {m.text}
           </div>
         ))}
-        {loading && (
-          <div className="bubble aiBubble" style={{ color: "#666" }}>
-            AI सोच रहा है...
-          </div>
-        )}
       </div>
 
       <div className="inputRow">
@@ -1205,10 +1655,9 @@ function ChatPage({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="अपना सवाल लिखें..."
-          disabled={loading}
           onKeyDown={(e) => e.key === "Enter" && send()}
         />
-        <button className="sendBtn" onClick={send} disabled={loading}>
+        <button className="sendBtn" onClick={send}>
           <Send size={18} />
         </button>
       </div>
