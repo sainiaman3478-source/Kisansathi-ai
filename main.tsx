@@ -154,45 +154,21 @@ const schemes = [
 
 const css = `
 * { box-sizing: border-box; }
-html,body,#root { margin:0; min-height:100%; font-family: Arial, "Noto Sans Devanagari", sans-serif; background:#F0FDF4; color:#14321A; }
+html,body,#root { margin:0; min-height:100%; font-family: Arial; background:#F0FDF4; color:#14321A; }
 .app { min-height:100vh; max-width:700px; margin:auto; background:#F0FDF4; padding-bottom:86px; }
-header { position:sticky; top:0; z-index:30; background:#fff; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 8px #00000012; }
-.brand { display:flex; align-items:center; gap:9px; color:#14532D; font-weight:800; font-size:18px; }
-.logo { width:36px; height:36px; border-radius:12px; background:#E8F6E5; display:grid; place-items:center; }
-main { padding:14px; }
-
-/* NAYA GREETING CARD - Photo jaisa */
+header { position:sticky; top:0; z-index:30; background:#fff; padding:11px 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 8px #00000012; }
+.brand { display:flex; align-items:center; gap:9px; color:#287b31; font-weight:800; font-size:17px; }
+.logo { width:38px; height:38px; border-radius:12px; background:#e8f6e5; display:grid; place-items:center; font-size:22px; }
+main { padding:12px; }
 .hero-new { background:#D9EAD3; border-radius:20px; padding:16px; display:flex; align-items:center; gap:12px; border:1px solid #A3C79A; margin-bottom:12px; }
-.hero-new h1 { font-size:19px; margin:0; color:#14532D; }
-.hero-new p { margin:4px 0 0; color:#2F6D31; font-size:13px; }
-.hero-avatar { width:48px; height:48px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:24px; }
-
-/* NAYA WEATHER CARD */
-.weatherButton-new { width:100%; border:0; background:#fff; border-radius:16px; padding:14px; display:flex; align-items:center; gap:12px; text-align:left; box-shadow:0 2px 10px #0000000A; margin-bottom:18px; }
-.weatherButton-new strong { font-size:16px; color:#14532D; }
-.weatherButton-new span { font-size:11px; color:#666; }
-
-.seva-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-.seva-header h2 { margin:0; font-size:20px; color:#14532D; font-weight:800; }
-.seva-header a { color:#15803D; font-size:13px; font-weight:700; text-decoration:none; }
-
+.weatherButton-new { width:100%; border:0; background:#fff; border-radius:16px; padding:13px; display:flex; align-items:center; gap:10px; text-align:left; box-shadow:0 2px 8px #00000008; margin-bottom:14px; }
 .grid-new { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.card-new { border:1px solid #C5E1A5; background:#F1F8E9; border-radius:16px; padding:14px; min-height:95px; display:flex; flex-direction:column; gap:10px; text-align:left; }
-.card-new:active { transform:scale(0.97); }
-.cardIcon-new { width:42px; height:42px; border-radius:50%; background:#81C784; display:grid; place-items:center; font-size:20px; }
-.cardTitle-new { font-weight:800; font-size:14px; color:#14532D; }
-.cardSub-new { color:#555; font-size:11px; margin-top:2px; }
-
-/* Baaki purana css same rahega... */
-.advice,.section,.chatBox{background:#fff;border-radius:16px;padding:14px;box-shadow:0 2px 8px #0000000b}
-.pageTitle{display:flex;align-items:center;gap:9px;margin:2px 0 12px}
-.pageTitle h2{margin:0;font-size:18px}
-.back{border:0;background:#fff;border-radius:50%;width:38px;height:38px;display:grid;place-items:center;box-shadow:0 1px 5px #0000000c}
-.primary{background:#2e7d32;color:#fff;border:0;border-radius:10px;padding:10px 13px;font-weight:700;width:100%}
-.search{width:100%;border:1px solid #ddd;border-radius:11px;padding:11px;outline:none;margin-bottom:10px;background:#fff}
-.bottomNav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(700px,100%);background:#fff;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 4px;box-shadow:0 -2px 12px #00000014;z-index:20}
-.navBtn{border:0;background:transparent;color:#777;font-size:10px;padding:5px;display:flex;flex-direction:column;align-items:center;gap:2px}
-.navBtn.active{color:#28752e;font-weight:800}
+.card-new { border:1px solid #C5E1A5; background:#FEFDF5; border-radius:16px; padding:14px; min-height:95px; display:flex; flex-direction:column; gap:8px; text-align:left; }
+.cardIcon-new { width:48px; height:48px; border-radius:50%; background:#A8D5A2; display:grid; place-items:center; font-size:22px; }
+.advice,.section,.chatBox { background:#fff; border-radius:16px; padding:14px; box-shadow:0 2px 8px #0000000b; }
+.bottomNav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:min(700px,100%); background:#fff; display:grid; grid-template-columns:repeat(4,1fr); padding:7px 4px; box-shadow:0 -2px 12px #00000014; z-index:20; }
+.navBtn { border:0; background:transparent; color:#777; font-size:10px; padding:5px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+.navBtn.active { color:#28752e; font-weight:800; }
 `;
 /* ================= PAGE TITLE ================= */
 
@@ -248,60 +224,35 @@ function Nav({
 }
 
 /* ================= HOME ================= */
- function HomePage({ setTab, name }: { setTab: (t: Tab) => void; name: string; }) {
+  function HomePage({ setTab, name }: { setTab: (t: Tab) => void; name: string; }) {
   return (
     <div>
-      {/* Greeting Card - Bilkul photo jaisa */}
       <section className="hero-new">
-        <div className="hero-avatar">👨‍🌾</div>
-        <div style={{flex:1}}>
-          <h1>नमस्ते {name || 'किसान भाई'} 👋</h1>
-          <p>आज खेती में आपकी मदद के लिए तैयार हूँ!</p>
-        </div>
+        <div style={{width:48, height:48, borderRadius:'50%', background:'#fff', display:'grid', placeItems:'center', fontSize:24}}>👨‍🌾</div>
+        <div style={{flex:1}}><h1 style={{margin:0, fontSize:19, color:'#14532D'}}>नमस्ते {name} 👋</h1><p style={{margin:'4px 0 0', color:'#2F6D31', fontSize:13}}>आज खेती में आपकी मदद के लिए तैयार हूँ!</p></div>
         <div style={{fontSize:30}}>🌾</div>
       </section>
-
-      {/* Weather Card - Naya design */}
-      <button className="weatherButton-new" onClick={() => setTab("weather")}>
-        <div style={{fontSize:32}}>⛅</div>
-        <div style={{flex:1}}>
-          <strong>आज का मौसम देखें</strong><br/>
-          <span>32°C धूप वाला • नई दिल्ली</span>
-        </div>
-        <div style={{color:'#15803D'}}>›</div>
-      </button>
-
-      <div className="seva-header">
-        <h2>सेवाएं</h2>
-        <a>सभी देखें ›</a>
-      </div>
-
+      <button className="weatherButton-new" onClick={() => setTab("weather")}><div style={{fontSize:32}}>⛅</div><div style={{flex:1}}><strong>आज का मौसम देखें</strong><br/><span style={{fontSize:11, color:'#777'}}>अपने इलाके का live मौसम</span></div><div>›</div></button>
       <div className="grid-new">
         {[
-          ["📷", "फसल जाँच", "फोटो से जाँच", "doctor"],
+          ["📷", "फसल जाँचें", "फोटो से जांच", "doctor"],
           ["🤖", "AI Kisan", "सवाल पूछें", "chat"],
-          ["☀️", "मौसम", "अपने इलाके का", "weather"],
+          ["🌦️", "मौसम", "इलाके का मौसम", "weather"],
           ["💰", "मंडी भाव", "सरकारी भाव", "mandi"],
           ["🌱", "मेरी फसल", "फसल जोड़ें", "crops"],
           ["🛒", "Kisan Store", "कृषि सामान", "store"],
-          ["🏛️", "सरकारी योजना", "योजनाएं देखें", "profile"],
-          ["📞", "हेल्पलाइन", "24x7 सहायता", "helpline"],
+          ["🏛️", "सरकारी योजना", "योजनाएं", "profile"],
+          ["📞", "हेल्पलाइन", "24x7 सहायता", "profile"],
         ].map((c, i) => (
-          <button className="card-new" key={i} onClick={() => {
-              if (c[3] === "helpline") window.location.href = "tel:18001801551";
-              else setTab(c[3] as Tab);
-            }}>
+          <button className="card-new" key={i} onClick={() => setTab(c[3] as Tab)}>
             <div className="cardIcon-new">{c[0]}</div>
-            <div>
-              <div className="cardTitle-new">{c[1]}</div>
-              <div className="cardSub-new">({c[2]})</div>
-            </div>
+            <div><div style={{fontWeight:800, fontSize:13}}>{c[1]}</div><div style={{fontSize:10, color:'#777'}}>{c[2]}</div></div>
           </button>
         ))}
       </div>
     </div>
   );
- }
+}
 /* ================= MANDI ================= */
 
 function MandiPage({
