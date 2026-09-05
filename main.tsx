@@ -921,7 +921,7 @@ function HomePage({
               }
             }}
           >
-            <div className="cardIcon">{c[0]}</div>
+            <div className="cardIcon" style={{width:'44px',height:'44px',borderRadius:'50%',background:'#C5E8BF',display:'grid',placeItems:'center',fontSize:'22px',flexShrink:0}}>{c[0]}</div>
 
             <div>
               <div className="cardTitle">{c[1]}</div>
