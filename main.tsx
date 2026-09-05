@@ -806,6 +806,9 @@ main {
 .hero{ background:#D9EAD3 !important; border:1.5px solid #B6D7A8 !important; border-radius:20px !important; }
 .card{ background:#FFFFF8 !important; border:1px solid #E2E8D5 !important; border-radius:18px !important; box-shadow:0 4px 12px rgba(0,0,0,0.04) !important; }
 .card div:first-child, .card span:first-child{ background:#C5E8BF !important; width:48px !important; height:48px !important; border-radius:50% !important; display:grid !important; place-items:center !important; }
+.card div:first-child img, .card span:first-child img{ width:28px !important; height:28px !important; }
+div[style*='E8F5E9']{ max-height:none !important; overflow:visible !important; height:auto !important; }
+div[style*='E8F5E9'] p, div[style*='E8F5E9'] div{ white-space:pre-wrap !important; max-height:none !important; }
 `;
 
 
