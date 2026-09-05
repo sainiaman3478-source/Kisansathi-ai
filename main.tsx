@@ -802,12 +802,11 @@ main {
   .filterGrid {
     grid-template-columns: 1fr;
   }
-/* === SAFE GREEN FIX === */
-.hero{ background:#D9EAD3 !important; border:1.5px solid #A3C79A !important; border-radius:18px !important; }
-.card{ background:#FFFEF5 !important; border:1px solid #C8E6C9 !important; border-radius:16px !important; box-shadow:0 2px 8px #0000000A !important; }
-.card div:first-child, .card span:first-child{ background:#C5E8BF !important; width:44px !important; height:44px !important; border-radius:50% !important; display:grid !important; place-items:center !important; }
-}
-`;
+  /* === FINAL MOCKUP EXACT === */
+.hero{ background:#D9EAD3 !important; border:1.5px solid #B6D7A8 !important; border-radius:20px !important; }
+.card{ background:#FFFFF8 !important; border:1px solid #E2E8D5 !important; border-radius:18px !important; box-shadow:0 4px 12px rgba(0,0,0,0.04) !important; }
+.card div:first-child, .card span:first-child{ background:#C5E8BF !important; width:48px !important; height:48px !important; border-radius:50% !important; display:grid !important; place-items:center !important; }
+;
 
 /* ================= PAGE TITLE ================= */
 
