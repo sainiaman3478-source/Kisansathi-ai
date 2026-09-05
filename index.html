@@ -1,76 +1,44 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KisanSaathi AI</title>
-    <style>
-      body { background:#f1f8e9; margin:0; padding:10px; font-family: sans-serif; }
-      #lakdi-mandi-ALAG { max-width: 420px; margin: 0 auto 20px auto; background: white; border-radius: 20px; padding: 18px; border: 2px solid #ff9800; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    </style>
-  </head>
-  <body>
-    
-    <!-- ============ STEP 1 - CARD ============ -->
-    <div id="lakdi-mandi-ALAG">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="margin:0; color:#e65100; font-size:20px;">🪵 लकड़ी मंडी भाव</h2>
-        <span style="background:#fff3e0; color:#e65100; padding:4px 10px; border-radius:15px; font-size:12px; font-weight:bold;">NEW • LIVE</span>
-      </div>
-      <p style="margin:5px 0; color:gray; font-size:13px;">📍 Yamunanagar Mandi • <span id="lakdiDate">5 सितंबर</span></p>
-      <div style="font-size:32px; font-weight:900; color:#0a4d1e; margin-top:10px;">₹ 1600 / क्विंटल</div>
-      <p style="font-size:12px; background:#e8f5e9; display:inline-block; padding:4px 8px; border-radius:6px; margin:5px 0;">🍃 Poplar / Safeda</p>
-      <div style="font-size:12px; color:green; margin-top:5px;">🕒 अपडेटेड: आज 6:30 शाम</div>
-      <button onclick="document.getElementById('lakdiDetailPage').style.display='block'" style="width:100%; background:#e65100; color:white; border:none; padding:12px; border-radius:10px; margin-top:12px; font-weight:bold; font-size:16px; cursor:pointer;">विस्तृत विवरण देखें →</button>
-    </div>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jansath Mandi Bhav</title>
+<style>
+body{font-family:system-ui; background:#f5f7f0; margin:0; padding:15px}
+.card{background:white; border:1.5px solid #a5d6a7; padding:16px; border-radius:14px; margin:12px 0; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 8px #0001}
+.green{color:green; background:#e8f5e9; padding:3px 8px; border-radius:10px; font-size:12px}
+</style>
+</head>
+<body>
+<h2>🌲 Jansath Lakdi Bhav - LIVE</h2>
+<p style="color:gray; font-size:13px">Rate Google Sheet se LIVE aa raha hai</p>
+<div id="bhav-list">Loading...</div>
 
-    <!-- ============ STEP 2 - DETAIL PAGE - YAHI PURA HAI ============ -->
-    <div id="lakdiDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f6fff6; z-index:9999; overflow:auto; padding:0;">
-      <!-- Header -->
-      <div style="background:#0a8a3a; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
-        <button onclick="document.getElementById('lakdiDetailPage').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; font-size:20px; width:35px; height:35px; border-radius:50%; cursor:pointer;">←</button>
-        <h2 style="margin:0; font-size:18px;">लकड़ी मंडी भाव - Yamunanagar</h2>
-      </div>
+<script>
+const SHEET_ID = "1HbtQAFCUWaoP3C6RSIGpw8E0p3tvf7mkSR0rY7mByDk";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
 
-      <div style="padding:20px; max-width:420px; margin:0 auto;">
-        <h2 style="margin:10px 0 5px 0; color:#0a4d1e;">आज का लकड़ी भाव</h2>
-        <p style="font-size:12px; color:gray; margin:0 0 15px 0;">*भाव प्रति क्विंटल | गुणवत्ता अनुसार बदल सकते हैं</p>
-
-        <div style="background:white; border:1.5px solid #a5d6a7; padding:14px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;">
-          <div><b>Poplar / सफ़ेदा</b><br><small style="color:gray;">सफ़ेदा / पॉपलर • अच्छी गुणवत्ता</small></div>
-          <div style="text-align:right;"><b style="font-size:18px;">₹1600 /Qtl</b><br><span style="font-size:12px; background:#e8f5e9; padding:2px 6px; border-radius:10px;">स्थिर</span></div>
-        </div>
-
-        <div style="background:white; border:1.5px solid #a5d6a7; padding:14px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;">
-          <div><b>Eucalyptus / यूकेलि.</b><br><small style="color:gray;">नीलगिरि • सुखी लकड़ी</small></div>
-          <div style="text-align:right;"><b style="font-size:18px;">₹1100 /Qtl</b><br><span style="font-size:12px; color:orange;">↓ ₹50</span></div>
-        </div>
-
-        <div style="background:white; border:1.5px solid #a5d6a7; padding:14px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;">
-          <div><b>Keekar / कीकर</b><br><small style="color:gray;">कीकर • मजबूत / ईंधन</small></div>
-          <div style="text-align:right;"><b style="font-size:18px;">₹1800 /Qtl</b><br><span style="font-size:12px; background:#e8f5e9; padding:2px 6px; border-radius:10px; color:green;">↑ ₹100</span></div>
-        </div>
-
-        <h3 style="margin-top:25px; color:#0a4d1e;">स्थानीय आढ़ती - संपर्क करें</h3>
-        <div style="background:white; border:1px solid #ddd; padding:12px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;">
-          <div><b>राम सरन आढ़ती</b><br><small>मण्डी गेट नं. 3 • दुकान: 12</small></div>
-          <a href="tel:9812345678"><button style="background:#0a8a3a; color:white; border:none; padding:8px 15px; border-radius:20px; font-weight:bold;">कॉल करें</button></a>
-        </div>
-        <div style="background:white; border:1px solid #ddd; padding:12px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between; align-items:center;">
-          <div><b>सुनील ट्रेडर्स</b><br><small>बड़े व्यापारी • दुकान: 27</small></div>
-          <a href="tel:9812345679"><button style="background:#0a8a3a; color:white; border:none; padding:8px 15px; border-radius:20px; font-weight:bold;">कॉल करें</button></a>
-        </div>
-
-        <button onclick="document.getElementById('lakdiDetailPage').style.display='none'" style="width:100%; background:#eee; border:none; padding:12px; border-radius:10px; margin-top:20px;">← वापस जाएं</button>
-      </div>
-    </div>
-
-    <script>
-      document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
-    </script>
-
-    <!-- ============ TERA PURANA APP - ISKO TOUCH NAHI KIYA ============ -->
-    <div id="root"></div>
-    <script type="module" src="./main.tsx"></script>
-  </body>
+async function loadBhav(){
+  try{
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    const rows = text.split("\n").slice(1); // pehli line header hata di
+    let html = "";
+    rows.forEach(r=>{
+      if(!r.trim()) return;
+      const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
+      html += `<div class="card">
+        <div><b>${item}</b><br><small style="color:gray">Per Quintal</small></div>
+        <div style="text-align:right"><b style="font-size:18px">₹${rate}</b><br><span class="green">${change}</span></div>
+      </div>`;
+    });
+    document.getElementById("bhav-list").innerHTML = html || "Sheet khali hai";
+  }catch(e){
+    document.getElementById("bhav-list").innerHTML = "Sheet load nahi hui, Publish check karo";
+  }
+}
+loadBhav();
+</script>
+</body>
 </html>
