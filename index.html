@@ -1,117 +1,144 @@
 <!doctype html>
 <html lang="hi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kisan Saathi - Lakdi Becho, Mandi Bhav</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@500;700;900&display=swap" rel="stylesheet">
-    <style>
-      *{box-sizing:border-box}
-      body { background:#f0f7ec; margin:0; font-family:'Noto Sans Devanagari', sans-serif; }
-      .app { max-width:420px; margin:0 auto; background:#f0f7ec; min-height:100vh; padding-bottom:80px; }
-      .header { background:#0a6831; color:white; padding:18px 16px 22px 16px; border-radius:0 0 25px 25px; position:sticky; top:0; z-index:10; }
-      .card { background:white; border-radius:18px; padding:16px; margin:14px; box-shadow:0 6px 20px rgba(0,0,0,0.06); border:1px solid #e6f1dd; }
-      .bhav-main { font-size:36px; font-weight:900; color:#0a4d1e; line-height:1; }
-      .btn-green { width:100%; background:#0a8a3a; color:white; border:none; padding:13px; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer; }
-      .btn-orange { width:100%; background:#ff6d00; color:white; border:none; padding:13px; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer; }
-      .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-      .small-card { background:white; border-radius:16px; padding:14px; text-align:center; border:1px solid #e6f1dd; }
-    </style>
-  </head>
-  <body>
-    <div class="app">
-      <!-- HEADER PRO -->
-      <div class="header">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div><div style="font-size:22px; font-weight:900; line-height:1;">Kisan Saathi</div><div style="font-size:13px; opacity:0.9;">किसान साथी</div></div>
-          <div style="background:rgba(255,255,255,0.2); padding:8px 12px; border-radius:20px; font-size:12px;">🌱 Yamunanagar</div>
-        </div>
-        <div style="margin-top:16px; background:rgba(255,255,255,0.15); border-radius:15px; padding:12px;">
-          <div style="font-size:20px; font-weight:700;">नमस्ते, राम! 🙏</div>
-          <div style="font-size:13px; opacity:0.9;">आज किसान साथी पर आपका स्वागत है</div>
-        </div>
-      </div>
-
-      <!-- MAUSAM CARD -->
-      <div class="card" style="background:linear-gradient(135deg, #e8f5e9, #fff9c4); display:flex; justify-content:space-between; align-items:center;">
-        <div><div style="font-weight:700;">आज का मौसम</div><div style="font-size:13px; color:#555;">मेरठ, UP • 28°C • आंशिक बादल</div><div style="font-size:11px; margin-top:6px;"><span>💧 नमी 65%</span> &nbsp; <span>🌬️ हवा 12km/h</span></div></div>
-        <div style="font-size:40px;">⛅</div>
-      </div>
-
-      <!-- LAKDI BHAV PRO CARD - TERA SHEET LOGIC SAME RAHEGA -->
-      <div class="card" style="border:2px solid #ff9800;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h2 style="margin:0; color:#e65100; font-size:18px;">🪵 लकड़ी मंडी भाव</h2>
-          <span style="background:#fff3e0; color:#e65100; padding:4px 10px; border-radius:15px; font-size:11px; font-weight:bold;" id="liveTag">LIVE</span>
-        </div>
-        <p style="margin:4px 0 10px 0; color:gray; font-size:12px;">📍 Yamunanagar Mandi • <span id="lakdiDate">5 सितंबर</span> • <span id="updateTime" style="color:green; font-weight:bold;">LIVE Sheet से</span></p>
-        
-        <div style="background:#f9fdf6; border:1.5px dashed #a5d6a7; border-radius:14px; padding:14px; display:flex; justify-content:space-between; align-items:center;">
-          <div><div style="font-size:13px; color:gray;">पॉपलर (सफ़ेदा)</div><div class="bhav-main" id="mainRate">₹ --</div><div style="font-size:12px; background:#e8f5e9; display:inline-block; padding:3px 8px; border-radius:6px; margin-top:4px;" id="mainItem">Loading...</div></div>
-          <div style="text-align:right;"><div style="font-size:12px; background:#e8f5e9; color:green; padding:4px 8px; border-radius:20px;">↗️ +₹40 इस हफ्ते</div><div style="font-size:11px; color:gray; margin-top:6px;">प्रति क्विंटल</div></div>
-        </div>
-
-        <div class="grid2" style="margin-top:12px;">
-          <button class="btn-orange" onclick="document.getElementById('lakdiDetailPage').style.display='block'">📊 पूरा भाव देखें</button>
-          <a href="https://docs.google.com/forms/d/e/1FAIpQLSdEMLnStwzgQ0Zgcwi2ENb4J4LUio-mH9U-jSExf2Z_XzWzcw/viewform" target="_blank" style="text-decoration:none;"><button class="btn-green">🌳 लकड़ी बेचें</button></a>
-        </div>
-      </div>
-
-      <!-- AI + SALAH -->
-      <div class="grid2" style="margin:0 14px;">
-        <div class="small-card"><div style="font-size:30px;">🩺</div><div style="font-weight:700; font-size:14px;">AI डॉक्टर</div><div style="font-size:11px; color:gray;">फसल रोग का निदान</div></div>
-        <div class="small-card"><div style="font-size:30px;">🌿</div><div style="font-weight:700; font-size:14px;">खेती की सलाह</div><div style="font-size:11px; color:gray;">विशेषज्ञ सलाह पाएं</div></div>
-      </div>
-
-      <div style="text-align:center; margin:20px; font-size:11px; color:gray;">Kisan Saathi AI • 1 Lakh+ किसान का भरोसा • Made in Jansath</div>
-
-      <div id="root"></div>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kisan Saathi - Lakdi + Sabji Mandi | Top Level</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box} body{margin:0; background:#f0f7ec; font-family:'Noto Sans Devanagari',sans-serif}
+.app{max-width:420px; margin:0 auto; min-height:100vh; padding-bottom:80px; background:#f0f7ec}
+.header{background:#0a6831; color:white; padding:18px 16px 22px; border-radius:0 0 25px 25px; position:sticky; top:0; z-index:10}
+.card{background:white; border-radius:18px; padding:16px; margin:14px; box-shadow:0 6px 20px rgba(0,0,0,0.06); border:1px solid #e6f1dd}
+.bhav-main{font-size:34px; font-weight:900; color:#0a4d1e; line-height:1}
+.btn-green{width:100%; background:#0a8a3a; color:white; border:none; padding:13px; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer}
+.btn-orange{width:100%; background:#ff6d00; color:white; border:none; padding:13px; border-radius:12px; font-weight:700; font-size:15px; cursor:pointer}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.small-card{background:white; border-radius:16px; padding:14px; text-align:center; border:1px solid #e6f1dd}
+.nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:420px; background:white; display:flex; justify-content:space-around; padding:10px 0; border-top:1px solid #ddd; border-radius:18px 18px 0 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div><div style="font-size:22px; font-weight:900;">Kisan Saathi</div><div style="font-size:12px; opacity:0.9;">किसान साथी • Jansath</div></div>
+      <div style="background:rgba(255,255,255,0.2); padding:6px 12px; border-radius:20px; font-size:11px;">🌱 LIVE</div>
     </div>
-
-    <!-- DETAIL PAGE PRO -->
-    <div id="lakdiDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f0f7ec; z-index:9999; overflow:auto;">
-      <div style="background:#0a8a3a; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
-        <button onclick="document.getElementById('lakdiDetailPage').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; font-size:20px; width:35px; height:35px; border-radius:50%; cursor:pointer;">←</button>
-        <h2 style="margin:0; font-size:17px;">लकड़ी मंडी - LIVE Rate</h2>
-      </div>
-      <div style="padding:16px; max-width:420px; margin:0 auto;">
-        <div id="bhav-list">Loading LIVE bhav...</div>
-        <h3 style="margin-top:25px; color:#0a4d1e;">📞 स्थानीय आढ़ती</h3>
-        <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin:10px 0;"><div><b>राम सरन आढ़ती</b><br><small>मण्डी गेट नं. 3 • दुकान: 12</small></div><a href="tel:9812345678"><button style="background:#0a8a3a; color:white; border:none; padding:8px 15px; border-radius:20px; font-weight:bold;">कॉल</button></a></div>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdEMLnStwzgQ0Zgcwi2ENb4J4LUio-mH9U-jSExf2Z_XzWzcw/viewform" target="_blank" style="text-decoration:none;"><button class="btn-green" style="margin-top:20px;">🌳 अपनी लकड़ी बेचें - Form भरें</button></a>
-        <button onclick="document.getElementById('lakdiDetailPage').style.display='none'" style="width:100%; background:#e0e0e0; border:none; padding:12px; border-radius:10px; margin-top:12px;">← वापस जाएं</button>
-      </div>
+    <div style="margin-top:14px; background:rgba(255,255,255,0.15); border-radius:14px; padding:11px;">
+      <div style="font-size:19px; font-weight:700;">नमस्ते, राम! 🙏</div>
+      <div style="font-size:12px; opacity:0.9;">आज की 2 मंडियों का भाव - एक जगह</div>
     </div>
+  </div>
 
-    <script>
-      document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
-      const SHEET_ID = "1HbtQAFCUWaoP3C6RSIGpw8E0p3tvf7mkSR0rY7mByDk";
-      const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
-      async function loadBhav(){
-        try{
-          const res = await fetch(CSV_URL);
-          const text = await res.text();
-          const rows = text.split("\n").slice(1).filter(r=>r.trim()!="");
-          if(rows.length > 0){
-            const firstRow = rows[0].split(",").map(s=>s.replace(/"/g,'').trim());
-            document.getElementById("mainItem").innerText = "🍃 " + firstRow[0];
-            document.getElementById("mainRate").innerText = "₹ " + firstRow[1];
-          }
-          let html = "";
-          rows.forEach(r=>{
-            const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
-            html += `<div class="card" style="margin:10px 0; display:flex; justify-content:space-between; align-items:center; border-left:4px solid #0a8a3a;">
-              <div><b>${item}</b><br><small style="color:gray;">अच्छी गुणवत्ता</small></div>
-              <div style="text-align:right;"><b style="font-size:18px;">₹${rate}/Qtl</b><br><span style="font-size:11px; background:#e8f5e9; padding:3px 7px; border-radius:10px; color:green;">${change||'+ LIVE'}</span></div>
-            </div>`;
-          });
-          document.getElementById("bhav-list").innerHTML = html;
-        }catch(e){
-          document.getElementById("bhav-list").innerHTML = "Sheet Publish nahi hui - Publish to Web check karo";
-        }
-      }
-      loadBhav();
-    </script>
-    <script type="module" src="./main.tsx"></script>
-  </body>
+  <!-- MAUSAM -->
+  <div class="card" style="background:linear-gradient(135deg, #e8f5e9, #fff9c4); display:flex; justify-content:space-between; align-items:center;">
+    <div><div style="font-weight:700;">आज का मौसम</div><div style="font-size:12px; color:#555;">मेरठ, UP • 28°C • आंशिक बादल</div></div>
+    <div style="font-size:36px;">⛅</div>
+  </div>
+
+  <!-- LAKDI MANDI - SHEET1 -->
+  <div class="card" style="border:2px solid #ff9800; border-left:5px solid #ff6d00;">
+    <div style="display:flex; justify-content:space-between;">
+      <h2 style="margin:0; color:#e65100; font-size:17px;">🪵 लकड़ी मंडी भाव</h2>
+      <span style="background:#fff3e0; color:#e65100; padding:4px 10px; border-radius:15px; font-size:10px; font-weight:bold;">LIVE • Yamunanagar</span>
+    </div>
+    <p style="margin:4px 0 10px; color:gray; font-size:11px;">📅 <span id="lakdiDate"></span> • <span id="updateTime" style="color:green; font-weight:bold;">LIVE</span></p>
+    <div style="background:#f9fdf6; border:1.5px dashed #a5d6a7; border-radius:14px; padding:14px; display:flex; justify-content:space-between;">
+      <div><div style="font-size:12px; color:gray;">पॉपलर (सफ़ेदा)</div><div class="bhav-main" id="mainRate">₹ --</div><div id="mainItem" style="font-size:11px; background:#e8f5e9; display:inline-block; padding:3px 8px; border-radius:6px; margin-top:4px;">Loading...</div></div>
+      <div style="text-align:right;"><div style="font-size:11px; background:#e8f5e9; color:green; padding:4px 8px; border-radius:20px;">↗️ +₹40</div><div style="font-size:10px; color:gray; margin-top:6px;">/क्विंटल</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px;">
+      <button class="btn-orange" onclick="document.getElementById('lakdiDetailPage').style.display='block'">📊 पूरा देखें</button>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSdEMLnStwzgQ0Zgcwi2ENb4J4LUio-mH9U-jSExf2Z_XzWzcw/viewform" target="_blank" style="text-decoration:none;"><button class="btn-green">🌳 बेचें</button></a>
+    </div>
+  </div>
+
+  <!-- SABJI MANDI - SHEET2 (Niche wala jo tu keh raha tha) -->
+  <div class="card" style="border:2px solid #2e7d32; border-left:5px solid #0a8a3a;">
+    <div style="display:flex; justify-content:space-between;">
+      <h2 style="margin:0; color:#0a6831; font-size:17px;">🥔 सब्जी मंडी भाव</h2>
+      <span style="background:#e8f5e9; color:#0a6831; padding:4px 10px; border-radius:15px; font-size:10px; font-weight:bold;">LIVE • Shamli / Meerut</span>
+    </div>
+    <p style="margin:4px 0 10px; color:gray; font-size:11px;">आज के ताजा सब्जी भाव - Google Sheet से</p>
+    <div id="sabji-list"><div style="font-size:13px; color:gray;">Loading Sabji Bhav...</div></div>
+    <button class="btn-green" style="margin-top:10px; background:#2e7d32;" onclick="document.getElementById('sabjiDetailPage').style.display='block'">🥕 पूरा सब्जी भाव देखें</button>
+  </div>
+
+  <!-- AI + SALAH -->
+  <div class="grid2" style="margin:0 14px;">
+    <div class="small-card"><div style="font-size:28px;">🩺</div><div style="font-weight:700; font-size:13px;">AI डॉक्टर</div><div style="font-size:10px; color:gray;">फसल रोग निदान</div></div>
+    <div class="small-card"><div style="font-size:28px;">🌿</div><div style="font-weight:700; font-size:13px;">खेती सलाह</div><div style="font-size:10px; color:gray;">विशेषज्ञ सलाह</div></div>
+  </div>
+
+  <div style="text-align:center; margin:18px; font-size:10px; color:gray;">Kisan Saathi AI • 1 Lakh+ किसान • Made in Jansath</div>
+
+  <div class="nav">
+    <div>🏠<br><small>Home</small></div>
+    <div>📊<br><small>Mandi Bhav</small></div>
+    <div>🛒<br><small>Kisan Store</small></div>
+    <div>🛍️<br><small>Cart</small></div>
+  </div>
+</div>
+
+<!-- LAKDI DETAIL -->
+<div id="lakdiDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f0f7ec; z-index:9999; overflow:auto;">
+  <div style="background:#0a8a3a; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
+    <button onclick="this.parentElement.parentElement.style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; width:35px; height:35px; border-radius:50%;">←</button>
+    <h2 style="margin:0; font-size:16px;">लकड़ी मंडी - LIVE</h2>
+  </div>
+  <div style="padding:16px; max-width:420px; margin:0 auto;"><div id="bhav-list"></div></div>
+</div>
+
+<!-- SABJI DETAIL -->
+<div id="sabjiDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f0f7ec; z-index:9999; overflow:auto;">
+  <div style="background:#2e7d32; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
+    <button onclick="this.parentElement.parentElement.style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; width:35px; height:35px; border-radius:50%;">←</button>
+    <h2 style="margin:0; font-size:16px;">सब्जी मंडी - LIVE</h2>
+  </div>
+  <div style="padding:16px; max-width:420px; margin:0 auto;"><div id="sabji-detail-list"></div></div>
+</div>
+
+<script>
+document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN',{day:'numeric', month:'long'});
+const SHEET_ID = "1HbtQAFCUWaoP3C6RSIGpw8E0p3tvf7mkSR0rY7mByDk";
+async function loadSheet(sheetName, callback){
+  try{
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+    const res = await fetch(url);
+    const text = await res.text();
+    const rows = text.split("\n").slice(1).filter(r=>r.trim()!="");
+    callback(rows);
+  }catch(e){ console.log(e); }
+}
+loadSheet("Sheet1", (rows)=>{
+  if(rows.length>0){
+    const first = rows[0].split(",").map(s=>s.replace(/"/g,'').trim());
+    document.getElementById("mainItem").innerText = first[0];
+    document.getElementById("mainRate").innerText = "₹ "+first[1];
+    document.getElementById("updateTime").innerText = "LIVE "+new Date().toLocaleTimeString('hi-IN');
+  }
+  let html="";
+  rows.forEach(r=>{
+    const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
+    html+=`<div class="card" style="margin:8px 0; display:flex; justify-content:space-between; border-left:4px solid #ff6d00;"><div><b>${item}</b></div><div><b>₹${rate}</b> <span style="font-size:11px; background:#e8f5e9; padding:2px 6px; border-radius:8px;">${change||'LIVE'}</span></div></div>`;
+  });
+  document.getElementById("bhav-list").innerHTML=html;
+});
+loadSheet("Sheet2", (rows)=>{
+  if(rows.length==0){ document.getElementById("sabji-list").innerHTML="<small>Sheet2 me sabji bhav dalo - Aloo, Tamatar</small>"; return; }
+  let html="", html2="";
+  rows.slice(0,3).forEach(r=>{
+    const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
+    html+=`<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;"><div>🥔 ${item}</div><div><b>₹${rate}</b></div></div>`;
+  });
+  rows.forEach(r=>{
+    const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
+    html2+=`<div class="card" style="margin:8px 0; display:flex; justify-content:space-between; border-left:4px solid #0a8a3a;"><div><b>${item}</b></div><div><b>₹${rate}/Qtl</b> <span style="font-size:11px; background:#e8f5e9; padding:2px 6px; border-radius:8px;">${change||''}</span></div></div>`;
+  });
+  document.getElementById("sabji-list").innerHTML=html;
+  document.getElementById("sabji-detail-list").innerHTML=html2;
+});
+</script>
+</body>
 </html>
