@@ -6,13 +6,11 @@
   <title>Kisan Saathi AI</title>
   <style>
     body { background:#f1f8e9; margin:0; padding:0; font-family: sans-serif; }
-    /* Sirf Lakdi wala card - baki tere app ka CSS alag hai, isse takkar nahi hogi */
     #lakdi-mandi-SAFE { max-width: 420px; margin: 10px auto; background: white; border-radius: 18px; padding: 16px; border: 2px solid #ff9800; border-left: 5px solid #ff6d00; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
   </style>
 </head>
 <body>
 
-  <!-- YE NAYA LAKDI WALA CARD - SIRF YE JUDEGA, BAAKI KUCH NAHI CHEDEGA -->
   <div id="lakdi-mandi-SAFE">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h2 style="margin:0; color:#e65100; font-size:17px;">🪵 लकड़ी मंडी भाव</h2>
@@ -27,10 +25,8 @@
     </div>
   </div>
 
-  <!-- TERA PURANA REAL APP - JAISE KA TAISA SAFE HAI -->
   <div id="root"></div>
 
-  <!-- DETAIL PAGE -->
   <div id="lakdiDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f6fff6; z-index:9999; overflow:auto;">
     <div style="background:#0a8a3a; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
       <button onclick="document.getElementById('lakdiDetailPage').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; font-size:20px; width:35px; height:35px; border-radius:50%;">←</button>
@@ -39,6 +35,10 @@
     <div style="padding:20px; max-width:420px; margin:0 auto;"><div id="bhav-list">Loading...</div></div>
   </div>
 
+  <!-- 1. PEHLE TERA REAL APP LOAD HOGA - LOCATION SAHI RAHEGA -->
+  <script type="module" src="./main.tsx"></script>
+
+  <!-- 2. USKE BAAD LAKDI WALA BHAV LOAD HOGA -->
   <script>
     document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
     const SHEET_ID = "1HbtQAFCUWaoP3C6RSIGpw8E0p3tvf7mkSR0rY7mByDk";
@@ -62,8 +62,8 @@
         document.getElementById("bhav-list").innerHTML = html;
       }catch(e){ document.getElementById("bhav-list").innerHTML = "Sheet Publish check karo"; }
     }
-    loadBhav();
+    // Thoda delay se chalao taaki location pehle load ho jaye
+    setTimeout(loadBhav, 1500);
   </script>
-  <script type="module" src="./main.tsx"></script>
 </body>
 </html>
