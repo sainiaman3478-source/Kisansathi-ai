@@ -9,6 +9,24 @@
     #lakdi-mandi-SAFE { max-width: 420px; margin: 10px auto; background: white; border-radius: 18px; padding: 16px; border: 2px solid #ff9800; border-left: 5px solid #ff6d00; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
     #daal-mandi-SAFE { max-width: 420px; margin: 10px auto; background: white; border-radius: 18px; padding: 16px; border: 2px solid #66bb6a; border-left: 5px solid #0a8a3a; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
   </style>
+  <!-- FIX 1: GPS FALLBACK - main.tsx se pehle chalega -->
+  <script>
+    (function(){
+      const NAKUR_POS = { coords: { latitude: 29.92, longitude: 77.30, accuracy: 100 }, timestamp: Date.now() };
+      if(navigator.geolocation){
+        const original = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+        navigator.geolocation.getCurrentPosition = function(success, error, opts){
+          let done = false;
+          const timer = setTimeout(function(){ if(!done){ done=true; console.log("Fallback Nakur Location"); success(NAKUR_POS); } }, 3500);
+          original(
+            function(pos){ if(!done){ done=true; clearTimeout(timer); success(pos); } },
+            function(err){ if(!done){ done=true; clearTimeout(timer); success(NAKUR_POS); } },
+            { timeout: 3000, enableHighAccuracy: false, maximumAge: 60000, ...(opts||{}) }
+          );
+        };
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -26,42 +44,28 @@
     </div>
   </div>
 
-  <!-- NAYA DAAL MANDI BLOCK -->
   <div id="daal-mandi-SAFE">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h2 style="margin:0; color:#0a4d1e; font-size:17px;">🫘 दाल मंडी - सहारनपुर</h2>
       <span style="background:#e8f5e9; color:#0a8a3a; padding:4px 10px; border-radius:15px; font-size:11px; font-weight:bold;">Nakur • LIVE</span>
     </div>
     <p style="margin:5px 0; color:gray; font-size:12px;">📍 गाँव नकूर से सीधे • आज के भाव</p>
-    
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
-      <!-- Bechna Hai Logo -->
       <button onclick="document.getElementById('daalDetailPage').style.display='block'" style="background:linear-gradient(135deg,#0a8a3a,#138A36); color:white; border:none; padding:14px; border-radius:14px; font-weight:900; cursor:pointer; text-align:center;">
-        <div style="font-size:28px; line-height:1;">🧺⬆️</div>
-        <div style="font-size:15px; margin-top:4px;">बेचना है</div>
-        <div style="font-size:11px; opacity:0.9; font-weight:normal;">अपना माल बेचें</div>
+        <div style="font-size:28px; line-height:1;">🧺⬆️</div><div style="font-size:15px; margin-top:4px;">बेचना है</div><div style="font-size:11px; opacity:0.9; font-weight:normal;">अपना माल बेचें</div>
       </button>
-      <!-- Kharidna Hai Logo -->
       <button onclick="document.getElementById('daalDetailPage').style.display='block'" style="background:linear-gradient(135deg,#ff6d00,#FF8C00); color:white; border:none; padding:14px; border-radius:14px; font-weight:900; cursor:pointer; text-align:center;">
-        <div style="font-size:28px; line-height:1;">🛒</div>
-        <div style="font-size:15px; margin-top:4px;">खरीदना है</div>
-        <div style="font-size:11px; opacity:0.9; font-weight:normal;">माल खरीदें</div>
+        <div style="font-size:28px; line-height:1;">🛒</div><div style="font-size:15px; margin-top:4px;">खरीदना है</div><div style="font-size:11px; opacity:0.9; font-weight:normal;">माल खरीदें</div>
       </button>
     </div>
-
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;">
-      <div style="background:#f1f8e9; padding:8px; border-radius:10px; text-align:center; border:1px solid #c5e1a5;">
-        <b style="font-size:12px;">राजमा</b><br><span style="color:#e65100; font-weight:bold; font-size:13px;">₹125 / किलो</span>
-      </div>
-      <div style="background:#fff3e0; padding:8px; border-radius:10px; text-align:center; border:1px solid #ffcc80;">
-        <b style="font-size:12px;">चना</b><br><span style="color:#0a8a3a; font-weight:bold; font-size:13px;">₹72 / किलो</span>
-      </div>
+      <div style="background:#f1f8e9; padding:8px; border-radius:10px; text-align:center; border:1px solid #c5e1a5;"><b style="font-size:12px;">राजमा</b><br><span style="color:#e65100; font-weight:bold; font-size:13px;">₹125 / किलो</span></div>
+      <div style="background:#fff3e0; padding:8px; border-radius:10px; text-align:center; border:1px solid #ffcc80;"><b style="font-size:12px;">चना</b><br><span style="color:#0a8a3a; font-weight:bold; font-size:13px;">₹72 / किलो</span></div>
     </div>
   </div>
 
   <div id="root"></div>
 
-  <!-- LAKDI DETAIL PAGE -->
   <div id="lakdiDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f6fff6; z-index:9999; overflow:auto;">
     <div style="background:#0a8a3a; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
       <button onclick="document.getElementById('lakdiDetailPage').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; font-size:20px; width:35px; height:35px; border-radius:50%;">←</button>
@@ -70,7 +74,6 @@
     <div style="padding:20px; max-width:420px; margin:0 auto;"><div id="bhav-list">Loading...</div></div>
   </div>
 
-  <!-- DAAL MANDI DETAIL PAGE -->
   <div id="daalDetailPage" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f1f8e9; z-index:10000; overflow:auto;">
     <div style="background:#0a8a3a; color:white; padding:15px 20px; display:flex; align-items:center; gap:15px; position:sticky; top:0;">
       <button onclick="document.getElementById('daalDetailPage').style.display='none'" style="background:rgba(255,255,255,0.2); border:none; color:white; font-size:20px; width:35px; height:35px; border-radius:50%;">←</button>
@@ -78,12 +81,12 @@
     </div>
     <div style="padding:15px; max-width:420px; margin:0 auto;">
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdEMLnStwzgQ0Zgcwi2ENb4J4LUio-mH9U-jSExf2Z_XzWzcw/viewform" target="_blank" style="text-decoration:none;"><button style="width:100%; background:#0a8a3a; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">🧺 बेचना है - फॉर्म भरो</button></a>
-        <button style="width:100%; background:#ff6d00; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">🛒 खरीदना है - कॉल करो</button>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdEMLnStwzgQ0Zgcwi2ENb4J4LUio-mH9U-jSExf2Z_XzWzcw/viewform" target="_blank" style="text-decoration:none;"><button style="width:100%; background:#0a8a3a; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">🧺 बेचना है</button></a>
+        <button style="width:100%; background:#ff6d00; color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">🛒 खरीदना है</button>
       </div>
       <div id="daal-list">
-        <div style="background:white; border-radius:12px; padding:12px; margin:8px 0; border-left:4px solid #0a8a3a;"><b>राजमा - 50 किलो</b><br>📍 नकूर • ₹125/किलो • विक्रेता: अमित कुमार<br><button style="background:#e8f5e9; border:none; padding:6px 12px; border-radius:8px; margin-top:6px; color:#0a8a3a; font-weight:bold;">📞 कॉल</button> <button style="background:#ff6d00; border:none; padding:6px 12px; border-radius:8px; margin-top:6px; color:white; font-weight:bold;">🛒 ऑर्डर</button></div>
-        <div style="background:white; border-radius:12px; padding:12px; margin:8px 0; border-left:4px solid #ff6d00;"><b>चना - 100 किलो</b><br>📍 नकूर • ₹72/किलो • विक्रेता: सुमित सिंह<br><button style="background:#e8f5e9; border:none; padding:6px 12px; border-radius:8px; margin-top:6px; color:#0a8a3a; font-weight:bold;">📞 कॉल</button> <button style="background:#ff6d00; border:none; padding:6px 12px; border-radius:8px; margin-top:6px; color:white; font-weight:bold;">🛒 ऑर्डर</button></div>
+        <div style="background:white; border-radius:12px; padding:12px; margin:8px 0; border-left:4px solid #0a8a3a;"><b>राजमा - 50 किलो</b><br>📍 नकूर • ₹125/किलो • विक्रेता: अमित कुमार<br><button style="background:#e8f5e9; border:none; padding:6px 12px; border-radius:8px; margin-top:6px; color:#0a8a3a; font-weight:bold;">📞 कॉल</button></div>
+        <div style="background:white; border-radius:12px; padding:12px; margin:8px 0; border-left:4px solid #ff6d00;"><b>चना - 100 किलो</b><br>📍 नकूर • ₹72/किलो • विक्रेता: सुमित सिंह<br><button style="background:#e8f5e9; border:none; padding:6px 12px; border-radius:8px; margin-top:6px; color:#0a8a3a; font-weight:bold;">📞 कॉल</button></div>
       </div>
     </div>
   </div>
@@ -91,9 +94,13 @@
   <script type="module" src="./main.tsx"></script>
 
   <script>
-    document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
+    // Lakdi Date
+    const dateEl = document.getElementById("lakdiDate");
+    if(dateEl) dateEl.innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
+    
     const SHEET_ID = "1HbtQAFCUWaoP3C6RSIGpw8E0p3tvf7mkSR0rY7mByDk";
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
+    
     async function loadBhav(){
       try{
         const res = await fetch(CSV_URL);
@@ -101,19 +108,38 @@
         const rows = text.split("\n").slice(1).filter(r=>r.trim()!="");
         if(rows.length > 0){
           const firstRow = rows[0].split(",").map(s=>s.replace(/"/g,'').trim());
-          document.getElementById("mainItem").innerText = "🍃 " + firstRow[0];
-          document.getElementById("mainRate").innerText = "₹ " + firstRow[1] + " / क्विंटल";
-          document.getElementById("updateTime").innerText = "LIVE " + new Date().toLocaleTimeString('hi-IN');
+          const mainItem = document.getElementById("mainItem");
+          const mainRate = document.getElementById("mainRate");
+          const updateTime = document.getElementById("updateTime");
+          if(mainItem) mainItem.innerText = "🍃 " + firstRow[0];
+          if(mainRate) mainRate.innerText = "₹ " + firstRow[1] + " / क्विंटल";
+          if(updateTime) updateTime.innerText = "LIVE " + new Date().toLocaleTimeString('hi-IN');
         }
         let html = "";
         rows.forEach(r=>{
           const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
           html += `<div style="background:white; border:1.5px solid #a5d6a7; padding:14px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between;"><div><b>${item}</b></div><div><b>₹${rate}</b> <small style="background:#e8f5e9; padding:2px 6px; border-radius:8px;">${change||''}</small></div></div>`;
         });
-        document.getElementById("bhav-list").innerHTML = html;
-      }catch(e){ document.getElementById("bhav-list").innerHTML = "Sheet Publish check karo"; }
+        const bhavList = document.getElementById("bhav-list");
+        if(bhavList) bhavList.innerHTML = html;
+      }catch(e){ 
+        const bhavList = document.getElementById("bhav-list");
+        if(bhavList) bhavList.innerHTML = "Sheet Publish check karo"; 
+      }
     }
-    setTimeout(loadBhav, 1500);
+
+    // FIX 2: Location wala error hatana aur Nakur dikhana
+    function fixWeatherUI(){
+      document.body.innerHTML = document.body.innerHTML.replace("कोई Live Location नहीं चुनी गई", "नकूर, सहारनपुर");
+      const errDiv = document.querySelector('div[style*="Live Location प्राप्त करने"]');
+      if(errDiv) errDiv.style.display = 'none';
+    }
+
+    window.addEventListener('load', function(){
+      setTimeout(loadBhav, 2000);
+      setTimeout(fixWeatherUI, 2500);
+      setTimeout(fixWeatherUI, 5000);
+    });
   </script>
 </body>
 </html>
