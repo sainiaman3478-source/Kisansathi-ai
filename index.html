@@ -9,20 +9,16 @@
     #lakdi-mandi-SAFE { max-width: 420px; margin: 10px auto; background: white; border-radius: 18px; padding: 16px; border: 2px solid #ff9800; border-left: 5px solid #ff6d00; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
     #daal-mandi-SAFE { max-width: 420px; margin: 10px auto; background: white; border-radius: 18px; padding: 16px; border: 2px solid #66bb6a; border-left: 5px solid #0a8a3a; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
   </style>
-  <!-- FIX 1: GPS FALLBACK - main.tsx se pehle chalega -->
   <script>
+    // GPS ka fallback - Nakur ka location dega agar GPS na mile
     (function(){
-      const NAKUR_POS = { coords: { latitude: 29.92, longitude: 77.30, accuracy: 100 }, timestamp: Date.now() };
+      const NAKUR = { coords: { latitude: 29.92, longitude: 77.30, accuracy: 100 }, timestamp: Date.now() };
       if(navigator.geolocation){
-        const original = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
-        navigator.geolocation.getCurrentPosition = function(success, error, opts){
-          let done = false;
-          const timer = setTimeout(function(){ if(!done){ done=true; console.log("Fallback Nakur Location"); success(NAKUR_POS); } }, 3500);
-          original(
-            function(pos){ if(!done){ done=true; clearTimeout(timer); success(pos); } },
-            function(err){ if(!done){ done=true; clearTimeout(timer); success(NAKUR_POS); } },
-            { timeout: 3000, enableHighAccuracy: false, maximumAge: 60000, ...(opts||{}) }
-          );
+        const orig = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+        navigator.geolocation.getCurrentPosition = function(s,e,o){
+          let done=false;
+          const t=setTimeout(function(){ if(!done){done=true; s(NAKUR);} },3000);
+          orig(function(p){ if(!done){done=true; clearTimeout(t); s(p);} }, function(err){ if(!done){done=true; clearTimeout(t); s(NAKUR);} }, {timeout:2500, enableHighAccuracy:false, maximumAge:60000, ...(o||{})});
         };
       }
     })();
@@ -94,13 +90,9 @@
   <script type="module" src="./main.tsx"></script>
 
   <script>
-    // Lakdi Date
-    const dateEl = document.getElementById("lakdiDate");
-    if(dateEl) dateEl.innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
-    
+    document.getElementById("lakdiDate").innerText = new Date().toLocaleDateString('hi-IN', {day:'numeric', month:'long'});
     const SHEET_ID = "1HbtQAFCUWaoP3C6RSIGpw8E0p3tvf7mkSR0rY7mByDk";
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
-    
     async function loadBhav(){
       try{
         const res = await fetch(CSV_URL);
@@ -108,38 +100,19 @@
         const rows = text.split("\n").slice(1).filter(r=>r.trim()!="");
         if(rows.length > 0){
           const firstRow = rows[0].split(",").map(s=>s.replace(/"/g,'').trim());
-          const mainItem = document.getElementById("mainItem");
-          const mainRate = document.getElementById("mainRate");
-          const updateTime = document.getElementById("updateTime");
-          if(mainItem) mainItem.innerText = "🍃 " + firstRow[0];
-          if(mainRate) mainRate.innerText = "₹ " + firstRow[1] + " / क्विंटल";
-          if(updateTime) updateTime.innerText = "LIVE " + new Date().toLocaleTimeString('hi-IN');
+          document.getElementById("mainItem").innerText = "🍃 " + firstRow[0];
+          document.getElementById("mainRate").innerText = "₹ " + firstRow[1] + " / क्विंटल";
+          document.getElementById("updateTime").innerText = "LIVE " + new Date().toLocaleTimeString('hi-IN');
         }
         let html = "";
         rows.forEach(r=>{
           const [item, rate, change] = r.split(",").map(s=>s.replace(/"/g,'').trim());
           html += `<div style="background:white; border:1.5px solid #a5d6a7; padding:14px; border-radius:12px; margin:10px 0; display:flex; justify-content:space-between;"><div><b>${item}</b></div><div><b>₹${rate}</b> <small style="background:#e8f5e9; padding:2px 6px; border-radius:8px;">${change||''}</small></div></div>`;
         });
-        const bhavList = document.getElementById("bhav-list");
-        if(bhavList) bhavList.innerHTML = html;
-      }catch(e){ 
-        const bhavList = document.getElementById("bhav-list");
-        if(bhavList) bhavList.innerHTML = "Sheet Publish check karo"; 
-      }
+        document.getElementById("bhav-list").innerHTML = html;
+      }catch(e){ document.getElementById("bhav-list").innerHTML = "Sheet Publish check karo"; }
     }
-
-    // FIX 2: Location wala error hatana aur Nakur dikhana
-    function fixWeatherUI(){
-      document.body.innerHTML = document.body.innerHTML.replace("कोई Live Location नहीं चुनी गई", "नकूर, सहारनपुर");
-      const errDiv = document.querySelector('div[style*="Live Location प्राप्त करने"]');
-      if(errDiv) errDiv.style.display = 'none';
-    }
-
-    window.addEventListener('load', function(){
-      setTimeout(loadBhav, 2000);
-      setTimeout(fixWeatherUI, 2500);
-      setTimeout(fixWeatherUI, 5000);
-    });
+    window.addEventListener('load', function(){ setTimeout(loadBhav, 1500); });
   </script>
 </body>
 </html>
